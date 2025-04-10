@@ -69,7 +69,8 @@
     "self-hosting:docker-cn@database": "docker build -t lobe-chat-database-local -f Dockerfile.database --build-arg USE_CN_MIRROR=true .",
     "start": "next start -p 3210",
     "stylelint": "stylelint \"src/**/*.{js,jsx,ts,tsx}\" --fix",
-    "test": "npm run test-app && npm run test-server",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
     "test-app": "vitest run --config vitest.config.ts",
     "test-app:coverage": "vitest run --config vitest.config.ts  --coverage",
     "test-server": "TEST_SERVER_DB=1 vitest run --config vitest.server.config.ts",
@@ -262,6 +263,8 @@
     "zustand-utils": "^2.1.0"
   },
   "devDependencies": {
+    "@azure-rest/core-client": "^2.3.4",
+    "@azure/core-util": "^1.11.0",
     "@commitlint/cli": "^19.8.0",
     "@edge-runtime/vm": "^5.0.0",
     "@huggingface/tasks": "^0.15.9",
@@ -337,7 +340,7 @@
     "typescript": "^5.8.2",
     "unified": "^11.0.5",
     "unist-util-visit": "^5.0.0",
-    "vite": "^5.4.16",
+    "vite": "^6.2.2",
     "vitest": "^3.1.1",
     "vitest-canvas-mock": "^0.3.3"
   },

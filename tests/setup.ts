@@ -33,3 +33,13 @@ theme.defaultConfig.hashed = false;
 
 // 将 React 设置为全局变量，这样就不需要在每个测试文件中导入它了
 (global as any).React = React;
+
+// ======= Temporary env modification for test =======
+// delete process.env.TEST_SERVER_DB;
+
+// delete process.env.DATABASE_TEST_URL;
+// delete process.env.DATABASE_DRIVER;
+// delete process.env.NEXT_PUBLIC_SERVICE_MODE;
+// delete process.env.KEY_VAULTS_SECRET;
+// delete process.env.S3_PUBLIC_DOMAIN;
+// delete process.env.APP_URL;
