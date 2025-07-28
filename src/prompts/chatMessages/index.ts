@@ -9,3 +9,15 @@ export const chatHistoryPrompts = (messages: ChatMessage[]) => {
 ${messages.map((m) => chatMessage(m)).join('\n')}
 </chat_history>`;
 };
+
+export const groupSupervisorPrompts = (messages: ChatMessage[]) => {
+  return `<chat_group>
+${messages.map((m) => chatMessage(m)).join('\n')}
+</chat_group>`;
+};
+
+export const groupMemeberSpeakingPrompts = (messages: ChatMessage[]) => {
+  return `<chat_group>
+${messages.map((m) => chatMessage(m)).join('\n')}
+</chat_group>`;
+};
