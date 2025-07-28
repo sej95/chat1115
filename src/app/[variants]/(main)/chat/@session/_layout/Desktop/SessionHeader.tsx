@@ -1,6 +1,6 @@
 'use client';
 
-import { ActionIcon } from '@lobehub/ui';
+import { ActionIcon, Dropdown } from '@lobehub/ui';
 import { createStyles } from 'antd-style';
 import { MessageSquarePlus } from 'lucide-react';
 import { memo } from 'react';
@@ -55,17 +55,35 @@ const Header = memo(() => {
         <Flexbox align={'center'} gap={4} horizontal>
           <TogglePanelButton />
           {showCreateSession && (
-            <ActionIcon
-              icon={MessageSquarePlus}
-              loading={isValidating}
-              onClick={() => mutate()}
-              size={DESKTOP_HEADER_ICON_SIZE}
-              style={{ flex: 'none' }}
-              title={t('newAgent')}
-              tooltipProps={{
-                placement: 'bottom',
+            <Dropdown
+              menu={{
+                items: [
+                  {
+                    key: 'newAgent',
+                    label: t('newAgent'),
+                    onClick: () => {
+                      mutate();
+                    },
+                  },
+                  {
+                    key: 'newGroup',
+                    label: 'New Group',
+                    onClick: () => {
+                      mutate();
+                    },
+                  },
+                ],
               }}
-            />
+              trigger={['click']}
+            >
+              <ActionIcon
+                icon={MessageSquarePlus}
+                loading={isValidating}
+                // onClick={() => mutate()}
+                size={DESKTOP_HEADER_ICON_SIZE}
+                style={{ flex: 'none' }}
+              />
+            </Dropdown>
           )}
         </Flexbox>
       </Flexbox>
