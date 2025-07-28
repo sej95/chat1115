@@ -9,7 +9,7 @@ export enum LobeSessionType {
 }
 
 /**
- * Lobe Agent
+ * Lobe Agent Session
  */
 export interface LobeAgentSession {
   config: LobeAgentConfig;
@@ -24,6 +24,23 @@ export interface LobeAgentSession {
   updatedAt: Date;
 }
 
+/**
+ * Lobe Group Session - represents group chats
+ */
+export interface LobeGroupSession {
+  createdAt: Date;
+  group?: SessionGroupId;
+  id: string;
+  meta: MetaData;
+  pinned?: boolean;
+  tags?: string[];
+  type: LobeSessionType.Group;
+  updatedAt: Date;
+  // Group-specific properties
+  members?: string[]; // Array of user/agent IDs in the group
+  maxMembers?: number; // Optional limit on group size
+}
+
 export interface LobeAgentSettings {
   /**
    * 语言模型角色设定
@@ -32,4 +49,7 @@ export interface LobeAgentSettings {
   meta: MetaData;
 }
 
-export type LobeSessions = LobeAgentSession[];
+// Union type for all session types
+export type LobeSession = LobeAgentSession | LobeGroupSession;
+
+export type LobeSessions = LobeSession[];

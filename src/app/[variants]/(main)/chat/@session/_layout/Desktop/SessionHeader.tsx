@@ -32,10 +32,11 @@ export const useStyles = createStyles(({ css, token }) => ({
 const Header = memo(() => {
   const { styles } = useStyles();
   const { t } = useTranslation('chat');
-  const [createSession] = useSessionStore((s) => [s.createSession]);
+  const [createSession, createGroupSession] = useSessionStore((s) => [s.createSession, s.createGroupSession]);
   const { enableWebrtc, showCreateSession } = useServerConfigStore(featureFlagsSelectors);
 
-  const { mutate, isValidating } = useActionSWR('session.createSession', () => createSession());
+  const { mutate: mutateAgent, isValidating: isValidatingAgent } = useActionSWR('session.createSession', () => createSession());
+  const { mutate: mutateGroup, isValidating: isValidatingGroup } = useActionSWR('session.createGroupSession', () => createGroupSession());
 
   return (
     <Flexbox className={styles.top} gap={16} paddingInline={8}>
@@ -62,14 +63,14 @@ const Header = memo(() => {
                     key: 'newAgent',
                     label: t('newAgent'),
                     onClick: () => {
-                      mutate();
+                      mutateAgent();
                     },
                   },
                   {
                     key: 'newGroup',
-                    label: 'New Group',
+                    label: t('newGroup'),
                     onClick: () => {
-                      mutate();
+                      mutateGroup();
                     },
                   },
                 ],
@@ -78,8 +79,8 @@ const Header = memo(() => {
             >
               <ActionIcon
                 icon={MessageSquarePlus}
-                loading={isValidating}
-                // onClick={() => mutate()}
+                loading={isValidatingAgent || isValidatingGroup}
+                // onClick={() => mutateAgent()}
                 size={DESKTOP_HEADER_ICON_SIZE}
                 style={{ flex: 'none' }}
               />

@@ -203,6 +203,13 @@
       "when": 1752567402506,
       "tag": "0028_oauth_handoffs",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1753679102797,
+      "tag": "0029_chemical_bastion",
+      "breakpoints": true
     }
   ],
   "version": "6"
