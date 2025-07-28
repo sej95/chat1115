@@ -3,6 +3,8 @@ import { memo, useMemo, useState } from 'react';
 import { Flexbox } from 'react-layout-kit';
 import { shallow } from 'zustand/shallow';
 
+import { LobeAgentSession } from '@/types/session';
+
 import { useAgentStore } from '@/store/agent';
 import { agentSelectors } from '@/store/agent/selectors';
 import { useChatStore } from '@/store/chat';
@@ -27,7 +29,7 @@ const SessionItem = memo<SessionItemProps>(({ id }) => {
   const [active] = useSessionStore((s) => [s.activeId === id]);
   const [loading] = useChatStore((s) => [chatSelectors.isAIGenerating(s) && id === s.activeId]);
 
-  const [pin, title, description, avatar, avatarBackground, updateAt, model, group] =
+  const [pin, title, description, avatar, avatarBackground, updateAt, model, group, sessionType] =
     useSessionStore((s) => {
       const session = sessionSelectors.getSessionById(id)(s);
       const meta = session.meta;
@@ -39,12 +41,13 @@ const SessionItem = memo<SessionItemProps>(({ id }) => {
         sessionMetaSelectors.getAvatar(meta),
         meta.backgroundColor,
         session?.updatedAt,
-        session.model,
+        session.type === 'agent' ? (session as any).model : undefined,
         session?.group,
+        session.type,
       ];
     });
 
-  const showModel = model !== defaultModel;
+  const showModel = sessionType === 'agent' && model && model !== defaultModel;
 
   const actions = useMemo(
     () => (

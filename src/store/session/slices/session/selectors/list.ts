@@ -1,7 +1,7 @@
 import { DEFAULT_AGENT_LOBE_SESSION, INBOX_SESSION_ID } from '@/const/session';
 import { sessionHelpers } from '@/store/session/slices/session/helpers';
 import { MetaData } from '@/types/meta';
-import { CustomSessionGroup, LobeAgentSession, LobeSessions } from '@/types/session';
+import { CustomSessionGroup, LobeAgentSession, LobeSession, LobeSessions } from '@/types/session';
 
 import { SessionStore } from '../../../store';
 
@@ -13,7 +13,7 @@ const allSessions = (s: SessionStore): LobeSessions => s.sessions;
 
 const getSessionById =
   (id: string) =>
-  (s: SessionStore): LobeAgentSession =>
+  (s: SessionStore): LobeSession =>
     sessionHelpers.getSessionById(id, allSessions(s));
 
 const getSessionMetaById =
@@ -25,13 +25,13 @@ const getSessionMetaById =
     return session.meta;
   };
 
-const currentSession = (s: SessionStore): LobeAgentSession | undefined => {
+const currentSession = (s: SessionStore): LobeSession | undefined => {
   if (!s.activeId) return;
 
   return allSessions(s).find((i) => i.id === s.activeId);
 };
 
-const currentSessionSafe = (s: SessionStore): LobeAgentSession => {
+const currentSessionSafe = (s: SessionStore): LobeSession => {
   return currentSession(s) || DEFAULT_AGENT_LOBE_SESSION;
 };
 

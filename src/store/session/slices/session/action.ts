@@ -17,6 +17,7 @@ import { MetaData } from '@/types/meta';
 import {
   ChatSessionList,
   LobeAgentSession,
+  LobeGroupSession,
   LobeSessionGroups,
   LobeSessionType,
   LobeSessions,
@@ -52,6 +53,15 @@ export interface SessionAction {
    */
   createSession: (
     session?: PartialDeep<LobeAgentSession>,
+    isSwitchSession?: boolean,
+  ) => Promise<string>;
+  /**
+   * create a new group session
+   * @param session
+   * @returns sessionId
+   */
+  createGroupSession: (
+    session?: PartialDeep<LobeGroupSession>,
     isSwitchSession?: boolean,
   ) => Promise<string>;
   duplicateSession: (id: string) => Promise<void>;
@@ -102,6 +112,58 @@ export const createSessionSlice: StateCreator<
     await get().refreshSessions();
   },
 
+  createGroupSession: async (groupSession, isSwitchSession = true) => {
+    const { switchSession, refreshSessions } = get();
+
+    // Default group session structure
+    const defaultGroupSession: Partial<LobeGroupSession> = {
+      maxMembers: 10, // Default max members
+      members: [],
+      meta: {
+        title: t('newGroup', { ns: 'chat' }) || 'New Group',
+        description: t('newGroupDescription', { ns: 'chat' }) || 'Group chat session',
+      },
+      type: LobeSessionType.Group,
+    };
+
+    const newSession: LobeGroupSession = merge(
+      defaultGroupSession,
+      groupSession,
+    ) as LobeGroupSession;
+
+    const id = await sessionService.createGroupSession(newSession);
+    await refreshSessions();
+
+    // Track new group creation analytics
+    const analytics = getSingletonAnalyticsOptional();
+    if (analytics) {
+      const userStore = getUserStoreState();
+      const userId = userProfileSelectors.userId(userStore);
+
+      // Get group information
+      const groupId = newSession.group || 'default';
+      const group = sessionGroupSelectors.getGroupById(groupId)(get());
+      const groupName = group?.name || (groupId === 'default' ? 'Default' : 'Unknown');
+
+      analytics.track({
+        name: 'new_group_created',
+        properties: {
+          group_name: newSession.meta?.title || 'Untitled Group',
+          group_tags: newSession.meta?.tags || [],
+          group_id: groupId,
+          session_id: id,
+          user_id: userId || 'anonymous',
+          max_members: newSession.maxMembers || 10,
+        },
+      });
+    }
+
+    // Whether to goto  to the new session after creation, the default is to switch to
+    if (isSwitchSession) switchSession(id);
+
+    return id;
+  },
+
   createSession: async (agent, isSwitchSession = true) => {
     const { switchSession, refreshSessions } = get();
 
@@ -145,6 +207,7 @@ export const createSessionSlice: StateCreator<
 
     return id;
   },
+
   duplicateSession: async (id) => {
     const { switchSession, refreshSessions } = get();
     const session = sessionSelectors.getSessionById(id)(get());

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { lambdaClient } from '@/libs/trpc/client';
+import { LobeSessionType } from '@/types/session';
 
 import { ISessionService } from './type';
 
@@ -15,6 +16,15 @@ export class ServerService implements ISessionService {
       config: { ...config, ...meta } as any,
       session: { ...session, groupId: group },
       type,
+    });
+  };
+
+  createGroupSession: ISessionService['createGroupSession'] = async (data) => {
+    const { group, meta, ...session } = data;
+    return lambdaClient.session.createSession.mutate({
+      config: meta as any,
+      session: { ...session, groupId: group },
+      type: LobeSessionType.Group,
     });
   };
 
