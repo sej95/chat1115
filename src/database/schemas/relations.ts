@@ -6,6 +6,7 @@ import { createdAt } from '@/database/schemas/_helpers';
 
 import { agents, agentsFiles, agentsKnowledgeBases } from './agent';
 import { asyncTasks } from './asyncTask';
+import { chatGroups, chatGroupsAgents } from './chatGroup';
 import { documentChunks, documents } from './document';
 import { files, knowledgeBases } from './file';
 import { generationBatches, generationTopics, generations } from './generation';
@@ -110,6 +111,7 @@ export const agentsRelations = relations(agents, ({ many }) => ({
   agentsToSessions: many(agentsToSessions),
   knowledgeBases: many(agentsKnowledgeBases),
   files: many(agentsFiles),
+  chatGroups: many(chatGroupsAgents),
 }));
 
 export const agentsToSessionsRelations = relations(agentsToSessions, ({ one }) => ({
@@ -279,5 +281,29 @@ export const generationsRelations = relations(generations, ({ one }) => ({
   file: one(files, {
     fields: [generations.fileId],
     references: [files.id],
+  }),
+}));
+
+// Chat Groups 相关关系定义
+export const chatGroupsRelations = relations(chatGroups, ({ many, one }) => ({
+  user: one(users, {
+    fields: [chatGroups.userId],
+    references: [users.id],
+  }),
+  agents: many(chatGroupsAgents),
+}));
+
+export const chatGroupsAgentsRelations = relations(chatGroupsAgents, ({ one }) => ({
+  chatGroup: one(chatGroups, {
+    fields: [chatGroupsAgents.chatGroupId],
+    references: [chatGroups.id],
+  }),
+  agent: one(agents, {
+    fields: [chatGroupsAgents.agentId],
+    references: [agents.id],
+  }),
+  user: one(users, {
+    fields: [chatGroupsAgents.userId],
+    references: [users.id],
   }),
 }));
