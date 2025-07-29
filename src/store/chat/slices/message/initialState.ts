@@ -1,4 +1,5 @@
 import { ChatMessage } from '@/types/message';
+import { ChatGroupAgentItem, ChatGroupItem } from '@/database/schemas/chatGroup';
 
 export interface ChatMessageState {
   /**
@@ -21,6 +22,32 @@ export interface ChatMessageState {
    */
   messagesInit: boolean;
   messagesMap: Record<string, ChatMessage[]>;
+
+  // ******* Group Chat State ******* //
+  /**
+   * Currently active group chat ID
+   */
+  activeGroupId?: string;
+  /**
+   * Group data maps by group ID
+   */
+  groupMaps: Record<string, ChatGroupItem>;
+  /**
+   * Group agents maps by group ID  
+   */
+  groupAgentMaps: Record<string, ChatGroupAgentItem[]>;
+  /**
+   * Supervisor decision loading states
+   */
+  supervisorDecisionLoading: string[];
+  /**
+   * Agent speaking status per group
+   */
+  agentSpeakingStatus: Record<string, Record<string, boolean>>;
+  /**
+   * Groups initialization status
+   */
+  groupsInit: boolean;
 }
 
 export const initialMessageState: ChatMessageState = {
@@ -30,4 +57,12 @@ export const initialMessageState: ChatMessageState = {
   messageLoadingIds: [],
   messagesInit: false,
   messagesMap: {},
+
+  // Group Chat Initial State
+  activeGroupId: undefined,
+  groupMaps: {},
+  groupAgentMaps: {},
+  supervisorDecisionLoading: [],
+  agentSpeakingStatus: {},
+  groupsInit: false,
 };

@@ -32,10 +32,26 @@ import type { ChatStoreState } from '../../initialState';
 import { chatSelectors } from '../../selectors';
 import { preventLeavingFn, toggleBooleanList } from '../../utils';
 import { MessageDispatch, messagesReducer } from './reducer';
+import { GroupChatSupervisor, SupervisorContext, SupervisorDecision } from './supervisor';
+import { ChatGroupModel } from '@/database/models/chatGroup';
+import { ChatGroupAgentItem, ChatGroupItem } from '@/database/schemas/chatGroup';
+import { clientDB } from '@/database/client/db';
+import { getUserStoreState } from '@/store/user';
+import { produce } from 'immer';
 
 const n = setNamespace('m');
 
 const SWR_USE_FETCH_MESSAGES = 'SWR_USE_FETCH_MESSAGES';
+
+// Helper to get ChatGroupModel instance
+const getChatGroupModel = () => {
+  const userStore = getUserStoreState();
+  const userId = userStore.user?.id || 'DEFAULT_LOBE_CHAT_USER';
+  return new ChatGroupModel(clientDB as any, userId);
+};
+
+// Group chat supervisor instance
+const supervisor = new GroupChatSupervisor();
 
 export interface ChatMessageAction {
   // create
@@ -60,6 +76,40 @@ export interface ChatMessageAction {
   ) => SWRResponse<ChatMessage[]>;
   copyMessage: (id: string, content: string) => Promise<void>;
   refreshMessages: () => Promise<void>;
+
+  // ******* Group Chat Actions ******* //
+  /**
+   * Send a message to group chat and trigger supervisor decision
+   */
+  sendGroupMessage: (params: {
+    groupId: string;
+    message: string;
+    files?: any[];
+  }) => Promise<void>;
+  /**
+   * Create a new group chat with agents
+   */
+  createGroupChat: (params: {
+    title: string;
+    agentIds: string[];
+    description?: string;
+  }) => Promise<string>;
+  /**
+   * Switch to a specific group
+   */
+  switchToGroup: (groupId: string) => Promise<void>;
+  /**
+   * Add an agent to existing group
+   */
+  addAgentToGroup: (groupId: string, agentId: string) => Promise<void>;
+  /**
+   * Remove an agent from group
+   */
+  removeAgentFromGroup: (groupId: string, agentId: string) => Promise<void>;
+  /**
+   * Refresh groups data
+   */
+  refreshGroups: () => Promise<void>;
 
   // =========  ↓ Internal Method ↓  ========== //
   // ========================================== //
@@ -132,6 +182,40 @@ export interface ChatMessageAction {
     id?: string,
     action?: Action,
   ) => AbortController | undefined;
+
+  // ******* Group Chat Internal Actions ******* //
+  /**
+   * Trigger supervisor decision for group chat
+   */
+  internal_triggerSupervisorDecision: (groupId: string) => Promise<void>;
+  /**
+   * Execute agent responses for selected agents
+   */
+  internal_executeAgentResponses: (groupId: string, agentIds: string[]) => Promise<void>;
+  /**
+   * Process individual agent message response
+   */
+  internal_processAgentMessage: (groupId: string, agentId: string, userMessageId: string) => Promise<void>;
+  /**
+   * Toggle supervisor loading state
+   */
+  internal_toggleSupervisorLoading: (loading: boolean, groupId?: string) => void;
+  /**
+   * Update agent speaking status
+   */
+  internal_updateAgentSpeakingStatus: (groupId: string, agentId: string, speaking: boolean) => void;
+  /**
+   * Set active group
+   */
+  internal_setActiveGroup: (groupId: string) => void;
+  /**
+   * Update group maps
+   */
+  internal_updateGroupMaps: (groups: ChatGroupItem[]) => void;
+  /**
+   * Update group agent maps
+   */
+  internal_updateGroupAgentMaps: (groupId: string, agents: ChatGroupAgentItem[]) => void;
 }
 
 export const chatMessage: StateCreator<
@@ -445,5 +529,291 @@ export const chatMessage: StateCreator<
 
       window.removeEventListener('beforeunload', preventLeavingFn);
     }
+  },
+
+  // ******* Group Chat Actions Implementation ******* //
+
+  sendGroupMessage: async ({ groupId, message, files }) => {
+    const {
+      internal_createMessage,
+      internal_triggerSupervisorDecision,
+      internal_setActiveGroup,
+    } = get();
+
+    if (!message.trim() && (!files || files.length === 0)) return;
+
+    // Set active group
+    internal_setActiveGroup(groupId);
+
+    set({ isCreatingMessage: true }, false, n('creatingGroupMessage/start'));
+
+    try {
+      // Add user message to group - reuse existing message creation
+      const userMessage: CreateMessageParams = {
+        content: message,
+        files: files?.map((f) => f.id),
+        role: 'user',
+        sessionId: groupId, // Use groupId as sessionId for group messages
+        // No agentId for user messages
+      };
+
+      const messageId = await internal_createMessage(userMessage);
+
+      // Trigger supervisor decision for group
+      if (messageId) {
+        await internal_triggerSupervisorDecision(groupId);
+      }
+    } catch (error) {
+      console.error('Failed to send group message:', error);
+    } finally {
+      set({ isCreatingMessage: false }, false, n('creatingGroupMessage/end'));
+    }
+  },
+
+  createGroupChat: async ({ title, agentIds, description }) => {
+    try {
+      const chatGroupModel = getChatGroupModel();
+      const { group } = await chatGroupModel.createWithAgents(
+        {
+          title,
+          description,
+          config: {
+            autoResponse: true,
+            maxAgents: 5,
+            responseOrder: 'smart',
+          },
+        },
+        agentIds,
+      );
+
+      // Refresh groups to update state
+      await get().refreshGroups();
+
+      return group.id;
+    } catch (error) {
+      console.error('Failed to create group chat:', error);
+      throw error;
+    }
+  },
+
+  switchToGroup: async (groupId: string) => {
+    const { internal_setActiveGroup, refreshMessages } = get();
+
+    internal_setActiveGroup(groupId);
+    await refreshMessages();
+  },
+
+  addAgentToGroup: async (groupId: string, agentId: string) => {
+    try {
+      const chatGroupModel = getChatGroupModel();
+      await chatGroupModel.addAgentToGroup(groupId, agentId);
+
+      // Refresh group agents
+      const agents = await chatGroupModel.getGroupAgents(groupId);
+      get().internal_updateGroupAgentMaps(groupId, agents);
+    } catch (error) {
+      console.error('Failed to add agent to group:', error);
+      throw error;
+    }
+  },
+
+  removeAgentFromGroup: async (groupId: string, agentId: string) => {
+    try {
+      const chatGroupModel = getChatGroupModel();
+      await chatGroupModel.removeAgentFromGroup(groupId, agentId);
+
+      // Refresh group agents
+      const agents = await chatGroupModel.getGroupAgents(groupId);
+      get().internal_updateGroupAgentMaps(groupId, agents);
+    } catch (error) {
+      console.error('Failed to remove agent from group:', error);
+      throw error;
+    }
+  },
+
+  refreshGroups: async () => {
+    try {
+      const chatGroupModel = getChatGroupModel();
+      const groups = await chatGroupModel.query();
+      get().internal_updateGroupMaps(groups);
+
+      set({ groupsInit: true }, false, n('refreshGroups'));
+    } catch (error) {
+      console.error('Failed to refresh groups:', error);
+    }
+  },
+
+  // ******* Group Chat Internal Actions ******* //
+
+  internal_triggerSupervisorDecision: async (groupId: string) => {
+    const {
+      messagesMap,
+      groupAgentMaps,
+      internal_toggleSupervisorLoading,
+      internal_executeAgentResponses,
+    } = get();
+
+    const messages = messagesMap[groupId] || [];
+    const agents = groupAgentMaps[groupId] || [];
+
+    if (messages.length === 0 || agents.length === 0) return;
+
+    internal_toggleSupervisorLoading(true, groupId);
+
+    try {
+      // Create supervisor context
+      const context: SupervisorContext = {
+        availableAgents: agents.filter((a) => a.enabled),
+        groupId,
+        messages,
+      };
+
+      // Make supervisor decision
+      const decision: SupervisorDecision = await supervisor.makeDecision(context);
+
+      // Validate decision
+      if (!supervisor.validateDecision(decision, context)) {
+        console.warn('Invalid supervisor decision:', decision);
+        return;
+      }
+
+      console.log('Supervisor decision:', decision);
+
+      // Execute agent responses if any agents selected
+      if (decision.nextSpeakers.length > 0) {
+        await internal_executeAgentResponses(groupId, decision.nextSpeakers);
+      }
+    } catch (error) {
+      console.error('Supervisor decision failed:', error);
+    } finally {
+      internal_toggleSupervisorLoading(false, groupId);
+    }
+  },
+
+  internal_executeAgentResponses: async (groupId: string, agentIds: string[]) => {
+    const { messagesMap, internal_processAgentMessage } = get();
+
+    const messages = messagesMap[groupId] || [];
+    const lastUserMessage = messages.filter((m) => m.role === 'user').pop();
+
+    if (!lastUserMessage) return;
+
+    // Process each agent response in parallel
+    const responsePromises = agentIds.map((agentId) =>
+      internal_processAgentMessage(groupId, agentId, lastUserMessage.id),
+    );
+
+    try {
+      await Promise.all(responsePromises);
+    } catch (error) {
+      console.error('Failed to execute agent responses:', error);
+    }
+  },
+
+  internal_processAgentMessage: async (
+    groupId: string,
+    agentId: string,
+    userMessageId: string,
+  ) => {
+    const {
+      messagesMap,
+      internal_createMessage,
+      internal_updateAgentSpeakingStatus,
+      internal_coreProcessMessage,
+    } = get();
+
+    internal_updateAgentSpeakingStatus(groupId, agentId, true);
+
+    try {
+      // Create assistant message placeholder for this specific agent
+      const assistantMessage: CreateMessageParams = {
+        role: 'assistant',
+        content: '',
+        sessionId: groupId,
+        parentId: userMessageId,
+        agentId, // Mark which agent is responding
+        fromModel: agentId, // TODO: Get actual model from agent config
+        fromProvider: 'openai', // TODO: Get from agent config
+      };
+
+      const messageId = await internal_createMessage(assistantMessage, { skipRefresh: true });
+
+      if (messageId) {
+        // Get group messages for context
+        const messages = messagesMap[groupId] || [];
+
+        // Reuse existing core processing logic
+        await internal_coreProcessMessage(messages, messageId, {
+          // Pass group-specific context
+          groupId,
+          agentId,
+        });
+      }
+    } catch (error) {
+      console.error(`Failed to process message for agent ${agentId}:`, error);
+    } finally {
+      internal_updateAgentSpeakingStatus(groupId, agentId, false);
+    }
+  },
+
+  internal_toggleSupervisorLoading: (loading: boolean, groupId?: string) => {
+    set(
+      {
+        supervisorDecisionLoading: groupId
+          ? toggleBooleanList(get().supervisorDecisionLoading, groupId, loading)
+          : loading
+            ? get().supervisorDecisionLoading
+            : [],
+      },
+      false,
+      n(`toggleSupervisorLoading/${loading ? 'start' : 'end'}`),
+    );
+  },
+
+  internal_updateAgentSpeakingStatus: (
+    groupId: string,
+    agentId: string,
+    speaking: boolean,
+  ) => {
+    set(
+      produce((state: ChatStoreState) => {
+        if (!state.agentSpeakingStatus[groupId]) {
+          state.agentSpeakingStatus[groupId] = {};
+        }
+        state.agentSpeakingStatus[groupId][agentId] = speaking;
+      }),
+      false,
+      n(`updateAgentSpeakingStatus/${groupId}/${agentId}`),
+    );
+  },
+
+  internal_setActiveGroup: (groupId: string) => {
+    if (get().activeGroupId === groupId) return;
+
+    set({ activeGroupId: groupId }, false, n('setActiveGroup'));
+  },
+
+  internal_updateGroupMaps: (groups: ChatGroupItem[]) => {
+    const nextGroupMaps = groups.reduce(
+      (acc, group) => {
+        acc[group.id] = group;
+        return acc;
+      },
+      {} as Record<string, ChatGroupItem>,
+    );
+
+    if (isEqual(nextGroupMaps, get().groupMaps)) return;
+
+    set({ groupMaps: nextGroupMaps }, false, n('updateGroupMaps'));
+  },
+
+  internal_updateGroupAgentMaps: (groupId: string, agents: ChatGroupAgentItem[]) => {
+    set(
+      produce((state: ChatStoreState) => {
+        state.groupAgentMaps[groupId] = agents;
+      }),
+      false,
+      n(`updateGroupAgentMaps/${groupId}`),
+    );
   },
 });
