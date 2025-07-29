@@ -96,6 +96,7 @@ const SessionItem = memo<SessionItemProps>(({ id }) => {
           },
         }}
         title={sessionTitle}
+        type={sessionType}
       />
       <CreateGroupModal
         id={id}
