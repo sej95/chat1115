@@ -31,14 +31,12 @@ export interface LobeGroupSession {
   createdAt: Date;
   group?: SessionGroupId;
   id: string;
+  members?: string[];
   meta: MetaData;
   pinned?: boolean;
   tags?: string[];
   type: LobeSessionType.Group;
   updatedAt: Date;
-  // Group-specific properties
-  members?: string[]; // Array of user/agent IDs in the group
-  maxMembers?: number; // Optional limit on group size
 }
 
 export interface LobeAgentSettings {

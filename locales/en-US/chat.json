@@ -140,6 +140,14 @@
     }
   },
   "newAgent": "New Assistant",
+  "newGroup": "Create Group Chat",
+  "groupChat": "Group Chat",
+  "groupSettings": "Group Settings",
+  "groupSettingsPlaceholder": "Group settings coming soon",
+  "addMember": "Add Member",
+  "members": "Members",
+  "recentActivity": "Recent Activity",
+  "noRecentActivity": "No recent activity",
   "pin": "Pin",
   "pinOff": "Unpin",
   "rag": {

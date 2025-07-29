@@ -7,7 +7,11 @@ import { StateCreator } from 'zustand/vanilla';
 
 import { message } from '@/components/AntdStaticMethods';
 import { MESSAGE_CANCEL_FLAT } from '@/const/message';
-import { DEFAULT_AGENT_LOBE_SESSION, INBOX_SESSION_ID } from '@/const/session';
+import {
+  DEFAULT_AGENT_LOBE_SESSION,
+  DEFAULT_GROUP_LOBE_SESSION,
+  INBOX_SESSION_ID,
+} from '@/const/session';
 import { useClientDataSWR } from '@/libs/swr';
 import { sessionService } from '@/services/session';
 import { SessionStore } from '@/store/session';
@@ -116,20 +120,14 @@ export const createSessionSlice: StateCreator<
     const { switchSession, refreshSessions } = get();
 
     // Default group session structure
-    const defaultGroupSession: Partial<LobeGroupSession> = {
-      maxMembers: 10, // Default max members
-      members: [],
-      meta: {
-        title: t('newGroup', { ns: 'chat' }) || 'New Group',
-        description: t('newGroupDescription', { ns: 'chat' }) || 'Group chat session',
-      },
-      type: LobeSessionType.Group,
-    };
+    const defaultGroupSession = DEFAULT_GROUP_LOBE_SESSION;
 
     const newSession: LobeGroupSession = merge(
       defaultGroupSession,
       groupSession,
     ) as LobeGroupSession;
+
+    console.log('newSession in createGroupSession', newSession);
 
     const id = await sessionService.createGroupSession(newSession);
     await refreshSessions();
@@ -153,7 +151,6 @@ export const createSessionSlice: StateCreator<
           group_id: groupId,
           session_id: id,
           user_id: userId || 'anonymous',
-          max_members: newSession.maxMembers || 10,
         },
       });
     }
