@@ -7,7 +7,7 @@ import Desktop from './_layout/Desktop';
 import Mobile from './_layout/Mobile';
 import SkeletonList from './features/SkeletonList';
 
-const SidebarSelector = lazy(() => import('./SidebarSelector'));
+const SidebarLayoutSwitcher = lazy(() => import('./SidebarLayoutSwitcher'));
 
 const Topic = async (props: DynamicLayoutProps) => {
   const isMobile = await RouteVariants.getIsMobile(props);
@@ -17,7 +17,7 @@ const Topic = async (props: DynamicLayoutProps) => {
   return (
     <Layout>
       <Suspense fallback={<SkeletonList />}>
-        <SidebarSelector />
+        <SidebarLayoutSwitcher />
       </Suspense>
     </Layout>
   );

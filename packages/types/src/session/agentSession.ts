@@ -25,12 +25,12 @@ export interface LobeAgentSession {
 }
 
 /**
- * Lobe Group Session - represents group chats
+ * Group chat (not confuse with session group)
  */
 export interface LobeGroupSession {
   createdAt: Date;
   group?: SessionGroupId;
-  id: string;
+  id: string; // Chat group ID
   members?: string[];
   meta: MetaData;
   pinned?: boolean;
