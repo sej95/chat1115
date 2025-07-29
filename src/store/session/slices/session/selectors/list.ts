@@ -39,6 +39,11 @@ const hasCustomAgents = (s: SessionStore) => defaultSessions(s).length > 0;
 
 const isInboxSession = (s: SessionStore) => s.activeId === INBOX_SESSION_ID;
 
+const isCurrentSessionGroupSession = (s: SessionStore) => {
+  const session = currentSession(s);
+  return session?.type === 'group';
+};
+
 const isSessionListInit = (s: SessionStore) => s.isSessionsFirstFetchFinished;
 
 // use to judge whether a session is fully activated
@@ -52,6 +57,7 @@ export const sessionSelectors = {
   getSessionById,
   getSessionMetaById,
   hasCustomAgents,
+  isCurrentSessionGroupSession,
   isInboxSession,
   isSessionListInit,
   isSomeSessionActive,
