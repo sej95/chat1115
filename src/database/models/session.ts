@@ -463,7 +463,7 @@ export class SessionModel {
       return {
         ...res,
         group: groupId,
-        members: [], // TODO: populate actual members when implemented
+        members: ['user', 'assistant-ai', 'expert-ai'], // Default test members
         meta,
         type: 'group',
       } as LobeGroupSession;

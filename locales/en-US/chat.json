@@ -141,7 +141,9 @@
   },
   "newAgent": "New Assistant",
   "newGroup": "Create Group Chat",
-  "groupChat": "Group Chat",
+  "groupChat": {
+    "memberTooltip": "{{count}} members in this group chat"
+  },
   "groupSettings": "Group Settings",
   "groupSettingsPlaceholder": "Group settings coming soon",
   "addMember": "Add Member",

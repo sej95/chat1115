@@ -1,7 +1,10 @@
 import { ModelTag } from '@lobehub/icons';
+import { Tag } from '@lobehub/ui';
 import { Skeleton } from 'antd';
 import isEqual from 'fast-deep-equal';
+import { Users } from 'lucide-react';
 import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Flexbox } from 'react-layout-kit';
 
 import ModelSwitchPanel from '@/features/ModelSwitchPanel';
@@ -10,14 +13,18 @@ import { useAgentEnableSearch } from '@/hooks/useAgentEnableSearch';
 import { useModelSupportToolUse } from '@/hooks/useModelSupportToolUse';
 import { useAgentStore } from '@/store/agent';
 import { agentChatConfigSelectors, agentSelectors } from '@/store/agent/selectors';
+import { useSessionStore } from '@/store/session';
+import { sessionSelectors } from '@/store/session/selectors';
 import { useUserStore } from '@/store/user';
 import { authSelectors } from '@/store/user/selectors';
 
 import HistoryLimitTags from './HistoryLimitTags';
 import KnowledgeTag from './KnowledgeTag';
+import MemberCountTag from './MemberCountTag';
 import SearchTags from './SearchTags';
 
 const TitleTags = memo(() => {
+  const { t } = useTranslation('chat');
   const [model, provider, hasKnowledge, isLoading] = useAgentStore((s) => [
     agentSelectors.currentAgentModel(s),
     agentSelectors.currentAgentModelProvider(s),
@@ -31,8 +38,17 @@ const TitleTags = memo(() => {
 
   const showPlugin = useModelSupportToolUse(model, provider);
   const isLogin = useUserStore(authSelectors.isLogin);
+  const isGroupSession = useSessionStore(sessionSelectors.isCurrentSessionGroupSession);
 
   const isAgentEnableSearch = useAgentEnableSearch();
+
+  if (isGroupSession) {
+    return (
+      <Flexbox align={'center'} gap={4} horizontal>
+        <MemberCountTag />
+      </Flexbox>
+    );
+  }
 
   return isLoading && isLogin ? (
     <Skeleton.Button active size={'small'} style={{ height: 20 }} />
