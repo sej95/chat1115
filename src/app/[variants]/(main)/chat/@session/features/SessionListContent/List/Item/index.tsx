@@ -1,6 +1,4 @@
 import { ModelTag } from '@lobehub/icons';
-import { Tag } from '@lobehub/ui';
-import { Users } from 'lucide-react';
 import { memo, useMemo, useState } from 'react';
 import { Flexbox } from 'react-layout-kit';
 import { shallow } from 'zustand/shallow';
@@ -72,7 +70,7 @@ const SessionItem = memo<SessionItemProps>(({ id }) => {
   );
 
   const sessionAvatar = sessionType === 'group' ? avatar || '👥' : avatar;
-  const sessionTitle = sessionType === 'group' ? `${title || 'Group Chat'}` : title;
+  const sessionTitle = sessionType === 'group' ? 'Group Chat' : title;
 
   return (
     <>
@@ -91,9 +89,6 @@ const SessionItem = memo<SessionItemProps>(({ id }) => {
         styles={{
           container: {
             gap: 12,
-            ...(sessionType === 'group' && {
-              border: '1px solid rgba(102, 126, 234, 0.2)',
-            }),
           },
           content: {
             gap: 6,

@@ -8,19 +8,19 @@ import { sessionSelectors } from '@/store/session/selectors';
 import GroupChat from './features/GroupChat';
 import SystemRole from './features/SystemRole';
 import TopicListContent from './features/TopicListContent';
+import Header from './features/Header';
 
 const SidebarSelector = memo(() => {
   const isGroupSession = useSessionStore(sessionSelectors.isCurrentSessionGroupSession);
 
   if (isGroupSession) {
-    // Completely different sidebar for group sessions
     return <GroupChat />;
   }
 
-  // Original sidebar for agent sessions (maintains exact original structure)
   return (
     <>
       <SystemRole />
+      <Header />
       <TopicListContent />
     </>
   );
@@ -28,4 +28,4 @@ const SidebarSelector = memo(() => {
 
 SidebarSelector.displayName = 'SidebarSelector';
 
-export default SidebarSelector; 
+export default SidebarSelector;
