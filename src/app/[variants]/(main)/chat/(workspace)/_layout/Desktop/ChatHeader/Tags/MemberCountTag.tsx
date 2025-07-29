@@ -15,7 +15,7 @@ const MemberCountTag = memo(() => {
   // Get member count from group session
   const memberCount =
     currentSession?.type === 'group'
-      ? (currentSession as LobeGroupSession).members?.length || 1 // Default to 1 (at least the user)
+      ? (currentSession as LobeGroupSession).members?.length || 1
       : 0;
 
   if (memberCount === 0) return null;
