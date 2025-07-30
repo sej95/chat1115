@@ -2,7 +2,7 @@
 
 import { ActionIcon, Avatar } from '@lobehub/ui';
 import { createStyles } from 'antd-style';
-import { Settings, UserPlus } from 'lucide-react';
+import { Edit, Settings, UserPlus } from 'lucide-react';
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Flexbox } from 'react-layout-kit';
@@ -16,11 +16,12 @@ import { useUserStore } from '@/store/user';
 import { userProfileSelectors } from '@/store/user/selectors';
 import { LobeGroupSession } from '@/types/session';
 
+import GroupDescriptionContent from './GroupDescriptionContent';
 import InviteMemberModal from './InviteMemberModal';
 
 const useStyles = createStyles(({ css, token }) => ({
   content: css`
-    padding: ${token.paddingSM}px;
+    padding: 0 ${token.paddingSM}px;
   `,
   emptyState: css`
     color: ${token.colorTextSecondary};
@@ -90,20 +91,9 @@ const GroupChatSidebar = memo(() => {
     setInviteModalOpen(false);
   };
 
-  const totalMembers = 1 + groupAgents.length;
-
   return (
     <Flexbox height={'100%'}>
-      <SidebarHeader
-        actions={[
-          <ActionIcon icon={Settings} key="settings" size={'small'} title={t('common:setting')} />,
-        ]}
-        title={
-          <Flexbox align={'center'} gap={8} horizontal>
-            {currentGroup?.meta?.title || t('groupDescription')}
-          </Flexbox>
-        }
-      />
+      <GroupDescriptionContent />
 
       <SidebarHeader
         actions={
@@ -112,18 +102,18 @@ const GroupChatSidebar = memo(() => {
             key="addMember"
             onClick={() => setInviteModalOpen(true)}
             size={'small'}
-            title={t('addMember')}
+            title="Add Member"
           />
         }
         style={{ cursor: 'pointer' }}
         title={
           <Flexbox align={'center'} gap={8} horizontal>
-            {t('members')} ({totalMembers})
+            Members
           </Flexbox>
         }
       />
 
-      <Flexbox className={styles.content} flex={1} gap={4}>
+      <Flexbox className={styles.content} flex={1} gap={2}>
         {/* Current User - Always shown first */}
         <div className={styles.memberItem}>
           <Flexbox align={'center'} gap={12} horizontal>
@@ -142,7 +132,7 @@ const GroupChatSidebar = memo(() => {
         </div>
 
         {currentSession?.members?.length === 0 ? (
-          <div className={styles.emptyState}>{t('noAgentsYet')}</div>
+          <div className={styles.emptyState}>No agents yet</div>
         ) : (
           <div>
             {currentSession?.members?.map((agent) => {
@@ -170,6 +160,14 @@ const GroupChatSidebar = memo(() => {
                         </div>
                       )}
                     </Flexbox>
+                    <ActionIcon
+                      icon={Edit}
+                      onClick={() => {
+                        // TODO: Implement edit member logic
+                      }}
+                      size={'small'}
+                      title="Edit Member"
+                    />
                   </Flexbox>
                 </div>
               );

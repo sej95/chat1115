@@ -6,10 +6,13 @@ import { ActionKeys } from '@/features/ChatInput/ActionBar/config';
 import DesktopChatInput, { FooterRender } from '@/features/ChatInput/Desktop';
 import { useGlobalStore } from '@/store/global';
 import { systemStatusSelectors } from '@/store/global/selectors';
+import { useSessionStore } from '@/store/session';
+import { sessionSelectors } from '@/store/session/selectors';
 
 import Footer from './Footer';
 import TextArea from './TextArea';
 
+// DM Actions
 const leftActions = [
   'model',
   'search',
@@ -21,6 +24,8 @@ const leftActions = [
   'tools',
   'mainToken',
 ] as ActionKeys[];
+
+const leftActionsForGroup = ['model', 'mention', 'fileUpload', 'knowledgeBase'] as ActionKeys[];
 
 const rightActions = ['clear'] as ActionKeys[];
 
@@ -35,10 +40,12 @@ const Desktop = memo(() => {
     s.updateSystemStatus,
   ]);
 
+  const isGroupSession = useSessionStore(sessionSelectors.isCurrentSessionGroupSession);
+
   return (
     <DesktopChatInput
       inputHeight={inputHeight}
-      leftActions={leftActions}
+      leftActions={isGroupSession ? leftActionsForGroup : leftActions}
       onInputHeightChange={(height) => {
         updatePreference({ inputHeight: height });
       }}

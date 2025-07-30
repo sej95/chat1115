@@ -588,5 +588,16 @@
     "bps": true,
     "folderMillis": 1753842839032,
     "hash": "572783c335f98e23f74ec9ef1e00a2f91e61933a6e77f5b8054c4dfc29107737"
+  },
+  {
+    "sql": [
+      "ALTER TABLE \"chat_groups\" ADD COLUMN \"session_id\" text;",
+      "\nALTER TABLE \"chat_groups\" ADD CONSTRAINT \"chat_groups_session_id_sessions_id_fk\" FOREIGN KEY (\"session_id\") REFERENCES \"public\".\"sessions\"(\"id\") ON DELETE cascade ON UPDATE no action;",
+      "\nALTER TABLE \"chat_groups\" DROP COLUMN \"avatar\";",
+      "\nALTER TABLE \"chat_groups\" DROP COLUMN \"background_color\";"
+    ],
+    "bps": true,
+    "folderMillis": 1753856484583,
+    "hash": "78549390d14a9c0b30ebcf21b84e3ce46a7d7eed3f2c89eac3a5d1a980c3179d"
   }
 ]

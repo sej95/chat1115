@@ -101,8 +101,6 @@ const SessionItem = memo<SessionItemProps>(({ id }) => {
         ]
       : avatar;
 
-  console.log('sessionAvatar', sessionAvatar);
-
   return (
     <>
       <ListItem

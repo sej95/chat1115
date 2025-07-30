@@ -224,6 +224,13 @@
       "when": 1753842839032,
       "tag": "0031_yellow_lightspeed",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1753856484583,
+      "tag": "0032_lethal_gladiator",
+      "breakpoints": true
     }
   ],
   "version": "6"

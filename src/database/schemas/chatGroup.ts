@@ -14,6 +14,7 @@ import { idGenerator, randomSlug } from '@/database/utils/idGenerator';
 
 import { timestamps } from './_helpers';
 import { agents } from './agent';
+import { sessions } from './session';
 import { users } from './user';
 
 /**
@@ -32,8 +33,6 @@ export const chatGroups = pgTable(
       .unique(),
     title: text('title'),
     description: text('description'),
-    avatar: text('avatar'),
-    backgroundColor: text('background_color'),
 
     /**
      * Group configuration settings
@@ -45,6 +44,9 @@ export const chatGroups = pgTable(
     }>(),
 
     clientId: text('client_id'),
+
+    // Compatible with old sessions
+    sessionId: text('session_id').references(() => sessions.id, { onDelete: 'cascade' }),
 
     userId: text('user_id')
       .references(() => users.id, { onDelete: 'cascade' })
