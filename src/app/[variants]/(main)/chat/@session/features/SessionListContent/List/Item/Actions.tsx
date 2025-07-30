@@ -57,7 +57,7 @@ const Actions = memo<ActionProps>(({ group, id, openCreateGroupModal, parentType
     },
   );
 
-  const [deleteGroup] = useChatGroupStore((s) => [s.deleteGroup]);
+  const [deleteGroup, pinGroup] = useChatGroupStore((s) => [s.deleteGroup, s.pinGroup]);
 
   const { modal, message } = App.useApp();
 
@@ -73,7 +73,11 @@ const Actions = memo<ActionProps>(({ group, id, openCreateGroupModal, parentType
             key: 'pin',
             label: t(pin ? 'pinOff' : 'pin'),
             onClick: () => {
-              pinSession(id, !pin);
+              if (parentType === 'group') {
+                pinGroup(id, !pin);
+              } else {
+                pinSession(id, !pin);
+              }
             },
           },
           {

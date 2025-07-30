@@ -111,7 +111,6 @@ export const sessionRouter = router({
       return {
         ...rest,
         meta: { avatar, backgroundColor, description, title },
-        pinned: false,
         type: 'group',
       };
     });

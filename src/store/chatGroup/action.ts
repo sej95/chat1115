@@ -1,12 +1,9 @@
 import { produce } from 'immer';
 import { StateCreator } from 'zustand/vanilla';
 
-import { DEFAULT_GROUP_LOBE_SESSION } from '@/const/session';
 import { ChatGroupItem, NewChatGroup } from '@/database/schemas/chatGroup';
 import { chatGroupService } from '@/services/chatGroup';
-import { sessionService } from '@/services/session';
 import { getSessionStoreState } from '@/store/session';
-import { LobeSessionType } from '@/types/session';
 
 import { ChatGroupState, initialChatGroupState } from './initialState';
 import { ChatGroupReducer, chatGroupReducers } from './reducers';
@@ -15,7 +12,6 @@ export interface ChatGroupAction {
   addAgentsToGroup: (groupId: string, agentIds: string[]) => Promise<void>;
   createGroup: (group: Omit<NewChatGroup, 'userId'>) => Promise<string>;
   deleteGroup: (id: string) => Promise<void>;
-
   internal_dispatchChatGroup: (
     payload:
       | {
@@ -26,8 +22,10 @@ export interface ChatGroupAction {
           type: keyof typeof chatGroupReducers;
         },
   ) => void;
+  internal_refreshGroups: () => Promise<void>;
 
   loadGroups: () => Promise<void>;
+  pinGroup: (id: string, pinned: boolean) => Promise<void>;
   updateGroup: (id: string, value: Partial<ChatGroupItem>) => Promise<void>;
 }
 
@@ -83,15 +81,27 @@ export const chatGroupAction: StateCreator<
 
     internal_dispatchChatGroup: dispatch,
 
+    internal_refreshGroups: async () => {
+      await get().loadGroups();
+      await getSessionStoreState().refreshSessions();
+    },
+
     loadGroups: async () => {
       dispatch({ payload: true, type: 'setGroupsLoading' });
       const groups = await chatGroupService.getGroups();
       dispatch({ payload: groups, type: 'loadGroups' });
     },
 
+    pinGroup: async (id, pinned) => {
+      await chatGroupService.updateGroup(id, { pinned });
+      dispatch({ payload: { id, pinned }, type: 'updateGroup' });
+      await get().internal_refreshGroups();
+    },
+
     updateGroup: async (id, value) => {
       await chatGroupService.updateGroup(id, value);
       dispatch({ payload: { id, value }, type: 'updateGroup' });
+      await get().internal_refreshGroups();
     },
   };
 };
