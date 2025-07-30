@@ -258,6 +258,16 @@
     "openNewTopic": "Open New Topic",
     "saveCurrentMessages": "Save current session as topic"
   },
+  "inviteMembers": "Invite Members",
+  "noAvailableAgents": "No available agents to invite",
+  "untitledAgent": "Untitled Agent",
+  "groupDescription": "Group Description",
+  "noMembersYet": "No members in this group yet. Click the + button to invite agents.",
+  "noAgentsYet": "No agents in this group yet. Click the + button to invite agents.",
+  "you": "You",
+  "owner": "Owner",
+  "active": "Active",
+  "inactive": "Inactive",
   "translate": {
     "action": "Translate",
     "clear": "Clear Translation"

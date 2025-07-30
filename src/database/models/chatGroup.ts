@@ -1,6 +1,5 @@
 import { and, desc, eq, inArray } from 'drizzle-orm';
 
-import { LobeChatDatabase } from '@/database/type';
 import {
   ChatGroupAgentItem,
   ChatGroupItem,
@@ -9,6 +8,7 @@ import {
   chatGroups,
   chatGroupsAgents,
 } from '@/database/schemas/chatGroup';
+import { LobeChatDatabase } from '@/database/type';
 
 export class ChatGroupModel {
   private userId: string;
@@ -36,18 +36,18 @@ export class ChatGroupModel {
   }
 
   async findGroupWithAgents(groupId: string): Promise<{
-    group: ChatGroupItem;
     agents: ChatGroupAgentItem[];
+    group: ChatGroupItem;
   } | null> {
     const group = await this.findById(groupId);
     if (!group) return null;
 
     const agents = await this.db.query.chatGroupsAgents.findMany({
-      where: eq(chatGroupsAgents.chatGroupId, groupId),
       orderBy: [chatGroupsAgents.order],
+      where: eq(chatGroupsAgents.chatGroupId, groupId),
     });
 
-    return { group, agents };
+    return { agents, group };
   }
 
   // ******* Create Methods ******* //
@@ -64,21 +64,21 @@ export class ChatGroupModel {
   async createWithAgents(
     groupParams: Omit<NewChatGroup, 'userId'>,
     agentIds: string[],
-  ): Promise<{ group: ChatGroupItem; agents: ChatGroupAgentItem[] }> {
+  ): Promise<{ agents: ChatGroupAgentItem[]; group: ChatGroupItem }> {
     const group = await this.create(groupParams);
 
     const agentParams: NewChatGroupAgent[] = agentIds.map((agentId, index) => ({
-      chatGroupId: group.id,
       agentId,
-      userId: this.userId,
-      order: index.toString(),
+      chatGroupId: group.id,
       enabled: true,
+      order: index.toString(),
       role: 'participant',
+      userId: this.userId,
     }));
 
     const agents = await this.db.insert(chatGroupsAgents).values(agentParams).returning();
 
-    return { group, agents };
+    return { agents, group };
   }
 
   // ******* Update Methods ******* //
@@ -99,24 +99,48 @@ export class ChatGroupModel {
     options?: { order?: string; role?: string },
   ): Promise<ChatGroupAgentItem> {
     const params: NewChatGroupAgent = {
-      chatGroupId: groupId,
       agentId,
-      userId: this.userId,
+      chatGroupId: groupId,
+      enabled: true,
       order: options?.order || '0',
       role: options?.role || 'participant',
-      enabled: true,
+      userId: this.userId,
     };
 
     const [result] = await this.db.insert(chatGroupsAgents).values(params).returning();
     return result;
   }
 
+  async addAgentsToGroup(
+    groupId: string,
+    agentIds: string[],
+  ): Promise<ChatGroupAgentItem[]> {
+    const group = await this.findById(groupId);
+    if (!group) throw new Error('Group not found');
+
+    const existingAgents = await this.getGroupAgents(groupId);
+    const existingAgentIds = existingAgents.map((a) => a.agentId);
+
+    const newAgentIds = agentIds.filter((id) => !existingAgentIds.includes(id));
+
+    if (newAgentIds.length === 0) {
+      return [];
+    }
+
+    const newAgents: NewChatGroupAgent[] = newAgentIds.map((agentId) => ({
+      agentId,
+      chatGroupId: groupId,
+      enabled: true,
+      userId: this.userId,
+    }));
+
+    return this.db.insert(chatGroupsAgents).values(newAgents).returning();
+  }
+
   async removeAgentFromGroup(groupId: string, agentId: string): Promise<void> {
     await this.db
       .delete(chatGroupsAgents)
-      .where(
-        and(eq(chatGroupsAgents.chatGroupId, groupId), eq(chatGroupsAgents.agentId, agentId)),
-      );
+      .where(and(eq(chatGroupsAgents.chatGroupId, groupId), eq(chatGroupsAgents.agentId, agentId)));
   }
 
   async updateAgentInGroup(
@@ -127,9 +151,7 @@ export class ChatGroupModel {
     const [result] = await this.db
       .update(chatGroupsAgents)
       .set({ ...updates, updatedAt: new Date() })
-      .where(
-        and(eq(chatGroupsAgents.chatGroupId, groupId), eq(chatGroupsAgents.agentId, agentId)),
-      )
+      .where(and(eq(chatGroupsAgents.chatGroupId, groupId), eq(chatGroupsAgents.agentId, agentId)))
       .returning();
 
     return result;
@@ -155,15 +177,15 @@ export class ChatGroupModel {
 
   async getGroupAgents(groupId: string): Promise<ChatGroupAgentItem[]> {
     return this.db.query.chatGroupsAgents.findMany({
-      where: eq(chatGroupsAgents.chatGroupId, groupId),
       orderBy: [chatGroupsAgents.order],
+      where: eq(chatGroupsAgents.chatGroupId, groupId),
     });
   }
 
   async getEnabledGroupAgents(groupId: string): Promise<ChatGroupAgentItem[]> {
     return this.db.query.chatGroupsAgents.findMany({
-      where: and(eq(chatGroupsAgents.chatGroupId, groupId), eq(chatGroupsAgents.enabled, true)),
       orderBy: [chatGroupsAgents.order],
+      where: and(eq(chatGroupsAgents.chatGroupId, groupId), eq(chatGroupsAgents.enabled, true)),
     });
   }
 
@@ -183,6 +205,7 @@ export class ChatGroupModel {
     if (groupIds.length === 0) return [];
 
     return this.db.query.chatGroups.findMany({
+      orderBy: [desc(chatGroups.updatedAt)],
       where: and(
         inArray(
           chatGroups.id,
@@ -190,7 +213,6 @@ export class ChatGroupModel {
         ),
         eq(chatGroups.userId, this.userId),
       ),
-      orderBy: [desc(chatGroups.updatedAt)],
     });
   }
-} 
+}

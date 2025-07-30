@@ -13,6 +13,7 @@ import {
   INBOX_SESSION_ID,
 } from '@/const/session';
 import { useClientDataSWR } from '@/libs/swr';
+import { chatGroupService } from '@/services/chatGroup';
 import { sessionService } from '@/services/session';
 import { SessionStore } from '@/store/session';
 import { getUserStoreState, useUserStore } from '@/store/user';
@@ -59,15 +60,7 @@ export interface SessionAction {
     session?: PartialDeep<LobeAgentSession>,
     isSwitchSession?: boolean,
   ) => Promise<string>;
-  /**
-   * create a new group session
-   * @param session
-   * @returns sessionId
-   */
-  createGroupSession: (
-    session?: PartialDeep<LobeGroupSession>,
-    isSwitchSession?: boolean,
-  ) => Promise<string>;
+
   duplicateSession: (id: string) => Promise<void>;
   triggerSessionUpdate: (id: string) => Promise<void>;
   updateSessionGroupId: (sessionId: string, groupId: string) => Promise<void>;
@@ -116,51 +109,6 @@ export const createSessionSlice: StateCreator<
     await get().refreshSessions();
   },
 
-  createGroupSession: async (groupSession, isSwitchSession = true) => {
-    const { switchSession, refreshSessions } = get();
-
-    // Default group session structure
-    const defaultGroupSession = DEFAULT_GROUP_LOBE_SESSION;
-
-    const newSession: LobeGroupSession = merge(
-      defaultGroupSession,
-      groupSession,
-    ) as LobeGroupSession;
-
-    console.log('newSession in createGroupSession', newSession);
-
-    const id = await sessionService.createGroupSession(newSession);
-    await refreshSessions();
-
-    // Track new group creation analytics
-    const analytics = getSingletonAnalyticsOptional();
-    if (analytics) {
-      const userStore = getUserStoreState();
-      const userId = userProfileSelectors.userId(userStore);
-
-      // Get group information
-      const groupId = newSession.group || 'default';
-      const group = sessionGroupSelectors.getGroupById(groupId)(get());
-      const groupName = group?.name || (groupId === 'default' ? 'Default' : 'Unknown');
-
-      analytics.track({
-        name: 'new_group_created',
-        properties: {
-          group_name: newSession.meta?.title || 'Untitled Group',
-          group_tags: newSession.meta?.tags || [],
-          group_id: groupId,
-          session_id: id,
-          user_id: userId || 'anonymous',
-        },
-      });
-    }
-
-    // Whether to goto  to the new session after creation, the default is to switch to
-    if (isSwitchSession) switchSession(id);
-
-    return id;
-  },
-
   createSession: async (agent, isSwitchSession = true) => {
     const { switchSession, refreshSessions } = get();
 
@@ -181,18 +129,11 @@ export const createSessionSlice: StateCreator<
       const userStore = getUserStoreState();
       const userId = userProfileSelectors.userId(userStore);
 
-      // Get group information
-      const groupId = newSession.group || 'default';
-      const group = sessionGroupSelectors.getGroupById(groupId)(get());
-      const groupName = group?.name || (groupId === 'default' ? 'Default' : 'Unknown');
-
       analytics.track({
         name: 'new_agent_created',
         properties: {
           assistant_name: newSession.meta?.title || 'Untitled Agent',
           assistant_tags: newSession.meta?.tags || [],
-          group_id: groupId,
-          group_name: groupName,
           session_id: id,
           user_id: userId || 'anonymous',
         },

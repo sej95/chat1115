@@ -151,6 +151,7 @@
   "download": "Download",
   "duplicate": "Create Duplicate",
   "edit": "Edit",
+  "invite": "Invite",
   "export": "Export Configuration",
   "exportType": {
     "agent": "Export Assistant Settings",
