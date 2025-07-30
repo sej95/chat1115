@@ -10,6 +10,8 @@ import { DESKTOP_HEADER_ICON_SIZE } from '@/const/layoutTokens';
 import { useGlobalStore } from '@/store/global';
 import { systemStatusSelectors } from '@/store/global/selectors';
 import { featureFlagsSelectors, useServerConfigStore } from '@/store/serverConfig';
+import { useSessionStore } from '@/store/session';
+import { sessionSelectors } from '@/store/session/selectors';
 import { useUserStore } from '@/store/user';
 import { settingsSelectors } from '@/store/user/selectors';
 import { HotkeyEnum } from '@/types/hotkey';
@@ -27,6 +29,8 @@ const HeaderAction = memo<{ className?: string }>(({ className }) => {
 
   const { isAgentEditable } = useServerConfigStore(featureFlagsSelectors);
 
+  const isGroupSession = useSessionStore(sessionSelectors.isCurrentSessionGroupSession);
+
   return (
     <Flexbox className={className} gap={4} horizontal>
       <ShareButton />
@@ -40,7 +44,7 @@ const HeaderAction = memo<{ className?: string }>(({ className }) => {
           placement: 'bottom',
         }}
       />
-      {isAgentEditable && <SettingButton />}
+      {!isGroupSession && isAgentEditable && <SettingButton />}
     </Flexbox>
   );
 });
