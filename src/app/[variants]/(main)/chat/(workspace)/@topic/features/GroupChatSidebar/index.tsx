@@ -2,7 +2,7 @@
 
 import { ActionIcon, Avatar } from '@lobehub/ui';
 import { createStyles } from 'antd-style';
-import { Edit, Settings, UserPlus } from 'lucide-react';
+import { Edit, UserPlus } from 'lucide-react';
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Flexbox } from 'react-layout-kit';
@@ -132,7 +132,7 @@ const GroupChatSidebar = memo(() => {
         </div>
 
         {currentSession?.members?.length === 0 ? (
-          <div className={styles.emptyState}>No agents yet</div>
+          <div className={styles.emptyState}></div>
         ) : (
           <div>
             {currentSession?.members?.map((agent) => {

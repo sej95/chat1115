@@ -2,16 +2,21 @@
 // Disable the auto sort key eslint rule to make the code more logic and readable
 import { copyToClipboard } from '@lobehub/ui';
 import isEqual from 'fast-deep-equal';
+import { produce } from 'immer';
 import { SWRResponse, mutate } from 'swr';
 import { StateCreator } from 'zustand/vanilla';
 
 import { TraceEventType } from '@/const/trace';
+import { clientDB } from '@/database/client/db';
+import { ChatGroupModel } from '@/database/models/chatGroup';
+import { ChatGroupAgentItem, ChatGroupItem } from '@/database/schemas/chatGroup';
 import { useClientDataSWR } from '@/libs/swr';
 import { messageService } from '@/services/message';
 import { topicService } from '@/services/topic';
 import { traceService } from '@/services/trace';
 import { ChatStore } from '@/store/chat/store';
 import { messageMapKey } from '@/store/chat/utils/messageMapKey';
+import { getUserStoreState } from '@/store/user';
 import { ChatErrorType } from '@/types/fetch';
 import {
   ChatMessage,
@@ -33,11 +38,6 @@ import { chatSelectors } from '../../selectors';
 import { preventLeavingFn, toggleBooleanList } from '../../utils';
 import { MessageDispatch, messagesReducer } from './reducer';
 import { GroupChatSupervisor, SupervisorContext, SupervisorDecision } from './supervisor';
-import { ChatGroupModel } from '@/database/models/chatGroup';
-import { ChatGroupAgentItem, ChatGroupItem } from '@/database/schemas/chatGroup';
-import { clientDB } from '@/database/client/db';
-import { getUserStoreState } from '@/store/user';
-import { produce } from 'immer';
 
 const n = setNamespace('m');
 
@@ -81,35 +81,7 @@ export interface ChatMessageAction {
   /**
    * Send a message to group chat and trigger supervisor decision
    */
-  sendGroupMessage: (params: {
-    groupId: string;
-    message: string;
-    files?: any[];
-  }) => Promise<void>;
-  /**
-   * Create a new group chat with agents
-   */
-  createGroupChat: (params: {
-    title: string;
-    agentIds: string[];
-    description?: string;
-  }) => Promise<string>;
-  /**
-   * Switch to a specific group
-   */
-  switchToGroup: (groupId: string) => Promise<void>;
-  /**
-   * Add an agent to existing group
-   */
-  addAgentToGroup: (groupId: string, agentId: string) => Promise<void>;
-  /**
-   * Remove an agent from group
-   */
-  removeAgentFromGroup: (groupId: string, agentId: string) => Promise<void>;
-  /**
-   * Refresh groups data
-   */
-  refreshGroups: () => Promise<void>;
+  sendGroupMessage: (params: { groupId: string; message: string; files?: any[] }) => Promise<void>;
 
   // =========  ↓ Internal Method ↓  ========== //
   // ========================================== //
@@ -195,7 +167,11 @@ export interface ChatMessageAction {
   /**
    * Process individual agent message response
    */
-  internal_processAgentMessage: (groupId: string, agentId: string, userMessageId: string) => Promise<void>;
+  internal_processAgentMessage: (
+    groupId: string,
+    agentId: string,
+    userMessageId: string,
+  ) => Promise<void>;
   /**
    * Toggle supervisor loading state
    */
@@ -534,11 +510,8 @@ export const chatMessage: StateCreator<
   // ******* Group Chat Actions Implementation ******* //
 
   sendGroupMessage: async ({ groupId, message, files }) => {
-    const {
-      internal_createMessage,
-      internal_triggerSupervisorDecision,
-      internal_setActiveGroup,
-    } = get();
+    const { internal_createMessage, internal_triggerSupervisorDecision, internal_setActiveGroup } =
+      get();
 
     if (!message.trim() && (!files || files.length === 0)) return;
 
@@ -567,79 +540,6 @@ export const chatMessage: StateCreator<
       console.error('Failed to send group message:', error);
     } finally {
       set({ isCreatingMessage: false }, false, n('creatingGroupMessage/end'));
-    }
-  },
-
-  createGroupChat: async ({ title, agentIds, description }) => {
-    try {
-      const chatGroupModel = getChatGroupModel();
-      const { group } = await chatGroupModel.createWithAgents(
-        {
-          title,
-          description,
-          config: {
-            autoResponse: true,
-            maxAgents: 5,
-            responseOrder: 'smart',
-          },
-        },
-        agentIds,
-      );
-
-      // Refresh groups to update state
-      await get().refreshGroups();
-
-      return group.id;
-    } catch (error) {
-      console.error('Failed to create group chat:', error);
-      throw error;
-    }
-  },
-
-  switchToGroup: async (groupId: string) => {
-    const { internal_setActiveGroup, refreshMessages } = get();
-
-    internal_setActiveGroup(groupId);
-    await refreshMessages();
-  },
-
-  addAgentToGroup: async (groupId: string, agentId: string) => {
-    try {
-      const chatGroupModel = getChatGroupModel();
-      await chatGroupModel.addAgentToGroup(groupId, agentId);
-
-      // Refresh group agents
-      const agents = await chatGroupModel.getGroupAgents(groupId);
-      get().internal_updateGroupAgentMaps(groupId, agents);
-    } catch (error) {
-      console.error('Failed to add agent to group:', error);
-      throw error;
-    }
-  },
-
-  removeAgentFromGroup: async (groupId: string, agentId: string) => {
-    try {
-      const chatGroupModel = getChatGroupModel();
-      await chatGroupModel.removeAgentFromGroup(groupId, agentId);
-
-      // Refresh group agents
-      const agents = await chatGroupModel.getGroupAgents(groupId);
-      get().internal_updateGroupAgentMaps(groupId, agents);
-    } catch (error) {
-      console.error('Failed to remove agent from group:', error);
-      throw error;
-    }
-  },
-
-  refreshGroups: async () => {
-    try {
-      const chatGroupModel = getChatGroupModel();
-      const groups = await chatGroupModel.query();
-      get().internal_updateGroupMaps(groups);
-
-      set({ groupsInit: true }, false, n('refreshGroups'));
-    } catch (error) {
-      console.error('Failed to refresh groups:', error);
     }
   },
 
@@ -710,11 +610,7 @@ export const chatMessage: StateCreator<
     }
   },
 
-  internal_processAgentMessage: async (
-    groupId: string,
-    agentId: string,
-    userMessageId: string,
-  ) => {
+  internal_processAgentMessage: async (groupId: string, agentId: string, userMessageId: string) => {
     const {
       messagesMap,
       internal_createMessage,
@@ -770,11 +666,7 @@ export const chatMessage: StateCreator<
     );
   },
 
-  internal_updateAgentSpeakingStatus: (
-    groupId: string,
-    agentId: string,
-    speaking: boolean,
-  ) => {
+  internal_updateAgentSpeakingStatus: (groupId: string, agentId: string, speaking: boolean) => {
     set(
       produce((state: ChatStoreState) => {
         if (!state.agentSpeakingStatus[groupId]) {

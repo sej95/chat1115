@@ -36,7 +36,7 @@ export const chatGroupReducers = {
 
   // Set the loading state for groups
   setGroupsLoading: (state, { payload }) => {
-    return { ...state, groupsLoading: payload };
+    return { ...state, isGroupsLoading: payload };
   },
 
   // Load groups into the state

@@ -1,8 +1,12 @@
 import { produce } from 'immer';
 import { StateCreator } from 'zustand/vanilla';
 
+import { DEFAULT_GROUP_LOBE_SESSION } from '@/const/session';
 import { ChatGroupItem, NewChatGroup } from '@/database/schemas/chatGroup';
 import { chatGroupService } from '@/services/chatGroup';
+import { sessionService } from '@/services/session';
+import { getSessionStoreState } from '@/store/session';
+import { LobeSessionType } from '@/types/session';
 
 import { ChatGroupState, initialChatGroupState } from './initialState';
 import { ChatGroupReducer, chatGroupReducers } from './reducers';
@@ -27,8 +31,11 @@ export interface ChatGroupAction {
   updateGroup: (id: string, value: Partial<ChatGroupItem>) => Promise<void>;
 }
 
+// Create combined store type for StateCreator
+export type ChatGroupStore = ChatGroupState & ChatGroupAction;
+
 export const chatGroupAction: StateCreator<
-  ChatGroupState,
+  ChatGroupStore,
   [['zustand/devtools', never]],
   [],
   ChatGroupAction
@@ -38,8 +45,8 @@ export const chatGroupAction: StateCreator<
       produce((draft: ChatGroupState) => {
         const reducer = chatGroupReducers[payload.type] as ChatGroupReducer;
         if (reducer) {
-          // @ts-ignore
-          draft = reducer(draft, payload);
+          // Apply the reducer and return the new state
+          return reducer(draft, payload);
         }
       }),
       false,
@@ -52,20 +59,35 @@ export const chatGroupAction: StateCreator<
 
     addAgentsToGroup: async (groupId, agentIds) => {
       await chatGroupService.addAgentsToGroup(groupId, agentIds);
-      // after adding, we should reload the groups to get updated member list.
       await get().loadGroups();
     },
 
     createGroup: async (newGroup) => {
       const group = await chatGroupService.createGroup(newGroup);
+
       dispatch({ payload: group, type: 'addGroup' });
+
+      await get().loadGroups();
+      await getSessionStoreState().refreshSessions();
+
       return group.id;
     },
 
     deleteGroup: async (id) => {
+      // First get the group to find the associated session
+      const group = await chatGroupService.getGroup(id);
+
       await chatGroupService.deleteGroup(id);
       dispatch({ payload: id, type: 'deleteGroup' });
+
+      // If there was an associated session, delete it and refresh session store
+      if (group?.sessionId) {
+        await sessionService.removeSession(group.sessionId);
+        await getSessionStoreState().refreshSessions();
+      }
     },
+
+    internal_dispatchChatGroup: dispatch,
 
     loadGroups: async () => {
       dispatch({ payload: true, type: 'setGroupsLoading' });
@@ -77,7 +99,5 @@ export const chatGroupAction: StateCreator<
       await chatGroupService.updateGroup(id, value);
       dispatch({ payload: { id, value }, type: 'updateGroup' });
     },
-
-    internal_dispatchChatGroup: dispatch,
   };
 };
