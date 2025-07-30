@@ -599,5 +599,15 @@
     "bps": true,
     "folderMillis": 1753856484583,
     "hash": "78549390d14a9c0b30ebcf21b84e3ce46a7d7eed3f2c89eac3a5d1a980c3179d"
+  },
+  {
+    "sql": [
+      "ALTER TABLE \"chat_groups\" DROP CONSTRAINT \"chat_groups_session_id_sessions_id_fk\";\n",
+      "\nALTER TABLE \"chat_groups\" ADD COLUMN \"pinned\" boolean DEFAULT false;",
+      "\nALTER TABLE \"chat_groups\" DROP COLUMN \"session_id\";"
+    ],
+    "bps": true,
+    "folderMillis": 1753867628608,
+    "hash": "ff88f3ae62e970d8756c8946f254d6000218caf184904e987fcbf70477b5b3d8"
   }
 ]

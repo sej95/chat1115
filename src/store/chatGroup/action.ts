@@ -74,17 +74,11 @@ export const chatGroupAction: StateCreator<
     },
 
     deleteGroup: async (id) => {
-      // First get the group to find the associated session
-      const group = await chatGroupService.getGroup(id);
-
       await chatGroupService.deleteGroup(id);
       dispatch({ payload: id, type: 'deleteGroup' });
 
-      // If there was an associated session, delete it and refresh session store
-      if (group?.sessionId) {
-        await sessionService.removeSession(group.sessionId);
-        await getSessionStoreState().refreshSessions();
-      }
+      await get().loadGroups();
+      await getSessionStoreState().refreshSessions();
     },
 
     internal_dispatchChatGroup: dispatch,
