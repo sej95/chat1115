@@ -1,6 +1,6 @@
 'use client';
 
-import { Avatar } from '@lobehub/ui';
+import { Avatar, GroupAvatar } from '@lobehub/ui';
 import { Skeleton } from 'antd';
 import { createStyles } from 'antd-style';
 import { Suspense, memo } from 'react';
@@ -46,13 +46,18 @@ const Main = memo<{ className?: string }>(({ className }) => {
   useInitAgentConfig();
   const [isPinned] = usePinnedAgentState();
 
-  const [init, isInbox, title, avatar, backgroundColor] = useSessionStore((s) => [
-    sessionSelectors.isSomeSessionActive(s),
-    sessionSelectors.isInboxSession(s),
-    sessionMetaSelectors.currentAgentTitle(s),
-    sessionMetaSelectors.currentAgentAvatar(s),
-    sessionMetaSelectors.currentAgentBackgroundColor(s),
-  ]);
+  const [init, isInbox, title, avatar, backgroundColor, sessionType] = useSessionStore((s) => {
+    const session = sessionSelectors.currentSession(s);
+
+    return [
+      sessionSelectors.isSomeSessionActive(s),
+      sessionSelectors.isInboxSession(s),
+      sessionMetaSelectors.currentAgentTitle(s),
+      sessionMetaSelectors.currentAgentAvatar(s),
+      sessionMetaSelectors.currentAgentBackgroundColor(s),
+      session?.type,
+    ];
+  });
 
   const openChatSettings = useOpenChatSettings();
 
@@ -71,6 +76,25 @@ const Main = memo<{ className?: string }>(({ className }) => {
         />
       </Flexbox>
     );
+
+  if (sessionType === 'group') {
+    return (
+      <Flexbox align={'center'} className={className} gap={12} horizontal>
+        {!isPinned && !showSessionPanel && <TogglePanelButton />}
+        {/* <GroupAvatar
+          avatars={[avatar]}
+          background={backgroundColor}
+          onClick={() => openChatSettings()}
+          size={32}
+          title={title}
+        /> */}
+        <Flexbox align={'center'} className={styles.container} gap={8} horizontal>
+          <div className={styles.title}>{displayTitle}</div>
+          <Tags />
+        </Flexbox>
+      </Flexbox>
+    );
+  }
 
   return (
     <Flexbox align={'center'} className={className} gap={12} horizontal>
