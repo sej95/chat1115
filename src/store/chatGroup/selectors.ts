@@ -1,11 +1,15 @@
-import { ChatGroupState } from './initialState';
+import { ChatGroupStore } from '@/store/chatGroup/store';
 
-const getGroupById = (id: string) => (state: ChatGroupState) => {
-  const group = state.groups.find((group) => group.id === id);
-  if (!group) return;
-  return group;
+const getGroupById = (id: string) => (state: ChatGroupStore) => {
+  return state.groups.find((g) => g.id === id);
+};
+
+const getGroupAgents = (id: string) => (state: ChatGroupStore) => {
+  const group = getGroupById(id)(state);
+  return group?.members || [];
 };
 
 export const chatGroupSelectors = {
+  getGroupAgents,
   getGroupById,
 }; 

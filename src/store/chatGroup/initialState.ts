@@ -1,13 +1,8 @@
-import { ChatGroupItem } from '@/database/schemas/chatGroup';
+import { ChatGroupItem } from '@/types/chatGroup';
 
 export interface ChatGroupState {
-  // loading status
-  isGroupsLoading: boolean;
-
-  // groups list
   groups: ChatGroupItem[];
-  // current group
-  currentGroupId?: string;
+  isGroupsLoading: boolean;
 }
 
 export const initialChatGroupState: ChatGroupState = {
