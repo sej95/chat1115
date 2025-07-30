@@ -210,6 +210,20 @@
       "when": 1753679102797,
       "tag": "0029_chemical_bastion",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1753796553917,
+      "tag": "0030_third_captain_flint",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1753842839032,
+      "tag": "0031_yellow_lightspeed",
+      "breakpoints": true
     }
   ],
   "version": "6"

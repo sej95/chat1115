@@ -7,7 +7,6 @@ import { BatchTaskResult } from '@/types/service';
 import {
   ChatSessionList,
   LobeAgentSession,
-  LobeGroupSession,
   LobeSessionType,
   LobeSessions,
   SessionGroupItem,
@@ -19,7 +18,6 @@ import {
 export interface ISessionService {
   hasSessions(): Promise<boolean>;
   createSession(type: LobeSessionType, defaultValue: Partial<LobeAgentSession>): Promise<string>;
-  createGroupSession(defaultValue: Partial<LobeGroupSession>): Promise<string>;
 
   /**
    * 需要废弃

@@ -10,6 +10,7 @@ import { chatSelectors } from '@/store/chat/selectors';
 import { useSessionStore } from '@/store/session';
 import { sessionHelpers } from '@/store/session/helpers';
 import { sessionMetaSelectors, sessionSelectors } from '@/store/session/selectors';
+import { LobeGroupSession } from '@/types/session';
 
 import ListItem from '../../ListItem';
 import CreateGroupModal from '../../Modals/CreateGroupModal';
@@ -27,23 +28,36 @@ const SessionItem = memo<SessionItemProps>(({ id }) => {
   const [active] = useSessionStore((s) => [s.activeId === id]);
   const [loading] = useChatStore((s) => [chatSelectors.isAIGenerating(s) && id === s.activeId]);
 
-  const [pin, title, description, avatar, avatarBackground, updateAt, model, group, sessionType] =
-    useSessionStore((s) => {
-      const session = sessionSelectors.getSessionById(id)(s);
-      const meta = session.meta;
+  const [
+    pin,
+    title,
+    description,
+    avatar,
+    avatarBackground,
+    updateAt,
+    members,
+    model,
+    group,
+    sessionType,
+  ] = useSessionStore((s) => {
+    const session = sessionSelectors.getSessionById(id)(s);
+    const meta = session.meta;
 
-      return [
-        sessionHelpers.getSessionPinned(session),
-        sessionMetaSelectors.getTitle(meta),
-        sessionMetaSelectors.getDescription(meta),
-        sessionMetaSelectors.getAvatar(meta),
-        meta.backgroundColor,
-        session?.updatedAt,
-        session.type === 'agent' ? (session as any).model : undefined,
-        session?.group,
-        session.type,
-      ];
-    });
+    return [
+      sessionHelpers.getSessionPinned(session),
+      sessionMetaSelectors.getTitle(meta),
+      sessionMetaSelectors.getDescription(meta),
+      sessionMetaSelectors.getAvatar(meta),
+      meta.backgroundColor,
+      (session as LobeGroupSession).members,
+      session?.updatedAt,
+      session.type === 'agent' ? (session as any).model : undefined,
+      session?.group,
+      session.type,
+    ];
+  });
+
+  console.log(members);
 
   const showModel = sessionType === 'agent' && model && model !== defaultModel;
 
