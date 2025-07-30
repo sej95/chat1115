@@ -5,9 +5,10 @@ import {
   ChatGroupItem,
   NewChatGroup,
   NewChatGroupAgent,
+  agents,
   chatGroups,
   chatGroupsAgents,
-} from '@/database/schemas/chatGroup';
+} from '@/database/schemas';
 import { LobeChatDatabase } from '@/database/type';
 
 export class ChatGroupModel {
@@ -33,6 +34,33 @@ export class ChatGroupModel {
       orderBy: [desc(chatGroups.updatedAt)],
       where: eq(chatGroups.userId, this.userId),
     });
+  }
+
+  async queryWithMemberDetails(): Promise<any[]> {
+    const groups = await this.query();
+    if (groups.length === 0) return [];
+
+    const groupIds = groups.map((g) => g.id);
+
+    const groupAgents = await this.db.query.chatGroupsAgents.findMany({
+      where: inArray(chatGroupsAgents.chatGroupId, groupIds),
+      with: { agent: true },
+    });
+
+    const groupAgentMap = new Map<string, any[]>();
+
+    for (const groupAgent of groupAgents) {
+      if (!groupAgent.agent) continue;
+
+      const groupList = groupAgentMap.get(groupAgent.chatGroupId) || [];
+      groupList.push(groupAgent.agent);
+      groupAgentMap.set(groupAgent.chatGroupId, groupList);
+    }
+
+    return groups.map((group) => ({
+      ...group,
+      members: groupAgentMap.get(group.id) || [],
+    }));
   }
 
   async findGroupWithAgents(groupId: string): Promise<{
@@ -111,10 +139,7 @@ export class ChatGroupModel {
     return result;
   }
 
-  async addAgentsToGroup(
-    groupId: string,
-    agentIds: string[],
-  ): Promise<ChatGroupAgentItem[]> {
+  async addAgentsToGroup(groupId: string, agentIds: string[]): Promise<ChatGroupAgentItem[]> {
     const group = await this.findById(groupId);
     if (!group) throw new Error('Group not found');
 
