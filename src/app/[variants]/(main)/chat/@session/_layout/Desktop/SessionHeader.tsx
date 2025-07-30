@@ -11,6 +11,7 @@ import { ProductLogo } from '@/components/Branding';
 import { DESKTOP_HEADER_ICON_SIZE } from '@/const/layoutTokens';
 import SyncStatusTag from '@/features/SyncStatusInspector';
 import { useActionSWR } from '@/libs/swr';
+import { useChatGroupStore } from '@/store/chatGroup';
 import { featureFlagsSelectors, useServerConfigStore } from '@/store/serverConfig';
 import { useSessionStore } from '@/store/session';
 
@@ -32,10 +33,8 @@ export const useStyles = createStyles(({ css, token }) => ({
 const Header = memo(() => {
   const { styles } = useStyles();
   const { t } = useTranslation('chat');
-  const [createSession, createGroupSession] = useSessionStore((s) => [
-    s.createSession,
-    s.createGroupSession,
-  ]);
+  const [createSession] = useSessionStore((s) => [s.createSession]);
+  const createGroup = useChatGroupStore((s) => s.createGroup);
   const { enableWebrtc, showCreateSession } = useServerConfigStore(featureFlagsSelectors);
 
   const { mutate: mutateAgent, isValidating: isValidatingAgent } = useActionSWR(
@@ -43,8 +42,8 @@ const Header = memo(() => {
     () => createSession(),
   );
   const { mutate: mutateGroup, isValidating: isValidatingGroup } = useActionSWR(
-    'session.createGroupSession',
-    () => createGroupSession(),
+    'chatGroup.createGroup',
+    () => createGroup({ title: 'New Group Chat' }),
   );
 
   return (
