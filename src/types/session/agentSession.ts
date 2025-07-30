@@ -1,6 +1,7 @@
 import { LobeAgentConfig } from '@/types/agent';
 
 import { MetaData } from '../meta';
+import { ChatGroupAgentItem } from '@/database/schemas/chatGroup';
 import { SessionGroupId } from './sessionGroup';
 
 export enum LobeSessionType {
@@ -31,7 +32,7 @@ export interface LobeGroupSession {
   createdAt: Date;
   group?: SessionGroupId;
   id: string; // Chat group ID
-  members?: string[];
+  members?: ChatGroupAgentItem[];
   meta: MetaData;
   pinned?: boolean;
   tags?: string[];
