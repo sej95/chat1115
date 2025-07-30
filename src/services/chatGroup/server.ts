@@ -35,7 +35,6 @@ export class ServerService implements IChatGroupService {
     return lambdaClient.group.getGroups.query();
   }
 
-  // Agent management in a group
   addAgentsToGroup(
     groupId: string,
     agentIds: string[],
