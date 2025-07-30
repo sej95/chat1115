@@ -28,7 +28,7 @@ const useStyles = createStyles(({ css, token }) => {
 
 const ListItem = memo<
   ListItemProps & {
-    avatar: string | string[];
+    avatar: string | { avatar: string; background?: string }[];
     avatarBackground?: string;
     type?: 'agent' | 'group' | 'inbox';
   }
@@ -48,7 +48,7 @@ const ListItem = memo<
     return (
       <Avatar
         animation={isHovering}
-        avatar={Array.isArray(avatar) ? avatar[0] : avatar}
+        avatar={avatar}
         background={avatarBackground}
         shape="circle"
         size={40}

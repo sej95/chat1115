@@ -231,6 +231,13 @@
       "when": 1753856484583,
       "tag": "0032_lethal_gladiator",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1753867628608,
+      "tag": "0033_peaceful_randall",
+      "breakpoints": true
     }
   ],
   "version": "6"

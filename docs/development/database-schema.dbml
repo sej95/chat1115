@@ -123,8 +123,8 @@ table chat_groups {
   description text
   config jsonb
   client_id text
-  session_id text
   user_id text [not null]
+  pinned boolean [default: false]
   accessed_at "timestamp with time zone" [not null, default: `now()`]
   created_at "timestamp with time zone" [not null, default: `now()`]
   updated_at "timestamp with time zone" [not null, default: `now()`]

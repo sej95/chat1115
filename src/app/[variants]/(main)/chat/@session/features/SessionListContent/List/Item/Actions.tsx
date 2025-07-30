@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 
 import { isServerMode } from '@/const/version';
 import { configService } from '@/services/config';
+import { useChatGroupStore } from '@/store/chatGroup';
 import { useSessionStore } from '@/store/session';
 import { sessionHelpers } from '@/store/session/helpers';
 import { sessionGroupSelectors, sessionSelectors } from '@/store/session/selectors';
@@ -34,10 +35,11 @@ interface ActionProps {
   group: string | undefined;
   id: string;
   openCreateGroupModal: () => void;
+  parentType: 'agent' | 'group';
   setOpen: (open: boolean) => void;
 }
 
-const Actions = memo<ActionProps>(({ group, id, openCreateGroupModal, setOpen }) => {
+const Actions = memo<ActionProps>(({ group, id, openCreateGroupModal, parentType, setOpen }) => {
   const { styles } = useStyles();
   const { t } = useTranslation('chat');
 
@@ -54,6 +56,8 @@ const Actions = memo<ActionProps>(({ group, id, openCreateGroupModal, setOpen })
       ];
     },
   );
+
+  const [deleteGroup] = useChatGroupStore((s) => [s.deleteGroup]);
 
   const { modal, message } = App.useApp();
 
@@ -157,7 +161,12 @@ const Actions = memo<ActionProps>(({ group, id, openCreateGroupModal, setOpen })
                 centered: true,
                 okButtonProps: { danger: true },
                 onOk: async () => {
-                  await removeSession(id);
+                  if (parentType === 'group') {
+                    await deleteGroup(id);
+                  } else {
+                    await removeSession(id);
+                  }
+
                   message.success(t('confirmRemoveSessionSuccess'));
                 },
                 rootClassName: styles.modalRoot,
