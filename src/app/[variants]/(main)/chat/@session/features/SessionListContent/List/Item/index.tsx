@@ -10,6 +10,8 @@ import { chatSelectors } from '@/store/chat/selectors';
 import { useSessionStore } from '@/store/session';
 import { sessionHelpers } from '@/store/session/helpers';
 import { sessionMetaSelectors, sessionSelectors } from '@/store/session/selectors';
+import { useUserStore } from '@/store/user';
+import { userProfileSelectors } from '@/store/user/selectors';
 import { LobeGroupSession } from '@/types/session';
 
 import ListItem from '../../ListItem';
@@ -49,15 +51,13 @@ const SessionItem = memo<SessionItemProps>(({ id }) => {
       sessionMetaSelectors.getDescription(meta),
       sessionMetaSelectors.getAvatar(meta),
       meta.backgroundColor,
-      (session as LobeGroupSession).members,
       session?.updatedAt,
+      (session as LobeGroupSession).members,
       session.type === 'agent' ? (session as any).model : undefined,
       session?.group,
       session.type,
     ];
   });
-
-  console.log(members);
 
   const showModel = sessionType === 'agent' && model && model !== defaultModel;
 
@@ -83,8 +83,25 @@ const SessionItem = memo<SessionItemProps>(({ id }) => {
     [showModel, model],
   );
 
-  const sessionAvatar = sessionType === 'group' ? avatar || '👥' : avatar;
-  const sessionTitle = sessionType === 'group' ? 'Group Chat' : title;
+  const currentUser = useUserStore((s) => ({
+    avatar: userProfileSelectors.userAvatar(s),
+    name: userProfileSelectors.displayUserName(s) || userProfileSelectors.nickName(s) || 'You',
+  }));
+
+  const sessionAvatar =
+    sessionType === 'group'
+      ? [
+          {
+            avatar: currentUser.avatar,
+          },
+          ...(members?.map((member) => ({
+            avatar: member.avatar,
+            background: member.backgroundColor,
+          })) || []),
+        ]
+      : avatar;
+
+  console.log('sessionAvatar', sessionAvatar);
 
   return (
     <>
@@ -109,7 +126,7 @@ const SessionItem = memo<SessionItemProps>(({ id }) => {
             maskImage: `linear-gradient(90deg, #000 90%, transparent)`,
           },
         }}
-        title={sessionTitle}
+        title={title}
         type={sessionType}
       />
       <CreateGroupModal
