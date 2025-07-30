@@ -8,9 +8,10 @@ import { useTranslation } from 'react-i18next';
 import { Flexbox } from 'react-layout-kit';
 
 import SidebarHeader from '@/components/SidebarHeader';
-import { useChatStore } from '@/store/chat';
-import { chatSelectors } from '@/store/chat/selectors';
+import { useChatGroupStore } from '@/store/chatGroup';
+import { chatGroupSelectors } from '@/store/chatGroup/selectors';
 import { useSessionStore } from '@/store/session';
+import { sessionSelectors } from '@/store/session/selectors';
 import { useUserStore } from '@/store/user';
 import { userProfileSelectors } from '@/store/user/selectors';
 
@@ -61,19 +62,25 @@ const GroupChatSidebar = memo(() => {
   const { styles } = useStyles();
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
+  const activeId = useSessionStore((s) => s.activeId);
+  const isGroupSession = useSessionStore(sessionSelectors.currentSessionIsGroup);
+  const activeGroupId = isGroupSession ? activeId : null;
+
   // Get current group ID from the chat store
-  const activeGroupId = useChatStore((s) => s.activeGroupId);
-  const currentGroup = useChatStore((s) =>
-    activeGroupId ? chatSelectors.getGroupById(activeGroupId)(s) : null,
+  const addAgentsToGroup = useChatGroupStore((s) => s.addAgentsToGroup);
+
+  const currentGroup = useChatGroupStore((s) =>
+    activeGroupId ? chatGroupSelectors.getGroupById(activeGroupId)(s) : null,
   );
 
   // Get current group agents
-  const groupAgents = useChatStore((s) =>
-    activeGroupId ? chatSelectors.getGroupAgents(activeGroupId)(s) : [],
+  const groupAgents = useChatGroupStore((s) =>
+    activeGroupId ? chatGroupSelectors.getGroupAgents(activeGroupId)(s) : [],
   );
 
+  console.log('groupAgents', groupAgents);
+
   // Get session data for the agents and current user data
-  const sessions = useSessionStore((s) => s.sessions);
   const currentUser = useUserStore((s) => ({
     avatar: userProfileSelectors.userAvatar(s),
     name: userProfileSelectors.displayUserName(s) || userProfileSelectors.nickName(s) || 'You',
@@ -84,16 +91,18 @@ const GroupChatSidebar = memo(() => {
       console.error('No active group to add members to');
       return;
     }
+    await addAgentsToGroup(activeGroupId, selectedAgents);
+    setInviteModalOpen(false);
   };
 
   // Get agent details for display
   const getAgentDetails = (agentId: string) => {
-    const session = sessions.find((s) => s.id === agentId);
+    const agent = groupAgents.find((a) => a.id === agentId);
     return {
-      avatar: session?.meta?.avatar,
-      description: session?.meta?.description,
+      avatar: agent?.meta?.avatar,
+      description: agent?.meta?.description,
       id: agentId,
-      name: session?.meta?.title || t('untitledAgent', { ns: 'chat' }),
+      name: agent?.meta?.title || t('untitledAgent'),
     };
   };
 
@@ -108,7 +117,7 @@ const GroupChatSidebar = memo(() => {
         ]}
         title={
           <Flexbox align={'center'} gap={8} horizontal>
-            {currentGroup?.title || t('groupDescription', { ns: 'chat' })}
+            {currentGroup?.meta?.title || t('groupDescription')}
           </Flexbox>
         }
       />
@@ -120,13 +129,13 @@ const GroupChatSidebar = memo(() => {
             key="addMember"
             onClick={() => setInviteModalOpen(true)}
             size={'small'}
-            title={t('addMember', { ns: 'chat' })}
+            title={t('addMember')}
           />
         }
         style={{ cursor: 'pointer' }}
         title={
           <Flexbox align={'center'} gap={8} horizontal>
-            {t('members', { ns: 'chat' })} ({totalMembers})
+            {t('members')} ({totalMembers})
           </Flexbox>
         }
       />
@@ -152,7 +161,7 @@ const GroupChatSidebar = memo(() => {
                   fontWeight: 500,
                 }}
               >
-                {t('active', { ns: 'chat' })} • {t('you', { ns: 'chat' })}
+                {t('active')} • {t('you')}
               </div>
             </Flexbox>
             <div
@@ -165,21 +174,21 @@ const GroupChatSidebar = memo(() => {
                 textTransform: 'uppercase',
               }}
             >
-              {t('owner', { ns: 'chat' })}
+              {t('owner')}
             </div>
           </Flexbox>
         </div>
 
         {/* Group Agent Members */}
         {groupAgents.length === 0 ? (
-          <div className={styles.emptyState}>{t('noAgentsYet', { ns: 'chat' })}</div>
+          <div className={styles.emptyState}>{t('noAgentsYet')}</div>
         ) : (
           <div>
             {groupAgents.map((agent) => {
-              const agentDetails = getAgentDetails(agent.agentId);
+              const agentDetails = getAgentDetails(agent.id);
 
               return (
-                <div className={styles.memberItem} key={agent.agentId}>
+                <div className={styles.memberItem} key={agent.id}>
                   <Flexbox align={'center'} gap={12} horizontal>
                     <Avatar
                       avatar={agentDetails.avatar}
@@ -216,9 +225,7 @@ const GroupChatSidebar = memo(() => {
                           fontWeight: 500,
                         }}
                       >
-                        {agent.enabled
-                          ? t('active', { ns: 'chat' })
-                          : t('inactive', { ns: 'chat' })}
+                        {agent.enabled ? t('active') : t('inactive')}
                       </div>
                     </Flexbox>
                     {agent.role && agent.role !== 'participant' && (

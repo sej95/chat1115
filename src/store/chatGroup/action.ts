@@ -16,6 +16,7 @@ export interface ChatGroupAction {
   updateGroup: (id: string, value: Partial<ChatGroupItem>) => Promise<void>;
   // query
   loadGroups: () => Promise<void>;
+  addAgentsToGroup: (groupId: string, agentIds: string[]) => Promise<void>;
 
   // internal dispatch
   internal_dispatchChatGroup: (
@@ -67,6 +68,12 @@ export const chatGroupAction: StateCreator<
     updateGroup: async (id, value) => {
       await chatGroupService.updateGroup(id, value);
       dispatch({ payload: { id, value }, type: 'updateGroup' });
+    },
+
+    addAgentsToGroup: async (groupId, agentIds) => {
+      await chatGroupService.addAgentsToGroup(groupId, agentIds);
+      // after adding, we should reload the groups to get updated member list.
+      await get().loadGroups();
     },
 
     loadGroups: async () => {

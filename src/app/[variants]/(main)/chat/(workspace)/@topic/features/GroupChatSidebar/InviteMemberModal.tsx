@@ -37,7 +37,7 @@ const InviteMemberModal = memo<InviteMemberModalProps>(({ open, onCancel, onConf
     setSelectedAgents((prev) =>
       prev.includes(agentId)
         ? prev.filter((id) => id !== agentId)
-        : [...prev, agentId]
+        : [...prev, agentId],
     );
   };
 
@@ -84,7 +84,7 @@ const InviteMemberModal = memo<InviteMemberModalProps>(({ open, onCancel, onConf
           <List
             dataSource={availableAgents}
             renderItem={(agent) => {
-              const isSelected = selectedAgents.includes(agent.id);
+              const isSelected = selectedAgents.includes(agent.config.id);
               const title = agent.meta?.title || t('untitledAgent', { ns: 'chat' });
               const description = agent.meta?.description || '';
               const avatar = agent.meta?.avatar;
@@ -97,7 +97,7 @@ const InviteMemberModal = memo<InviteMemberModalProps>(({ open, onCancel, onConf
                     padding: '12px 16px',
                     transition: 'all 0.2s ease',
                   }}
-                  onClick={() => handleAgentToggle(agent.id)}
+                  onClick={() => handleAgentToggle(agent.config.id)}
                 >
                   <Flexbox align="center" gap={12} horizontal width="100%">
                     <Avatar

@@ -35,10 +35,9 @@ export const chatGroupReducers = {
     }),
 
   // Set the loading state for groups
-  setGroupsLoading: (state, { payload }: { payload: boolean }) =>
-    produce(state, (draft) => {
-      draft.isGroupsLoading = payload;
-    }),
+  setGroupsLoading: (state, { payload }) => {
+    return { ...state, groupsLoading: payload };
+  },
 
   // Load groups into the state
   loadGroups: (state, { payload }: { payload: ChatGroupItem[] }) =>
@@ -46,4 +45,12 @@ export const chatGroupReducers = {
       draft.groups = payload;
       draft.isGroupsLoading = false;
     }),
-} as Record<string, ChatGroupReducer>; 
+};
+
+export type ChatGroupDispatchPayloads = {
+  addGroup: ChatGroupItem;
+  deleteGroup: string;
+  loadGroups: ChatGroupItem[];
+  setGroupsLoading: boolean;
+  updateGroup: { id: string; value: Partial<ChatGroupItem> };
+}; 
