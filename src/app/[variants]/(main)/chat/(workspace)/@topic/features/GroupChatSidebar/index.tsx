@@ -14,6 +14,7 @@ import { useSessionStore } from '@/store/session';
 import { sessionSelectors } from '@/store/session/selectors';
 import { useUserStore } from '@/store/user';
 import { userProfileSelectors } from '@/store/user/selectors';
+import { LobeGroupSession } from '@/types/session';
 
 import InviteMemberModal from './InviteMemberModal';
 
@@ -62,25 +63,19 @@ const GroupChatSidebar = memo(() => {
   const { styles } = useStyles();
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
-  const activeId = useSessionStore((s) => s.activeId);
-  const isGroupSession = useSessionStore(sessionSelectors.currentSessionIsGroup);
-  const activeGroupId = isGroupSession ? activeId : null;
+  const activeGroupId = useSessionStore((s) => s.activeId);
+  const currentSession = useSessionStore(sessionSelectors.currentSession) as LobeGroupSession;
 
-  // Get current group ID from the chat store
   const addAgentsToGroup = useChatGroupStore((s) => s.addAgentsToGroup);
 
   const currentGroup = useChatGroupStore((s) =>
     activeGroupId ? chatGroupSelectors.getGroupById(activeGroupId)(s) : null,
   );
 
-  // Get current group agents
   const groupAgents = useChatGroupStore((s) =>
     activeGroupId ? chatGroupSelectors.getGroupAgents(activeGroupId)(s) : [],
   );
 
-  console.log('groupAgents', groupAgents);
-
-  // Get session data for the agents and current user data
   const currentUser = useUserStore((s) => ({
     avatar: userProfileSelectors.userAvatar(s),
     name: userProfileSelectors.displayUserName(s) || userProfileSelectors.nickName(s) || 'You',
@@ -95,18 +90,6 @@ const GroupChatSidebar = memo(() => {
     setInviteModalOpen(false);
   };
 
-  // Get agent details for display
-  const getAgentDetails = (agentId: string) => {
-    const agent = groupAgents.find((a) => a.id === agentId);
-    return {
-      avatar: agent?.meta?.avatar,
-      description: agent?.meta?.description,
-      id: agentId,
-      name: agent?.meta?.title || t('untitledAgent'),
-    };
-  };
-
-  // Total members count includes user + agents
   const totalMembers = 1 + groupAgents.length;
 
   return (
@@ -140,7 +123,7 @@ const GroupChatSidebar = memo(() => {
         }
       />
 
-      <Flexbox className={styles.content} flex={1} gap={8}>
+      <Flexbox className={styles.content} flex={1} gap={4}>
         {/* Current User - Always shown first */}
         <div className={styles.memberItem}>
           <Flexbox align={'center'} gap={12} horizontal>
@@ -154,94 +137,39 @@ const GroupChatSidebar = memo(() => {
               >
                 {currentUser.name}
               </div>
-              <div
-                style={{
-                  color: '#52c41a',
-                  fontSize: '11px',
-                  fontWeight: 500,
-                }}
-              >
-                {t('active')} • {t('you')}
-              </div>
             </Flexbox>
-            <div
-              style={{
-                background: '#52c41a',
-                borderRadius: '4px',
-                color: 'white',
-                fontSize: '10px',
-                padding: '2px 6px',
-                textTransform: 'uppercase',
-              }}
-            >
-              {t('owner')}
-            </div>
           </Flexbox>
         </div>
 
-        {/* Group Agent Members */}
-        {groupAgents.length === 0 ? (
+        {currentSession?.members?.length === 0 ? (
           <div className={styles.emptyState}>{t('noAgentsYet')}</div>
         ) : (
           <div>
-            {groupAgents.map((agent) => {
-              const agentDetails = getAgentDetails(agent.id);
-
+            {currentSession?.members?.map((agent) => {
               return (
                 <div className={styles.memberItem} key={agent.id}>
                   <Flexbox align={'center'} gap={12} horizontal>
-                    <Avatar
-                      avatar={agentDetails.avatar}
-                      size={32}
-                      style={{
-                        opacity: agent.enabled ? 1 : 0.5,
-                      }}
-                    />
+                    <Avatar avatar={agent.avatar} background={agent.backgroundColor} size={32} />
                     <Flexbox flex={1} gap={2}>
                       <div
                         style={{
                           fontSize: '14px',
                           fontWeight: 500,
-                          opacity: agent.enabled ? 1 : 0.5,
                         }}
                       >
-                        {agentDetails.name}
+                        {agent.title}
                       </div>
-                      {agentDetails.description && (
+                      {agent.description && (
                         <div
                           style={{
                             color: '#666',
                             fontSize: '12px',
-                            opacity: agent.enabled ? 1 : 0.5,
                           }}
                         >
-                          {agentDetails.description}
+                          {agent.description}
                         </div>
                       )}
-                      <div
-                        style={{
-                          color: agent.enabled ? '#52c41a' : '#d9d9d9',
-                          fontSize: '11px',
-                          fontWeight: 500,
-                        }}
-                      >
-                        {agent.enabled ? t('active') : t('inactive')}
-                      </div>
                     </Flexbox>
-                    {agent.role && agent.role !== 'participant' && (
-                      <div
-                        style={{
-                          background: '#1890ff',
-                          borderRadius: '4px',
-                          color: 'white',
-                          fontSize: '10px',
-                          padding: '2px 6px',
-                          textTransform: 'uppercase',
-                        }}
-                      >
-                        {agent.role}
-                      </div>
-                    )}
                   </Flexbox>
                 </div>
               );

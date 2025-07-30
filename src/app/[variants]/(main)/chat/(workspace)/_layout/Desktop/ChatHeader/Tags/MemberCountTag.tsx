@@ -12,11 +12,7 @@ const MemberCountTag = memo(() => {
   const { t } = useTranslation('chat');
   const currentSession = useSessionStore(sessionSelectors.currentSession);
 
-  // Get member count from group session
-  const memberCount =
-    currentSession?.type === 'group'
-      ? (currentSession as LobeGroupSession).members?.length || 1
-      : 0;
+  const memberCount = (currentSession as LobeGroupSession).members?.length || 0;
 
   if (memberCount === 0) return null;
 
@@ -31,7 +27,7 @@ const MemberCountTag = memo(() => {
         <Tag>
           <Icon icon={Users} />
           <span>
-            {memberCount} {t('members')}
+            {memberCount + 1} {t('members')}
           </span>
         </Tag>
       </Flexbox>

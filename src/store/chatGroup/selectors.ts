@@ -12,4 +12,4 @@ const getGroupAgents = (id: string) => (state: ChatGroupStore) => {
 export const chatGroupSelectors = {
   getGroupAgents,
   getGroupById,
-}; 
+};

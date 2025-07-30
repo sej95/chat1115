@@ -8,17 +8,10 @@ import { ChatGroupState, initialChatGroupState } from './initialState';
 import { ChatGroupReducer, chatGroupReducers } from './reducers';
 
 export interface ChatGroupAction {
-  // create
-  createGroup: (group: Omit<NewChatGroup, 'userId'>) => Promise<string>;
-  // delete
-  deleteGroup: (id: string) => Promise<void>;
-  // update
-  updateGroup: (id: string, value: Partial<ChatGroupItem>) => Promise<void>;
-  // query
-  loadGroups: () => Promise<void>;
   addAgentsToGroup: (groupId: string, agentIds: string[]) => Promise<void>;
+  createGroup: (group: Omit<NewChatGroup, 'userId'>) => Promise<string>;
+  deleteGroup: (id: string) => Promise<void>;
 
-  // internal dispatch
   internal_dispatchChatGroup: (
     payload:
       | {
@@ -29,6 +22,9 @@ export interface ChatGroupAction {
           type: keyof typeof chatGroupReducers;
         },
   ) => void;
+
+  loadGroups: () => Promise<void>;
+  updateGroup: (id: string, value: Partial<ChatGroupItem>) => Promise<void>;
 }
 
 export const chatGroupAction: StateCreator<
@@ -54,6 +50,12 @@ export const chatGroupAction: StateCreator<
   return {
     ...initialChatGroupState,
 
+    addAgentsToGroup: async (groupId, agentIds) => {
+      await chatGroupService.addAgentsToGroup(groupId, agentIds);
+      // after adding, we should reload the groups to get updated member list.
+      await get().loadGroups();
+    },
+
     createGroup: async (newGroup) => {
       const group = await chatGroupService.createGroup(newGroup);
       dispatch({ payload: group, type: 'addGroup' });
@@ -65,21 +67,15 @@ export const chatGroupAction: StateCreator<
       dispatch({ payload: id, type: 'deleteGroup' });
     },
 
-    updateGroup: async (id, value) => {
-      await chatGroupService.updateGroup(id, value);
-      dispatch({ payload: { id, value }, type: 'updateGroup' });
-    },
-
-    addAgentsToGroup: async (groupId, agentIds) => {
-      await chatGroupService.addAgentsToGroup(groupId, agentIds);
-      // after adding, we should reload the groups to get updated member list.
-      await get().loadGroups();
-    },
-
     loadGroups: async () => {
       dispatch({ payload: true, type: 'setGroupsLoading' });
       const groups = await chatGroupService.getGroups();
       dispatch({ payload: groups, type: 'loadGroups' });
+    },
+
+    updateGroup: async (id, value) => {
+      await chatGroupService.updateGroup(id, value);
+      dispatch({ payload: { id, value }, type: 'updateGroup' });
     },
 
     internal_dispatchChatGroup: dispatch,
