@@ -40,7 +40,6 @@ const ListItem = memo<
 
   const avatarRender = useMemo(() => {
     if (type === 'group') {
-      // For group sessions, handle avatar as array
       const avatars = Array.isArray(avatar) ? avatar : [avatar];
       return <GroupAvatar avatars={avatars} size={40} />;
     }
