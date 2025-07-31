@@ -1,31 +1,37 @@
 'use client';
 
 import { Drawer } from '@lobehub/ui';
-import isEqual from 'fast-deep-equal';
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Flexbox } from 'react-layout-kit';
 
-import HeaderContent from '@/app/[variants]/(main)/chat/settings/features/HeaderContent';
 import BrandWatermark from '@/components/BrandWatermark';
 import PanelTitle from '@/components/PanelTitle';
 import { isDesktop } from '@/const/version';
-import { AgentCategory, AgentSettings as Settings } from '@/features/AgentSetting';
-import { AgentSettingsProvider } from '@/features/AgentSetting/AgentSettingsProvider';
 import { TITLE_BAR_HEIGHT } from '@/features/ElectronTitlebar';
-import Footer from '@/features/Setting/Footer';
-import { useInitAgentConfig } from '@/hooks/useInitAgentConfig';
-import { useAgentStore } from '@/store/agent';
-import { agentSelectors } from '@/store/agent/slices/chat';
+import { GroupCategory } from '@/features/GroupSetting';
 import { useChatGroupStore } from '@/store/chatGroup';
-import { ChatSettingsTabs } from '@/store/global/initialState';
-import { useSessionStore } from '@/store/session';
-import { sessionMetaSelectors } from '@/store/session/selectors';
+import { GroupSettingsTabs } from '@/store/global/initialState';
 
 const GroupSettings = memo(() => {
   const { t } = useTranslation('setting');
 
   const [showGroupSetting] = useChatGroupStore((s) => [s.showGroupSetting]);
+
+  const [tab, setTab] = useState(GroupSettingsTabs.Settings);
+
+  const renderTabContent = () => {
+    switch (tab) {
+      case GroupSettingsTabs.Settings:
+        return <div>TODO: Group Settings Content</div>;
+      case GroupSettingsTabs.Members:
+        return <div>TODO: Group Members Content</div>;
+      case GroupSettingsTabs.Chat:
+        return <div>TODO: Group Chat Settings Content</div>;
+      default:
+        return <div>TODO: Default Content</div>;
+    }
+  };
 
   return (
     <Drawer
@@ -42,10 +48,8 @@ const GroupSettings = memo(() => {
             minHeight: '100%',
           }}
         >
-          <PanelTitle desc={t('header.sessionDesc')} title={t('header.session')} />
-          <Flexbox align={'center'} gap={8} paddingInline={8} width={'100%'}>
-            <HeaderContent modal />
-          </Flexbox>
+          <PanelTitle desc={t('header.groupDesc')} title={t('header.group')} />
+          <GroupCategory setTab={setTab} tab={tab} />
           <BrandWatermark paddingInline={12} />
         </Flexbox>
       }
@@ -60,7 +64,7 @@ const GroupSettings = memo(() => {
         },
       }}
     >
-      TODO
+      {renderTabContent()}
     </Drawer>
   );
 });
