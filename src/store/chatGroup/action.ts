@@ -27,6 +27,7 @@ export interface ChatGroupAction {
   loadGroups: () => Promise<void>;
   pinGroup: (id: string, pinned: boolean) => Promise<void>;
   removeAgentFromGroup: (groupId: string, agentId: string) => Promise<void>;
+  toggleGroupSetting: (open: boolean) => void;
   updateGroup: (id: string, value: Partial<ChatGroupItem>) => Promise<void>;
 }
 
@@ -102,6 +103,10 @@ export const chatGroupAction: StateCreator<
     removeAgentFromGroup: async (groupId, agentId) => {
       await chatGroupService.removeAgentsFromGroup(groupId, [agentId]);
       await get().internal_refreshGroups();
+    },
+
+    toggleGroupSetting: (open) => {
+      set({ showGroupSetting: open }, false, 'toggleGroupSetting');
     },
 
     updateGroup: async (id, value) => {
