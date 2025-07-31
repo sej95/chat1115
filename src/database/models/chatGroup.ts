@@ -5,7 +5,6 @@ import {
   ChatGroupItem,
   NewChatGroup,
   NewChatGroupAgent,
-  agents,
   chatGroups,
   chatGroupsAgents,
 } from '@/database/schemas';
@@ -95,6 +94,10 @@ export class ChatGroupModel {
   ): Promise<{ agents: ChatGroupAgentItem[]; group: ChatGroupItem }> {
     const group = await this.create(groupParams);
 
+    if (agentIds.length === 0) {
+      return { agents: [], group };
+    }
+
     const agentParams: NewChatGroupAgent[] = agentIds.map((agentId, index) => ({
       agentId,
       chatGroupId: group.id,
@@ -117,6 +120,10 @@ export class ChatGroupModel {
       .set({ ...value, updatedAt: new Date() })
       .where(and(eq(chatGroups.id, id), eq(chatGroups.userId, this.userId)))
       .returning();
+
+    if (!result) {
+      throw new Error('Chat group not found or access denied');
+    }
 
     return result;
   }
@@ -144,9 +151,9 @@ export class ChatGroupModel {
     if (!group) throw new Error('Group not found');
 
     const existingAgents = await this.getGroupAgents(groupId);
-    const existingAgentIds = existingAgents.map((a) => a.agentId);
+    const existingAgentIds = new Set(existingAgents.map((a) => a.agentId));
 
-    const newAgentIds = agentIds.filter((id) => !existingAgentIds.includes(id));
+    const newAgentIds = agentIds.filter((id) => !existingAgentIds.has(id));
 
     if (newAgentIds.length === 0) {
       return [];
@@ -190,6 +197,10 @@ export class ChatGroupModel {
       .delete(chatGroups)
       .where(and(eq(chatGroups.id, id), eq(chatGroups.userId, this.userId)))
       .returning();
+
+    if (!result) {
+      throw new Error('Chat group not found or access denied');
+    }
 
     return result;
   }
