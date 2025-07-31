@@ -11,6 +11,11 @@
     "prompt": "Role Configuration",
     "tts": "Voice Service"
   },
+  "groupTab": {
+    "chat": "Chat Settings",
+    "members": "Group Members",
+    "settings": "Group Settings"
+  },
   "analytics": {
     "telemetry": {
       "desc": "By opting to send telemetry data, you can help us improve the overall user experience of {{appName}}.",
@@ -38,6 +43,8 @@
   "header": {
     "desc": "Preferences and model settings.",
     "global": "Global Settings",
+    "group": "Group Settings",
+    "groupDesc": "Group chat settings and member management.",
     "session": "Session Settings",
     "sessionDesc": "Role settings and session preferences.",
     "sessionWithName": "Session Settings · {{name}}",
