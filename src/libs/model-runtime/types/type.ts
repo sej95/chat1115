@@ -36,6 +36,7 @@ export enum ModelProvider {
   AzureAI = 'azureai',
   Baichuan = 'baichuan',
   Bedrock = 'bedrock',
+  BurnCloud = 'burncloud',
   Cloudflare = 'cloudflare',
   Cohere = 'cohere',
   DeepSeek = 'deepseek',
