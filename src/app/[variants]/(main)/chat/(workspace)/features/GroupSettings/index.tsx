@@ -13,6 +13,10 @@ import { GroupCategory } from '@/features/GroupSetting';
 import { useChatGroupStore } from '@/store/chatGroup';
 import { GroupSettingsTabs } from '@/store/global/initialState';
 
+import GroupChatSettings from './GroupChatSettings';
+import GroupMembers from './GroupMembers';
+import GroupSettingsContent from './GroupSettingsContent';
+
 const GroupSettings = memo(() => {
   const { t } = useTranslation('setting');
 
@@ -23,13 +27,13 @@ const GroupSettings = memo(() => {
   const renderTabContent = () => {
     switch (tab) {
       case GroupSettingsTabs.Settings:
-        return <div>TODO: Group Settings Content</div>;
+        return <GroupSettingsContent />;
       case GroupSettingsTabs.Members:
-        return <div>TODO: Group Members Content</div>;
+        return <GroupMembers />;
       case GroupSettingsTabs.Chat:
-        return <div>TODO: Group Chat Settings Content</div>;
+        return <GroupChatSettings />;
       default:
-        return <div>TODO: Default Content</div>;
+        return <GroupSettingsContent />;
     }
   };
 
@@ -48,7 +52,7 @@ const GroupSettings = memo(() => {
             minHeight: '100%',
           }}
         >
-          <PanelTitle desc={t('header.groupDesc')} title={t('header.group')} />
+          <PanelTitle desc="Manage your group settings" title="Group Settings" />
           <GroupCategory setTab={setTab} tab={tab} />
           <BrandWatermark paddingInline={12} />
         </Flexbox>

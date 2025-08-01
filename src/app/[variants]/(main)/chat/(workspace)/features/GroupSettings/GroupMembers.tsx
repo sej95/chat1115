@@ -7,7 +7,6 @@ import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Flexbox } from 'react-layout-kit';
 
-import SidebarHeader from '@/components/SidebarHeader';
 import { useChatGroupStore } from '@/store/chatGroup';
 import { chatGroupSelectors } from '@/store/chatGroup/selectors';
 import { useSessionStore } from '@/store/session';
@@ -16,11 +15,10 @@ import { useUserStore } from '@/store/user';
 import { userProfileSelectors } from '@/store/user/selectors';
 import { LobeGroupSession } from '@/types/session';
 
-import GroupDescriptionContent from './GroupDescriptionContent';
-import InviteMemberModal from './InviteMemberModal';
+import InviteMemberModal from '../../@topic/features/GroupChatSidebar/InviteMemberModal';
 
 const useStyles = createStyles(({ css, token }) => ({
-  content: css`
+  container: css`
     padding: 0 ${token.paddingSM}px;
   `,
   emptyState: css`
@@ -41,14 +39,6 @@ const useStyles = createStyles(({ css, token }) => ({
       background: ${token.colorFillTertiary};
     }
   `,
-  placeholder: css`
-    border: 1px dashed ${token.colorBorder};
-    border-radius: ${token.borderRadiusLG}px;
-    color: ${token.colorTextSecondary};
-    margin: ${token.marginSM}px 0;
-    padding: ${token.paddingLG}px;
-    text-align: center;
-  `,
   sectionTitle: css`
     color: ${token.colorTextSecondary};
     font-size: ${token.fontSizeSM}px;
@@ -59,7 +49,7 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
 }));
 
-const GroupChatSidebar = memo(() => {
+const GroupMembers = memo(() => {
   const { t } = useTranslation(['chat', 'common']);
   const { styles } = useStyles();
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
@@ -90,28 +80,8 @@ const GroupChatSidebar = memo(() => {
   };
 
   return (
-    <Flexbox height={'100%'}>
-      <GroupDescriptionContent />
-
-      <SidebarHeader
-        actions={
-          <ActionIcon
-            icon={UserPlus}
-            key="addMember"
-            onClick={() => setInviteModalOpen(true)}
-            size={'small'}
-            title="Add Member"
-          />
-        }
-        style={{ cursor: 'pointer' }}
-        title={
-          <Flexbox align={'center'} gap={8} horizontal>
-            Members
-          </Flexbox>
-        }
-      />
-
-      <Flexbox className={styles.content} flex={1} gap={2}>
+    <Flexbox gap={24} height={'100%'} paddingInline={24}>
+      <Flexbox className={styles.container} flex={1} gap={2}>
         {/* Current User - Always shown first */}
         <div className={styles.memberItem}>
           <Flexbox align={'center'} gap={12} horizontal>
@@ -125,58 +95,72 @@ const GroupChatSidebar = memo(() => {
               >
                 {currentUser.name}
               </div>
+              <div
+                style={{
+                  color: '#888',
+                  fontSize: '12px',
+                }}
+              >
+                You (Owner)
+              </div>
             </Flexbox>
           </Flexbox>
         </div>
 
-        <div>
-          {currentSession?.members?.map((agent) => {
-            return (
-              <div className={styles.memberItem} key={agent.id}>
-                <Flexbox align={'center'} gap={12} horizontal>
-                  <Avatar avatar={agent.avatar} background={agent.backgroundColor} size={32} />
-                  <Flexbox flex={1} gap={2}>
+        {/* Agent Members */}
+        {currentSession?.members?.map((agent) => {
+          return (
+            <div className={styles.memberItem} key={agent.id}>
+              <Flexbox align={'center'} gap={12} horizontal>
+                <Avatar avatar={agent.avatar} background={agent.backgroundColor} size={32} />
+                <Flexbox flex={1} gap={2}>
+                  <div
+                    style={{
+                      fontSize: '14px',
+                      fontWeight: 500,
+                    }}
+                  >
+                    {agent.title}
+                  </div>
+                  {agent.description && (
                     <div
                       style={{
-                        fontSize: '14px',
-                        fontWeight: 500,
+                        color: '#666',
+                        fontSize: '12px',
                       }}
                     >
-                      {agent.title}
+                      {agent.description}
                     </div>
-                    {agent.description && (
-                      <div
-                        style={{
-                          color: '#666',
-                          fontSize: '12px',
-                        }}
-                      >
-                        {agent.description}
-                      </div>
-                    )}
-                  </Flexbox>
-                  <ActionIcon
-                    icon={Edit}
-                    onClick={() => {
-                      // TODO: Implement edit member logic
-                    }}
-                    size={'small'}
-                    title="Edit Member"
-                  />
-                  <ActionIcon
-                    danger
-                    icon={UserMinus}
-                    onClick={() => {
-                      removeAgentFromGroup(currentGroup?.id, agent.agentId);
-                    }}
-                    size={'small'}
-                    title="Remove Member"
-                  />
+                  )}
                 </Flexbox>
-              </div>
-            );
-          })}
-        </div>
+                <ActionIcon
+                  icon={Edit}
+                  onClick={() => {
+                    // TODO: Implement edit member logic
+                  }}
+                  size={'small'}
+                  title="Edit Member"
+                />
+                <ActionIcon
+                  danger
+                  icon={UserMinus}
+                  onClick={() => {
+                    removeAgentFromGroup(currentGroup?.id, agent.agentId);
+                  }}
+                  size={'small'}
+                  title="Remove Member"
+                />
+              </Flexbox>
+            </div>
+          );
+        })}
+
+        {/* Empty State */}
+        {(!currentSession?.members || currentSession.members.length === 0) && (
+          <div className={styles.emptyState}>
+            No agents in this group yet. Click the + button to add members.
+          </div>
+        )}
       </Flexbox>
 
       <InviteMemberModal
@@ -188,6 +172,6 @@ const GroupChatSidebar = memo(() => {
   );
 });
 
-GroupChatSidebar.displayName = 'GroupChat';
+GroupMembers.displayName = 'GroupMembers';
 
-export default GroupChatSidebar;
+export default GroupMembers;
