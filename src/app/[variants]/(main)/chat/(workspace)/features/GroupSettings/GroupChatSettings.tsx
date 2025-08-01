@@ -1,16 +1,18 @@
 'use client';
 
-import { Form, FormItem, SliderWithInput } from '@lobehub/ui';
+import { Form, type FormGroupItemType, SliderWithInput } from '@lobehub/ui';
+import { useUpdateEffect } from 'ahooks';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Flexbox } from 'react-layout-kit';
 
+import { FORM_STYLE } from '@/const/layoutTokens';
 import { useChatGroupStore } from '@/store/chatGroup';
 import { chatGroupSelectors } from '@/store/chatGroup/selectors';
 import { useSessionStore } from '@/store/session';
 
 const GroupChatSettings = memo(() => {
   const { t } = useTranslation(['setting', 'common']);
+  const [form] = Form.useForm();
   
   const activeGroupId = useSessionStore((s) => s.activeId);
   const currentGroup = useChatGroupStore((s) =>
@@ -49,10 +51,18 @@ const GroupChatSettings = memo(() => {
 
   const responseSpeedValue = getResponseSpeedValue(currentGroup?.config?.responseOrder);
 
-  const handleResponseSpeedChange = async (value: number) => {
+  const chatData = {
+    responseSpeed: responseSpeedValue,
+  };
+
+  useUpdateEffect(() => {
+    form.setFieldsValue(chatData);
+  }, [chatData]);
+
+  const handleFinish = async (values: { responseSpeed: number }) => {
     if (!activeGroupId) return;
     
-    const responseOrder = getResponseOrder(value);
+    const responseOrder = getResponseOrder(values.responseSpeed);
     const newConfig = {
       ...currentGroup?.config,
       responseOrder,
@@ -67,31 +77,52 @@ const GroupChatSettings = memo(() => {
     3: 'Random',
   };
 
-  return (
-    <Flexbox gap={24} paddingInline={24}>
-      <Form>
-        <FormItem 
-          desc="Choose how agents respond in group conversations"
-          label="Response Speed" 
-          minWidth={undefined}
-        >
+  const chatSettings: FormGroupItemType = {
+    children: [
+      {
+        children: (
           <SliderWithInput
             marks={responseSpeedMarks}
             max={3}
             min={1}
-            onChange={handleResponseSpeedChange}
             step={1}
-            value={responseSpeedValue}
           />
-        </FormItem>
-        
-        <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
-          <strong>Sequential:</strong> Agents respond one by one in order<br />
-          <strong>Smart:</strong> AI determines the best agent to respond<br />
-          <strong>Random:</strong> Agents respond in random order
-        </div>
-      </Form>
-    </Flexbox>
+        ),
+        desc: "Choose how agents respond in group conversations",
+        label: "Response Speed",
+        name: 'responseSpeed',
+      },
+    ],
+    extra: (
+      <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
+        <strong>Sequential:</strong> Agents respond one by one in order<br />
+        <strong>Smart:</strong> AI determines the best agent to respond<br />
+        <strong>Random:</strong> Agents respond in random order
+      </div>
+    ),
+    title: 'Chat Settings',
+  };
+
+  return (
+    <Form
+      footer={
+        <Form.SubmitFooter
+          texts={{
+            reset: t('submitFooter.reset'),
+            submit: 'Update Settings',
+            unSaved: t('submitFooter.unSaved'),
+            unSavedWarning: t('submitFooter.unSavedWarning'),
+          }}
+        />
+      }
+      form={form}
+      initialValues={chatData}
+      items={[chatSettings]}
+      itemsType={'group'}
+      onFinish={handleFinish}
+      variant={'borderless'}
+      {...FORM_STYLE}
+    />
   );
 });
 

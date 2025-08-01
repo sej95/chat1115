@@ -2,7 +2,6 @@
 
 import { Drawer } from '@lobehub/ui';
 import { memo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Flexbox } from 'react-layout-kit';
 
 import BrandWatermark from '@/components/BrandWatermark';
@@ -18,7 +17,6 @@ import GroupMembers from './GroupMembers';
 import GroupSettingsContent from './GroupSettingsContent';
 
 const GroupSettings = memo(() => {
-  const { t } = useTranslation('setting');
 
   const [showGroupSetting] = useChatGroupStore((s) => [s.showGroupSetting]);
 
