@@ -1,11 +1,13 @@
 'use client';
 
-import { Form, FormItem } from '@lobehub/ui';
+import { Form, type FormGroupItemType } from '@lobehub/ui';
 import { Input } from 'antd';
+import { useUpdateEffect } from 'ahooks';
+import isEqual from 'fast-deep-equal';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Flexbox } from 'react-layout-kit';
 
+import { FORM_STYLE } from '@/const/layoutTokens';
 import { useChatGroupStore } from '@/store/chatGroup';
 import { chatGroupSelectors } from '@/store/chatGroup/selectors';
 import { useSessionStore } from '@/store/session';
@@ -14,6 +16,7 @@ const { TextArea } = Input;
 
 const GroupSettingsContent = memo(() => {
   const { t } = useTranslation(['setting', 'common']);
+  const [form] = Form.useForm();
   
   const activeGroupId = useSessionStore((s) => s.activeId);
   const currentGroup = useChatGroupStore((s) =>
@@ -22,56 +25,75 @@ const GroupSettingsContent = memo(() => {
   
   const updateGroup = useChatGroupStore((s) => s.updateGroup);
 
-  const handleUpdateName = async (title: string) => {
-    if (!activeGroupId) return;
-    await updateGroup(activeGroupId, { title });
+  const groupData = {
+    title: currentGroup?.title || '',
+    description: currentGroup?.description || '',
   };
 
-  const handleUpdateDescription = async (description: string) => {
+  useUpdateEffect(() => {
+    form.setFieldsValue(groupData);
+  }, [groupData]);
+
+  const handleFinish = async (values: { title: string; description: string }) => {
     if (!activeGroupId) return;
-    await updateGroup(activeGroupId, { description });
+    
+    const updates: { title?: string; description?: string } = {};
+    
+    if (values.title !== currentGroup?.title) {
+      updates.title = values.title;
+    }
+    
+    if (values.description !== currentGroup?.description) {
+      updates.description = values.description;
+    }
+    
+    if (Object.keys(updates).length > 0) {
+      await updateGroup(activeGroupId, updates);
+    }
+  };
+
+  const groupSettings: FormGroupItemType = {
+    children: [
+      {
+        children: <Input placeholder={t('common:name')} />,
+        label: t('common:name'),
+        name: 'title',
+      },
+      {
+        children: (
+          <TextArea
+            autoSize={{ minRows: 3, maxRows: 8 }}
+            placeholder="Group description..."
+            rows={4}
+          />
+        ),
+        label: t('common:description'),
+        name: 'description',
+      },
+    ],
+    title: 'Group Settings',
   };
 
   return (
-    <Flexbox gap={24} paddingInline={24}>
-      <Form>
-        <FormItem label={t('common:name')} minWidth={undefined}>
-          <Input
-            onBlur={(e) => {
-              const newTitle = e.target.value.trim();
-              if (newTitle !== currentGroup?.title) {
-                handleUpdateName(newTitle);
-              }
-            }}
-            placeholder={t('common:name')}
-            value={currentGroup?.title || ''}
-            onChange={(e) => {
-              // For immediate UI feedback, we could dispatch a local state update here
-              // But for simplicity, we'll handle it on blur
-            }}
-          />
-        </FormItem>
-
-        <FormItem label={t('common:description')} minWidth={undefined}>
-          <TextArea
-            autoSize={{ minRows: 3, maxRows: 8 }}
-            onBlur={(e) => {
-              const newDescription = e.target.value.trim();
-              if (newDescription !== currentGroup?.description) {
-                handleUpdateDescription(newDescription);
-              }
-            }}
-            placeholder="Group description..."
-            rows={4}
-            value={currentGroup?.description || ''}
-            onChange={(e) => {
-              // For immediate UI feedback, we could dispatch a local state update here
-              // But for simplicity, we'll handle it on blur
-            }}
-          />
-        </FormItem>
-      </Form>
-    </Flexbox>
+    <Form
+      footer={
+        <Form.SubmitFooter
+          texts={{
+            reset: t('submitFooter.reset'),
+            submit: 'Update Group',
+            unSaved: t('submitFooter.unSaved'),
+            unSavedWarning: t('submitFooter.unSavedWarning'),
+          }}
+        />
+      }
+      form={form}
+      initialValues={groupData}
+      items={[groupSettings]}
+      itemsType={'group'}
+      onFinish={handleFinish}
+      variant={'borderless'}
+      {...FORM_STYLE}
+    />
   );
 });
 
