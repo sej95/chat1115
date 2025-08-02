@@ -5,12 +5,8 @@ export default defineConfig({
   test: {
     alias: {
       /* eslint-disable sort-keys-fix/sort-keys-fix */
-      '@/const': resolve(__dirname, '../const/src'),
-      '@/utils/errorResponse': resolve(__dirname, '../../src/utils/errorResponse'),
-      '@/utils': resolve(__dirname, '../utils/src'),
-      '@/database': resolve(__dirname, '../database/src'),
-      '@/types': resolve(__dirname, '../types/src'),
-      '@': resolve(__dirname, '../../src'),
+      '@/types': resolve(__dirname, './packages/types/src'),
+      '@': resolve(__dirname, './src'),
       /* eslint-enable */
     },
     coverage: {
