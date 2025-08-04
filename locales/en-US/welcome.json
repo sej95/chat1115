@@ -6,6 +6,8 @@
     },
     "defaultMessage": "I am your personal intelligent assistant {{appName}}. How can I assist you today?<br />If you need a more professional or customized assistant, you can click <plus /> to create a custom assistant.",
     "defaultMessageWithoutCreate": "I am your personal intelligent assistant {{appName}}. How can I assist you today?",
+    "groupMessage": "Welcome to {{appName}} Group Chat! Collaborate with multiple AI assistants or team members in a shared conversation space.<br />Click <plus /> to create a new group chat and start collaborating.",
+    "groupMessageWithoutCreate": "Welcome to {{appName}} Group Chat! Collaborate with multiple AI assistants or team members in a shared conversation space.",
     "qa": {
       "q01": "What is LobeHub?",
       "q02": "What is {{appName}}?",
