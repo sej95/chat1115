@@ -2,14 +2,12 @@
 
 import { ActionIcon, Avatar } from '@lobehub/ui';
 import { createStyles } from 'antd-style';
-import { Edit, Trash, UserMinus, UserPlus } from 'lucide-react';
+import { Edit, UserMinus, UserPlus } from 'lucide-react';
 import { memo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Flexbox } from 'react-layout-kit';
 
 import SidebarHeader from '@/components/SidebarHeader';
 import { useChatGroupStore } from '@/store/chatGroup';
-import { chatGroupSelectors } from '@/store/chatGroup/selectors';
 import { useSessionStore } from '@/store/session';
 import { sessionSelectors } from '@/store/session/selectors';
 import { useUserStore } from '@/store/user';
@@ -17,7 +15,8 @@ import { userProfileSelectors } from '@/store/user/selectors';
 import { LobeGroupSession } from '@/types/session';
 
 import GroupDescriptionContent from './GroupDescriptionContent';
-import InviteMemberModal from './InviteMemberModal';
+import { MemberSelectionModal } from '@/components/MemberSelectionModal';
+import { ChatGroupAgentItem } from '@/database/schemas/chatGroup';
 
 const useStyles = createStyles(({ css, token }) => ({
   content: css`
@@ -60,7 +59,6 @@ const useStyles = createStyles(({ css, token }) => ({
 }));
 
 const GroupChatSidebar = memo(() => {
-  const { t } = useTranslation(['chat', 'common']);
   const { styles } = useStyles();
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
@@ -68,10 +66,6 @@ const GroupChatSidebar = memo(() => {
   const currentSession = useSessionStore(sessionSelectors.currentSession) as LobeGroupSession;
 
   const addAgentsToGroup = useChatGroupStore((s) => s.addAgentsToGroup);
-
-  const currentGroup = useChatGroupStore((s) =>
-    activeGroupId ? chatGroupSelectors.getGroupById(activeGroupId)(s) : null,
-  );
 
   const currentUser = useUserStore((s) => ({
     avatar: userProfileSelectors.userAvatar(s),
@@ -130,11 +124,11 @@ const GroupChatSidebar = memo(() => {
         </div>
 
         <div>
-          {currentSession?.members?.map((agent) => {
+          {currentSession?.members?.map((member: ChatGroupAgentItem) => {
             return (
-              <div className={styles.memberItem} key={agent.id}>
+              <div className={styles.memberItem} key={member.id}>
                 <Flexbox align={'center'} gap={12} horizontal>
-                  <Avatar avatar={agent.avatar} background={agent.backgroundColor} size={32} />
+                  <Avatar avatar={member.avatar} background={member.backgroundColor!} size={32} />
                   <Flexbox flex={1} gap={2}>
                     <div
                       style={{
@@ -142,18 +136,16 @@ const GroupChatSidebar = memo(() => {
                         fontWeight: 500,
                       }}
                     >
-                      {agent.title}
+                      {member.title}
                     </div>
-                    {agent.description && (
-                      <div
-                        style={{
-                          color: '#666',
-                          fontSize: '12px',
-                        }}
-                      >
-                        {agent.description}
-                      </div>
-                    )}
+                    <div
+                      style={{
+                        color: '#666',
+                        fontSize: '12px',
+                      }}
+                    >
+                      {member.systemRole}
+                    </div>
                   </Flexbox>
                   <ActionIcon
                     icon={Edit}
@@ -167,7 +159,7 @@ const GroupChatSidebar = memo(() => {
                     danger
                     icon={UserMinus}
                     onClick={() => {
-                      removeAgentFromGroup(currentGroup?.id, agent.agentId);
+                      removeAgentFromGroup(activeGroupId!, member.id);
                     }}
                     size={'small'}
                     title="Remove Member"
@@ -179,7 +171,8 @@ const GroupChatSidebar = memo(() => {
         </div>
       </Flexbox>
 
-      <InviteMemberModal
+      <MemberSelectionModal
+        mode="invite"
         onCancel={() => setInviteModalOpen(false)}
         onConfirm={handleInviteMembers}
         open={inviteModalOpen}

@@ -3,11 +3,12 @@
 import { ActionIcon, Dropdown } from '@lobehub/ui';
 import { createStyles } from 'antd-style';
 import { MessageSquarePlus } from 'lucide-react';
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Flexbox } from 'react-layout-kit';
 
 import { ProductLogo } from '@/components/Branding';
+import { MemberSelectionModal } from '@/components/MemberSelectionModal';
 import { DESKTOP_HEADER_ICON_SIZE } from '@/const/layoutTokens';
 import SyncStatusTag from '@/features/SyncStatusInspector';
 import { useActionSWR } from '@/libs/swr';
@@ -36,15 +37,29 @@ const Header = memo(() => {
   const [createSession] = useSessionStore((s) => [s.createSession]);
   const createGroup = useChatGroupStore((s) => s.createGroup);
   const { enableWebrtc, showCreateSession } = useServerConfigStore(featureFlagsSelectors);
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
 
   const { mutate: mutateAgent, isValidating: isValidatingAgent } = useActionSWR(
     'session.createSession',
     () => createSession(),
   );
+
   const { mutate: mutateGroup, isValidating: isValidatingGroup } = useActionSWR(
     'chatGroup.createGroup',
-    () => createGroup({ title: 'New Group Chat' }),
+    () => createGroup({
+      title: 'New Group Chat'
+    }),
   );
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleCreateGroupWithMembers = async (_selectedAgents: string[]) => {
+    setIsGroupModalOpen(false);
+    mutateGroup();
+  };
+
+  const handleGroupModalCancel = () => {
+    setIsGroupModalOpen(false);
+  };
 
   return (
     <Flexbox className={styles.top} gap={16} paddingInline={8}>
@@ -78,7 +93,7 @@ const Header = memo(() => {
                     key: 'newGroup',
                     label: 'Create Group Chat',
                     onClick: () => {
-                      mutateGroup();
+                      setIsGroupModalOpen(true);
                     },
                   },
                 ],
@@ -96,6 +111,13 @@ const Header = memo(() => {
         </Flexbox>
       </Flexbox>
       <SessionSearchBar />
+
+      <MemberSelectionModal
+        mode="create"
+        onCancel={handleGroupModalCancel}
+        onConfirm={handleCreateGroupWithMembers}
+        open={isGroupModalOpen}
+      />
     </Flexbox>
   );
 });
