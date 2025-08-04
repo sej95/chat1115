@@ -14,13 +14,16 @@ import { useUserStore } from '@/store/user';
 import { userProfileSelectors } from '@/store/user/selectors';
 import { LobeGroupSession } from '@/types/session';
 
-import GroupDescriptionContent from './GroupDescriptionContent';
 import { MemberSelectionModal } from '@/components/MemberSelectionModal';
 import { ChatGroupAgentItem } from '@/database/schemas/chatGroup';
+import TopicListContent from '../TopicListContent';
+import Header from '../Header';
 
 const useStyles = createStyles(({ css, token }) => ({
   content: css`
     padding: 0 ${token.paddingSM}px;
+    min-height: 200px;
+    height: fit-content;
   `,
   emptyState: css`
     color: ${token.colorTextSecondary};
@@ -56,6 +59,9 @@ const useStyles = createStyles(({ css, token }) => ({
     margin: ${token.marginLG}px 0 ${token.marginSM}px 0;
     text-transform: uppercase;
   `,
+  topicList: css`
+    border-block-start: 1px solid ${token.colorBorderSecondary};
+  `,
 }));
 
 const GroupChatSidebar = memo(() => {
@@ -85,8 +91,6 @@ const GroupChatSidebar = memo(() => {
 
   return (
     <Flexbox height={'100%'}>
-      <GroupDescriptionContent />
-
       <SidebarHeader
         actions={
           <ActionIcon
@@ -105,7 +109,7 @@ const GroupChatSidebar = memo(() => {
         }
       />
 
-      <Flexbox className={styles.content} flex={1} gap={2}>
+      <Flexbox className={styles.content} flex={0.6} gap={2}>
         {/* Current User - Always shown first */}
         <div className={styles.memberItem}>
           <Flexbox align={'center'} gap={12} horizontal>
@@ -169,6 +173,11 @@ const GroupChatSidebar = memo(() => {
             );
           })}
         </div>
+      </Flexbox>
+
+      <Flexbox className={styles.topicList} flex={1}>
+        <Header />
+        <TopicListContent />
       </Flexbox>
 
       <MemberSelectionModal
