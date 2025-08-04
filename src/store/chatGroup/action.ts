@@ -10,7 +10,7 @@ import { ChatGroupReducer, chatGroupReducers } from './reducers';
 
 export interface ChatGroupAction {
   addAgentsToGroup: (groupId: string, agentIds: string[]) => Promise<void>;
-  createGroup: (group: Omit<NewChatGroup, 'userId'>) => Promise<string>;
+  createGroup: (group: Omit<NewChatGroup, 'userId'>, agentIds?: string[]) => Promise<string>;
   deleteGroup: (id: string) => Promise<void>;
   internal_dispatchChatGroup: (
     payload:
@@ -62,8 +62,12 @@ export const chatGroupAction: StateCreator<
       await get().internal_refreshGroups();
     },
 
-    createGroup: async (newGroup) => {
+    createGroup: async (newGroup, agentIds) => {
       const group = await chatGroupService.createGroup(newGroup);
+
+      if (agentIds) {
+        await chatGroupService.addAgentsToGroup(group.id, agentIds);
+      }
 
       dispatch({ payload: group, type: 'addGroup' });
 

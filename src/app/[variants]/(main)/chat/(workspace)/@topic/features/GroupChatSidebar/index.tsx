@@ -177,6 +177,7 @@ const GroupChatSidebar = memo(() => {
         onConfirm={handleInviteMembers}
         open={inviteModalOpen}
       />
+
     </Flexbox>
   );
 });
