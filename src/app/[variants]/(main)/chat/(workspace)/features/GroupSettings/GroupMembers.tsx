@@ -18,7 +18,7 @@ import { useUserStore } from '@/store/user';
 import { userProfileSelectors } from '@/store/user/selectors';
 import { LobeGroupSession } from '@/types/session';
 
-import InviteMemberModal from '../../@topic/features/GroupChatSidebar/InviteMemberModal';
+import { MemberSelectionModal } from '@/components/MemberSelectionModal';
 
 const useStyles = createStyles(({ css, token }) => ({
   container: css`
@@ -219,7 +219,8 @@ const GroupMembers = memo(() => {
       {/* Members List */}
       {membersContent}
       
-      <InviteMemberModal
+      <MemberSelectionModal
+        mode="invite"
         onCancel={() => setInviteModalOpen(false)}
         onConfirm={handleInviteMembers}
         open={inviteModalOpen}
