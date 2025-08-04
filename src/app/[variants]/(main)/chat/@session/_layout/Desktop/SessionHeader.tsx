@@ -35,26 +35,30 @@ const Header = memo(() => {
   const { styles } = useStyles();
   const { t } = useTranslation('chat');
   const [createSession] = useSessionStore((s) => [s.createSession]);
-  const createGroup = useChatGroupStore((s) => s.createGroup);
+  const [createGroup] = useChatGroupStore((s) => [s.createGroup]);
   const { enableWebrtc, showCreateSession } = useServerConfigStore(featureFlagsSelectors);
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+  
+  // We need pass inital member list so we cannot use mutate
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
 
   const { mutate: mutateAgent, isValidating: isValidatingAgent } = useActionSWR(
     'session.createSession',
     () => createSession(),
   );
 
-  const { mutate: mutateGroup, isValidating: isValidatingGroup } = useActionSWR(
-    'chatGroup.createGroup',
-    () => createGroup({
-      title: 'New Group Chat'
-    }),
-  );
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleCreateGroupWithMembers = async (_selectedAgents: string[]) => {
+  const handleCreateGroupWithMembers = async (selectedAgents: string[]) => {
     setIsGroupModalOpen(false);
-    mutateGroup();
+    setIsCreatingGroup(true);
+    try {
+      await createGroup({
+        title: 'New Group Chat'
+      }, selectedAgents);
+    } catch (error) {
+      console.error('Failed to create group:', error);
+    } finally {
+      setIsCreatingGroup(false);
+    }
   };
 
   const handleGroupModalCancel = () => {
@@ -102,7 +106,7 @@ const Header = memo(() => {
             >
               <ActionIcon
                 icon={MessageSquarePlus}
-                loading={isValidatingAgent || isValidatingGroup}
+                loading={isValidatingAgent || isCreatingGroup}
                 size={DESKTOP_HEADER_ICON_SIZE}
                 style={{ flex: 'none' }}
               />
