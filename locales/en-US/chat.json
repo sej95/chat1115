@@ -259,7 +259,12 @@
     "saveCurrentMessages": "Save current session as topic"
   },
   "inviteMembers": "Invite Members",
+  "availableAgents": "Available Agents",
+  "selectedAgents": "Selected Agents",
+  "searchAgents": "Search agents...",
   "noAvailableAgents": "No available agents to invite",
+  "noMatchingAgents": "No agents match your search",
+  "noSelectedAgents": "No agents selected yet",
   "untitledAgent": "Untitled Agent",
   "groupDescription": "Group Description",
   "noMembersYet": "No members in this group yet. Click the + button to invite agents.",

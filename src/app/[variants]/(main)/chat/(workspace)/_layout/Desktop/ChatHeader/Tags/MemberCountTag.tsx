@@ -12,9 +12,9 @@ const MemberCountTag = memo(() => {
   const { t } = useTranslation('chat');
   const currentSession = useSessionStore(sessionSelectors.currentSession);
 
-  const memberCount = (currentSession as LobeGroupSession).members?.length || 0;
+  const memberCount = (currentSession as LobeGroupSession).members?.length + 1;
 
-  if (memberCount === 0) return null;
+  if (memberCount < 0) return null;
 
   return (
     <Tooltip
@@ -27,7 +27,7 @@ const MemberCountTag = memo(() => {
         <Tag>
           <Icon icon={Users} />
           <span>
-            {memberCount + 1} {t('members')}
+            {memberCount}
           </span>
         </Tag>
       </Flexbox>
