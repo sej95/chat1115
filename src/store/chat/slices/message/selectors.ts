@@ -9,12 +9,10 @@ import { useUserStore } from '@/store/user';
 import { userProfileSelectors } from '@/store/user/selectors';
 import { ChatFileItem, ChatMessage } from '@/types/message';
 import { ChatGroupAgentItem, ChatGroupItem } from '@/database/schemas/chatGroup';
-import { LobeSessionType } from '@/types/session';
 
 import { chatHelpers } from '../../helpers';
 import type { ChatStoreState } from '../../initialState';
 
-// TODO: [Group Chat] Better implementation for group chat
 const getMeta = (message: ChatMessage) => {
   switch (message.role) {
     case 'user': {
@@ -28,28 +26,12 @@ const getMeta = (message: ChatMessage) => {
     }
 
     default: {
-      // If message belongs to a group chat and has an agentId, find the corresponding agent session
+      // For group chat, get meta from agent session
       if (message.groupId && message.agentId) {
-        console.log("Fetching group member meta", message.agentId);
-        const sessionState = useSessionStore.getState();
-
-        // Find agent session where config.id matches the agentId (same pattern as MemberSelectionModal)
-        const agentSession = sessionState.sessions?.find(
-          session => session.type === LobeSessionType.Agent && session.config?.id === message.agentId
-        );
-
-        if (agentSession?.meta) {
-          return agentSession.meta;
-        }
-
-        // Fallback: Create default meta for group chat agents
-        return {
-          avatar: '🤖', // Default avatar for group chat agents
-          title: `Agent ${message.agentId.slice(-6)}`, // Show last 6 chars of agent ID
-        };
+        return sessionMetaSelectors.getAgentMetaByAgentId(message.agentId)(useSessionStore.getState());
       }
 
-      // Otherwise, use the current session's agent meta
+      // Otherwise, use the current session's agent meta for single agent chat
       return sessionMetaSelectors.currentAgentMeta(useSessionStore.getState());
     }
   }
