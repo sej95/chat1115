@@ -15,7 +15,7 @@ export class ClientService extends BaseClientService implements IMessageService 
   createMessage: IMessageService['createMessage'] = async ({ sessionId, ...params }) => {
     const { id } = await this.messageModel.create({
       ...params,
-      sessionId: this.toDbSessionId(sessionId) as string,
+      sessionId: sessionId ? this.toDbSessionId(sessionId) as string : undefined,
     });
 
     return id;

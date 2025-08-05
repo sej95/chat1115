@@ -2,6 +2,7 @@ import { useChatStore } from '@/store/chat';
 import { useGlobalStore } from '@/store/global';
 import { systemStatusSelectors } from '@/store/global/selectors';
 import { useSessionStore } from '@/store/session';
+import { sessionSelectors } from '@/store/session/selectors';
 
 export const useFetchMessages = () => {
   const isDBInited = useGlobalStore(systemStatusSelectors.isDBInited);
@@ -11,5 +12,7 @@ export const useFetchMessages = () => {
     s.useFetchMessages,
   ]);
 
-  useFetchMessages(isDBInited, sessionId, activeTopicId);
+  const isGroupSession = useSessionStore(sessionSelectors.isCurrentSessionGroupSession);
+
+  useFetchMessages(isDBInited, isGroupSession ? undefined : sessionId, activeTopicId, isGroupSession ? sessionId : undefined);
 };
