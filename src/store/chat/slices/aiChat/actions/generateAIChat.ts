@@ -22,14 +22,22 @@ import { messageMapKey } from '@/store/chat/utils/messageMapKey';
 import { getFileStoreState } from '@/store/file/store';
 import { useSessionStore } from '@/store/session';
 import { WebBrowsingManifest } from '@/tools/web-browsing';
-import { ChatMessage, CreateMessageParams, SendMessageParams } from '@/types/message';
+import { ChatMessage, CreateMessageParams, SendMessageParams, SendGroupMessageParams } from '@/types/message';
 import { ChatImageItem } from '@/types/message/image';
 import { MessageSemanticSearchChunk } from '@/types/rag';
 import { Action, setNamespace } from '@/utils/storeDebug';
 
+// Group chat imports
+import { GroupChatSupervisor, SupervisorContext, SupervisorDecision } from '../../message/supervisor';
+
 import { chatSelectors, topicSelectors } from '../../../selectors';
+import { toggleBooleanList } from '../../../utils';
+import type { ChatStoreState } from '../../../initialState';
 
 const n = setNamespace('ai');
+
+// Group chat supervisor instance
+const supervisor = new GroupChatSupervisor();
 
 interface ProcessMessageParams {
   traceId?: string;
@@ -41,7 +49,7 @@ interface ProcessMessageParams {
   ragQuery?: string;
   threadId?: string;
   inPortalThread?: boolean;
-  
+
   // Group chat parameters
   groupId?: string;
   agentId?: string;
@@ -52,6 +60,10 @@ export interface AIGenerateAction {
    * Sends a new message to the AI chat system
    */
   sendMessage: (params: SendMessageParams) => Promise<void>;
+  /**
+   * Sends a new message to a group chat and triggers agent responses
+   */
+  sendGroupMessage: (params: SendGroupMessageParams) => Promise<void>;
   /**
    * Regenerates a specific message in the chat
    */
@@ -126,6 +138,38 @@ export interface AIGenerateAction {
   ) => AbortController | undefined;
 
   internal_toggleSearchWorkflow: (loading: boolean, id?: string) => void;
+
+  // ========= ↓ Group Chat Methods ↓ ========== //
+
+  /**
+   * Triggers supervisor decision for group chat
+   */
+  internal_triggerSupervisorDecision: (groupId: string) => Promise<void>;
+
+  /**
+   * Executes agent responses for group chat
+   */
+  internal_executeAgentResponses: (groupId: string, agentIds: string[]) => Promise<void>;
+
+  /**
+   * Processes a single agent message in group chat
+   */
+  internal_processAgentMessage: (groupId: string, agentId: string, userMessageId: string) => Promise<void>;
+
+  /**
+   * Updates agent speaking status in group chat
+   */
+  internal_updateAgentSpeakingStatus: (groupId: string, agentId: string, speaking: boolean) => void;
+
+  /**
+   * Sets the active group
+   */
+  internal_setActiveGroup: (groupId: string) => void;
+
+  /**
+   * Toggles supervisor loading state for group chat
+   */
+  internal_toggleSupervisorLoading: (loading: boolean, groupId?: string) => void;
 }
 
 export const generateAIChat: StateCreator<
@@ -247,6 +291,8 @@ export const generateAIChat: StateCreator<
       return;
     }
 
+    // == ✨ Start generating AI response ==
+
     // Get the current messages to generate AI response
     const messages = chatSelectors.activeBaseChats(get());
     const userFiles = chatSelectors.currentUserFiles(get()).map((f) => f.id);
@@ -289,6 +335,44 @@ export const generateAIChat: StateCreator<
 
     await Promise.all([summaryTitle(), addFilesToAgent()]);
   },
+
+  sendGroupMessage: async ({ groupId, message, files, onlyAddUserMessage }) => {
+    const { internal_createMessage, internal_triggerSupervisorDecision, internal_setActiveGroup } = get();
+
+    if (!message.trim() && (!files || files.length === 0)) return;
+
+    console.log("generateAIChat: Start send group message", groupId, message, files, onlyAddUserMessage);
+
+    internal_setActiveGroup(groupId);
+
+    set({ isCreatingMessage: true }, false, n('creatingGroupMessage/start'));
+
+    try {
+      const userMessage: CreateMessageParams = {
+        content: message,
+        files: files?.map((f) => f.id),
+        role: 'user',
+        groupId,
+      };
+
+      const messageId = await internal_createMessage(userMessage);
+
+      // if only add user message, then stop
+      if (onlyAddUserMessage) {
+        set({ isCreatingMessage: false }, false, n('creatingGroupMessage/onlyUser'));
+        return;
+      }
+
+      if (messageId) {
+        await internal_triggerSupervisorDecision(groupId);
+      }
+    } catch (error) {
+      console.error('Failed to send group message:', error);
+    } finally {
+      set({ isCreatingMessage: false }, false, n('creatingGroupMessage/end'));
+    }
+  },
+
   stopGenerateMessage: () => {
     const { chatLoadingIdsAbortController, internal_toggleChatLoading } = get();
 
@@ -554,18 +638,18 @@ export const generateAIChat: StateCreator<
     preprocessMsgs = !chatConfig.inputTemplate
       ? preprocessMsgs
       : preprocessMsgs.map((m) => {
-          if (m.role === 'user') {
-            try {
-              return { ...m, content: compiler({ text: m.content }) };
-            } catch (error) {
-              console.error(error);
+        if (m.role === 'user') {
+          try {
+            return { ...m, content: compiler({ text: m.content }) };
+          } catch (error) {
+            console.error(error);
 
-              return m;
-            }
+            return m;
           }
+        }
 
-          return m;
-        });
+        return m;
+      });
 
     // 3. add systemRole
     if (agentConfig.systemRole) {
@@ -854,5 +938,149 @@ export const generateAIChat: StateCreator<
 
   internal_toggleSearchWorkflow: (loading, id) => {
     return get().internal_toggleLoadingArrays('searchWorkflowLoadingIds', loading, id);
+  },
+
+  // ========= ↓ Group Chat Internal Methods ↓ ========== //
+
+  internal_triggerSupervisorDecision: async (groupId: string) => {
+    const {
+      messagesMap,
+      groupAgentMaps,
+      internal_toggleSupervisorLoading,
+      internal_executeAgentResponses,
+    } = get();
+
+    console.log("internal_triggerSupervisorDecision", groupAgentMaps, messagesMap);
+
+    const messages = messagesMap[groupId] || [];
+    const agents = groupAgentMaps[groupId] || [];
+
+    // TODO: [Group Chat] Handle the case when there is no messages
+    // if (messages.length === 0) return;
+
+    console.log("internal_triggerSupervisorDecision: Trigger supervisor decision for group", groupId);
+
+    internal_toggleSupervisorLoading(true, groupId);
+
+    try {
+      const context: SupervisorContext = {
+        availableAgents: agents.filter((a) => a.enabled),
+        groupId,
+        messages,
+      };
+
+      const decision: SupervisorDecision = await supervisor.makeDecision(context);
+
+      if (!supervisor.validateDecision(decision, context)) {
+        console.warn('Invalid supervisor decision:', decision);
+        return;
+      }
+
+      console.log('Supervisor decision:', decision);
+
+      // Execute agent responses if any agents selected
+      if (decision.nextSpeakers.length > 0) {
+        await internal_executeAgentResponses(groupId, decision.nextSpeakers);
+      }
+    } catch (error) {
+      console.error('Supervisor decision failed:', error);
+    } finally {
+      internal_toggleSupervisorLoading(false, groupId);
+    }
+  },
+
+  internal_executeAgentResponses: async (groupId: string, agentIds: string[]) => {
+    const { messagesMap, internal_processAgentMessage } = get();
+
+    const messages = messagesMap[groupId] || [];
+    const lastUserMessage = messages.findLast((m) => m.role === 'user');
+
+    if (!lastUserMessage) return;
+
+    // Process each agent response in parallel
+    const responsePromises = agentIds.map((agentId) =>
+      internal_processAgentMessage(groupId, agentId, lastUserMessage.id),
+    );
+
+    try {
+      await Promise.all(responsePromises);
+    } catch (error) {
+      console.error('Failed to execute agent responses:', error);
+    }
+  },
+
+  internal_processAgentMessage: async (groupId: string, agentId: string, userMessageId: string) => {
+    const {
+      messagesMap,
+      internal_createMessage,
+      internal_updateAgentSpeakingStatus,
+      internal_coreProcessMessage,
+    } = get();
+
+    internal_updateAgentSpeakingStatus(groupId, agentId, true);
+
+    try {
+      // Create assistant message placeholder for this specific agent
+      const assistantMessage: CreateMessageParams = {
+        role: 'assistant',
+        content: '',
+        groupId: groupId, // Use groupId instead of sessionId for group chat messages
+        parentId: userMessageId,
+        agentId, // Mark which agent is responding
+        fromModel: agentId, // TODO: Get actual model from agent config
+        fromProvider: 'openai', // TODO: Get from agent config
+      };
+
+      const messageId = await internal_createMessage(assistantMessage, { skipRefresh: true });
+
+      if (messageId) {
+        // Get group messages for context
+        const messages = messagesMap[groupId] || [];
+
+        // Reuse existing core processing logic
+        await internal_coreProcessMessage(messages, messageId, {
+          // Pass group-specific context
+          groupId,
+          agentId,
+        });
+      }
+    } catch (error) {
+      console.error(`Failed to process message for agent ${agentId}:`, error);
+    } finally {
+      internal_updateAgentSpeakingStatus(groupId, agentId, false);
+    }
+  },
+
+  internal_updateAgentSpeakingStatus: (groupId: string, agentId: string, speaking: boolean) => {
+    set(
+      produce((state: ChatStoreState) => {
+        if (!state.agentSpeakingStatus[groupId]) {
+          state.agentSpeakingStatus[groupId] = {};
+        }
+        state.agentSpeakingStatus[groupId][agentId] = speaking;
+      }),
+      false,
+      n(`updateAgentSpeakingStatus/${groupId}/${agentId}`),
+    );
+  },
+
+  internal_setActiveGroup: (groupId: string) => {
+    if (get().activeGroupId === groupId) return;
+
+    set({ activeGroupId: groupId }, false, n('setActiveGroup'));
+  },
+
+  internal_toggleSupervisorLoading: (loading: boolean, groupId?: string) => {
+    set(
+      {
+        supervisorDecisionLoading: groupId
+          ? toggleBooleanList(get().supervisorDecisionLoading, groupId, loading)
+          : loading
+            ? get().supervisorDecisionLoading
+            : [],
+      },
+      false,
+      n(`toggleSupervisorLoading/${loading ? 'start' : 'end'}`),
+    );
   },
 });

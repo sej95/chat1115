@@ -94,6 +94,7 @@ export const useSendGroupMessage = () => {
     s.sendGroupMessage,
     s.updateInputMessage,
   ]);
+  const { analytics } = useAnalytics();
 
   const send = useCallback((params: UseSendMessageParams = {}) => {
     const store = useChatStore.getState();
@@ -106,6 +107,24 @@ export const useSendGroupMessage = () => {
     });
 
     updateInputMessage('');
+
+    // 获取分析数据
+    const userStore = getUserStoreState();
+    const agentStore = getAgentStoreState();
+
+    analytics?.track({
+      name: 'send_message',
+      properties: {
+        chat_id: store.activeId || 'unknown',
+        current_topic: topicSelectors.currentActiveTopic(store)?.title || null,
+        history_message_count: chatSelectors.activeBaseChats(store).length,
+        message: store.inputMessage,
+        message_length: store.inputMessage.length,
+        selected_model: agentSelectors.currentAgentModel(agentStore),
+        session_id: store.activeId || 'inbox', // 当前活跃的会话ID
+        user_id: userStore.user?.id || 'anonymous',
+      },
+    });
   }, []);
 
   return useMemo(() => ({ send }), [send]);
