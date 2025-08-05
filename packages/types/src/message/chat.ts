@@ -59,6 +59,8 @@ export interface ChatMessageExtra {
 }
 
 export interface ChatMessage {
+  // Group chat fields (alphabetically before other fields)
+  agentId?: string;
   chunksList?: ChatFileChunk[];
   content: string;
   createdAt: number;
@@ -74,6 +76,7 @@ export interface ChatMessage {
    * @deprecated
    */
   files?: string[];
+  groupId?: string;
   id: string;
   imageList?: ChatImageItem[];
   meta: MetaData;
@@ -129,8 +132,9 @@ export interface CreateMessageParams
   files?: string[];
   fromModel?: string;
   fromProvider?: string;
+  groupId?: string;
   role: MessageRoleType;
-  sessionId: string;
+  sessionId?: string; // Made optional to support group chat messages
   threadId?: string | null;
   topicId?: string;
   traceId?: string;

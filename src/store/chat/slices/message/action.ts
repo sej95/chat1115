@@ -7,8 +7,7 @@ import { produce } from 'immer';
 import { SWRResponse, mutate } from 'swr';
 import { StateCreator } from 'zustand/vanilla';
 
-import { clientDB } from '@/database/client/db';
-import { ChatGroupModel } from '@/database/models/chatGroup';
+
 import { ChatGroupAgentItem, ChatGroupItem } from '@/database/schemas/chatGroup';
 import { useClientDataSWR } from '@/libs/swr';
 import { messageService } from '@/services/message';
@@ -16,7 +15,6 @@ import { topicService } from '@/services/topic';
 import { traceService } from '@/services/trace';
 import { ChatStore } from '@/store/chat/store';
 import { messageMapKey } from '@/store/chat/utils/messageMapKey';
-import { getUserStoreState } from '@/store/user';
 import {
   ChatMessage,
   ChatMessageError,
@@ -42,13 +40,6 @@ const n = setNamespace('m');
 
 const SWR_USE_FETCH_MESSAGES = 'SWR_USE_FETCH_MESSAGES';
 
-// Helper to get ChatGroupModel instance
-const getChatGroupModel = () => {
-  const userStore = getUserStoreState();
-  const userId = userStore.user?.id || 'DEFAULT_LOBE_CHAT_USER';
-  return new ChatGroupModel(clientDB as any, userId);
-};
-
 // Group chat supervisor instance
 const supervisor = new GroupChatSupervisor();
 
@@ -72,6 +63,7 @@ export interface ChatMessageAction {
     enable: boolean,
     sessionId: string,
     topicId?: string,
+    groupId?: string,
   ) => SWRResponse<ChatMessage[]>;
   copyMessage: (id: string, content: string) => Promise<void>;
   refreshMessages: () => Promise<void>;
@@ -301,16 +293,16 @@ export const chatMessage: StateCreator<
 
     await get().internal_updateMessageContent(id, content);
   },
-  useFetchMessages: (enable, sessionId, activeTopicId) =>
+  useFetchMessages: (enable, sessionId, activeTopicId, groupId) =>
     useClientDataSWR<ChatMessage[]>(
       enable ? [SWR_USE_FETCH_MESSAGES, sessionId, activeTopicId] : null,
       async ([, sessionId, topicId]: [string, string, string | undefined]) =>
-        messageService.getMessages(sessionId, topicId),
+        messageService.getMessages(sessionId, topicId, groupId),
       {
         onSuccess: (messages, key) => {
           const nextMap = {
             ...get().messagesMap,
-            [messageMapKey(sessionId, activeTopicId)]: messages,
+            [messageMapKey(sessionId || groupId || '', activeTopicId)]: messages,
           };
           // no need to update map if the messages have been init and the map is the same
           if (get().messagesInit && isEqual(nextMap, get().messagesMap)) return;
@@ -520,13 +512,11 @@ export const chatMessage: StateCreator<
     set({ isCreatingMessage: true }, false, n('creatingGroupMessage/start'));
 
     try {
-      // Add user message to group - reuse existing message creation
       const userMessage: CreateMessageParams = {
         content: message,
         files: files?.map((f) => f.id),
         role: 'user',
-        sessionId: groupId, // Use groupId as sessionId for group messages
-        // No agentId for user messages
+        groupId, // Use groupId for group chat messages, no sessionId needed
       };
 
       const messageId = await internal_createMessage(userMessage);
@@ -593,7 +583,7 @@ export const chatMessage: StateCreator<
     const { messagesMap, internal_processAgentMessage } = get();
 
     const messages = messagesMap[groupId] || [];
-    const lastUserMessage = messages.filter((m) => m.role === 'user').pop();
+    const lastUserMessage = messages.findLast((m) => m.role === 'user');
 
     if (!lastUserMessage) return;
 
@@ -624,7 +614,7 @@ export const chatMessage: StateCreator<
       const assistantMessage: CreateMessageParams = {
         role: 'assistant',
         content: '',
-        sessionId: groupId,
+        groupId: groupId, // Use groupId instead of sessionId for group chat messages
         parentId: userMessageId,
         agentId, // Mark which agent is responding
         fromModel: agentId, // TODO: Get actual model from agent config

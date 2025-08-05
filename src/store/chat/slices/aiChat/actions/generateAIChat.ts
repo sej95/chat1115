@@ -41,6 +41,10 @@ interface ProcessMessageParams {
   ragQuery?: string;
   threadId?: string;
   inPortalThread?: boolean;
+  
+  // Group chat parameters
+  groupId?: string;
+  agentId?: string;
 }
 
 export interface AIGenerateAction {

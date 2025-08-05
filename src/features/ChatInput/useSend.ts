@@ -88,3 +88,25 @@ export const useSendMessage = () => {
 
   return useMemo(() => ({ canSend, send }), [canSend]);
 };
+
+export const useSendGroupMessage = () => {
+  const [sendGroupMessage, updateInputMessage] = useChatStore((s) => [
+    s.sendGroupMessage,
+    s.updateInputMessage,
+  ]);
+
+  const send = useCallback((params: UseSendMessageParams = {}) => {
+    const store = useChatStore.getState();
+    if (!store.activeId) return;
+
+    sendGroupMessage({
+      groupId: store.activeId,
+      message: store.inputMessage,
+      ...params,
+    });
+
+    updateInputMessage('');
+  }, []);
+
+  return useMemo(() => ({ send }), [send]);
+};

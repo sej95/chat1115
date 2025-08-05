@@ -393,6 +393,7 @@ table messages {
   parent_id text
   quota_id text
   agent_id text
+  group_id text
   accessed_at "timestamp with time zone" [not null, default: `now()`]
   created_at "timestamp with time zone" [not null, default: `now()`]
   updated_at "timestamp with time zone" [not null, default: `now()`]
@@ -858,6 +859,7 @@ table topics {
   title text
   favorite boolean [default: false]
   session_id text
+  group_id text
   user_id text [not null]
   client_id text
   history_summary text
