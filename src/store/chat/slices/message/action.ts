@@ -359,6 +359,8 @@ export const chatMessage: StateCreator<
     }
 
     try {
+      console.log('internal_createMessage: Trying to call messageService.createMessage', message);
+
       const id = await messageService.createMessage(message);
       if (!context?.skipRefresh) {
         internal_toggleMessageLoading(true, tempId);
