@@ -2,6 +2,8 @@ import { ChatMessage } from '@/types/message';
 import { ChatGroupAgentItem } from '@/database/schemas/chatGroup';
 import { groupSupervisorPrompts } from '@/prompts/chatMessages';
 import { chatService } from '@/services/chat';
+import { systemAgentSelectors } from '@/store/user/selectors';
+import { useUserStore } from '@/store/user';
 
 export interface SupervisorDecision {
   nextSpeakers: string[]; // agentIds who should respond (empty array = stop)
@@ -56,10 +58,8 @@ ${conversationHistory}
 
 Which agents should respond next?`;
 
-      // Call LLM to make decision
       const response = await this.callLLMForDecision(supervisorPrompt);
 
-      // Parse and validate response
       const decision = this.parseDecision(response, availableAgents);
 
       return decision;
@@ -75,50 +75,41 @@ Which agents should respond next?`;
    * Build agent description text for supervisor
    */
   private buildAgentDescriptions(agents: ChatGroupAgentItem[]): string {
-    return agents
-      .filter((agent) => agent.enabled)
-      .map((agent) => `- ${agent.agentId} (role: ${agent.role})`)
-      .join('\n');
+    return JSON.stringify(agents, null, 2);
   }
 
   /**
    * Call LLM service to get supervisor decision
    */
   private async callLLMForDecision(prompt: string): Promise<string> {
+    const { model, provider } = systemAgentSelectors.groupChatSupervisor(useUserStore.getState());
+
     const supervisorConfig = {
-      max_tokens: 100, // Short response expected
-      model: 'gemini-2.5-flash', // Fast and cost-effective for simple decisions
+      // max_tokens: 100,
+      model: 'gemini-2.5-flash',
       provider: 'google',
-      temperature: 0.3, // Lower temperature for more consistent decisions
+      temperature: 0.3,
     };
 
-    let response = '';
-    const abortController = new AbortController();
+    let res = ""
 
-    return new Promise((resolve, reject) => {
-      chatService.fetchPresetTaskResult({
-        abortController,
-        onError: (error) => {
-          reject(error);
-        },
-        onFinish: async () => {
-          resolve(response.trim());
-        },
-        onLoadingChange: (loading) => {
-          // Optional: Could emit loading state if needed for UI feedback
-          console.log('Supervisor LLM loading state:', loading);
-        },
-        onMessageHandle: (chunk) => {
-          if (chunk.type === 'text') {
-            response += chunk.text;
-          }
-        },
-        params: {
-          messages: [{ content: prompt, role: 'user' }],
-          ...supervisorConfig,
-        },
-      });
+    await chatService.fetchPresetTaskResult({
+      onFinish: async (content) => {
+        console.log('Supervisor LLM response:', content);
+        res = content.trim();
+      },
+      onLoadingChange: (loading) => {
+        // Optional: Could emit loading state if needed for UI feedback
+        console.log('Supervisor LLM loading state:', loading);
+      },
+      params: {
+        messages: [{ content: prompt, role: 'user' }],
+        stream: false,
+        ...supervisorConfig,
+      },
     });
+
+    return res;
   }
 
   /**
@@ -139,7 +130,7 @@ Which agents should respond next?`;
 
       // Validate agent IDs exist in available agents
       const validAgentIds = agentIds.filter((id) =>
-        availableAgents.some((agent) => agent.agentId === id && agent.enabled),
+        availableAgents.some((agent) => agent.id === id),
       );
 
       return { nextSpeakers: validAgentIds };

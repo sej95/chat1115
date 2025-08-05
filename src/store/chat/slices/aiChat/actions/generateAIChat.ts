@@ -33,6 +33,7 @@ import { GroupChatSupervisor, SupervisorContext, SupervisorDecision } from '../.
 import { chatSelectors, topicSelectors } from '../../../selectors';
 import { toggleBooleanList } from '../../../utils';
 import type { ChatStoreState } from '../../../initialState';
+import { sessionSelectors } from '@/store/session/selectors';
 
 const n = setNamespace('ai');
 
@@ -159,7 +160,7 @@ export interface AIGenerateAction {
   /**
    * Processes a single agent message in group chat
    */
-  internal_processAgentMessage: (groupId: string, agentId: string, userMessageId: string) => Promise<void>;
+  internal_processAgentMessage: (groupId: string, agentId: string) => Promise<void>;
 
   /**
    * Updates agent speaking status in group chat
@@ -955,40 +956,32 @@ export const generateAIChat: StateCreator<
   internal_triggerSupervisorDecision: async (groupId: string) => {
     const {
       messagesMap,
-      groupAgentMaps,
       internal_toggleSupervisorLoading,
       internal_executeAgentResponses,
     } = get();
 
-    console.log("internal_triggerSupervisorDecision", groupAgentMaps, messagesMap);
+    const messages = messagesMap[messageMapKey(groupId, null)] || [];
+    const agents = sessionSelectors.currentGroupAgents(useSessionStore.getState());
 
-    const messages = messagesMap[groupId] || [];
-    const agents = groupAgentMaps[groupId] || [];
-
-    // TODO: [Group Chat] Handle the case when there is no messages
-    // if (messages.length === 0) return;
-
-    console.log("internal_triggerSupervisorDecision: Trigger supervisor decision for group", groupId);
+    if (messages.length === 0) return;
 
     internal_toggleSupervisorLoading(true, groupId);
 
     try {
       const context: SupervisorContext = {
-        availableAgents: agents.filter((a) => a.enabled),
+        availableAgents: agents!.map(a => ({
+          name: a.title,
+          id: a.id,
+          role: a.systemRole,
+        })),
         groupId,
         messages,
       };
 
       const decision: SupervisorDecision = await supervisor.makeDecision(context);
 
-      if (!supervisor.validateDecision(decision, context)) {
-        console.warn('Invalid supervisor decision:', decision);
-        return;
-      }
-
       console.log('Supervisor decision:', decision);
 
-      // Execute agent responses if any agents selected
       if (decision.nextSpeakers.length > 0) {
         await internal_executeAgentResponses(groupId, decision.nextSpeakers);
       }
@@ -1000,16 +993,11 @@ export const generateAIChat: StateCreator<
   },
 
   internal_executeAgentResponses: async (groupId: string, agentIds: string[]) => {
-    const { messagesMap, internal_processAgentMessage } = get();
+    const { internal_processAgentMessage } = get();
 
-    const messages = messagesMap[groupId] || [];
-    const lastUserMessage = messages.findLast((m) => m.role === 'user');
 
-    if (!lastUserMessage) return;
-
-    // Process each agent response in parallel
     const responsePromises = agentIds.map((agentId) =>
-      internal_processAgentMessage(groupId, agentId, lastUserMessage.id),
+      internal_processAgentMessage(groupId, agentId),
     );
 
     try {
@@ -1019,7 +1007,7 @@ export const generateAIChat: StateCreator<
     }
   },
 
-  internal_processAgentMessage: async (groupId: string, agentId: string, userMessageId: string) => {
+  internal_processAgentMessage: async (groupId: string, agentId: string) => {
     const {
       messagesMap,
       internal_createMessage,
@@ -1030,12 +1018,10 @@ export const generateAIChat: StateCreator<
     internal_updateAgentSpeakingStatus(groupId, agentId, true);
 
     try {
-      // Create assistant message placeholder for this specific agent
       const assistantMessage: CreateMessageParams = {
         role: 'assistant',
         content: '',
         groupId: groupId, // Use groupId instead of sessionId for group chat messages
-        parentId: userMessageId,
         agentId, // Mark which agent is responding
         fromModel: agentId, // TODO: Get actual model from agent config
         fromProvider: 'openai', // TODO: Get from agent config
@@ -1044,12 +1030,9 @@ export const generateAIChat: StateCreator<
       const messageId = await internal_createMessage(assistantMessage, { skipRefresh: true });
 
       if (messageId) {
-        // Get group messages for context
         const messages = messagesMap[groupId] || [];
 
-        // Reuse existing core processing logic
         await internal_coreProcessMessage(messages, messageId, {
-          // Pass group-specific context
           groupId,
           agentId,
         });
