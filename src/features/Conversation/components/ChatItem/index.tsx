@@ -9,7 +9,7 @@ import { Flexbox } from 'react-layout-kit';
 import ChatItem from '@/features/ChatItem';
 import { VirtuosoContext } from '@/features/Conversation/components/VirtualizedList/VirtuosoContext';
 import { useAgentStore } from '@/store/agent';
-import { agentChatConfigSelectors } from '@/store/agent/selectors';
+import { agentChatConfigSelectors, agentSelectors } from '@/store/agent/selectors';
 import { useChatStore } from '@/store/chat';
 import { chatSelectors } from '@/store/chat/selectors';
 import { useUserStore } from '@/store/user';
@@ -28,6 +28,8 @@ import History from '../History';
 import { markdownElements } from '../MarkdownElements';
 import { InPortalThreadContext } from './InPortalThreadContext';
 import { normalizeThinkTags, processWithArtifact } from './utils';
+import { useSessionStore } from '@/store/session';
+import { sessionSelectors } from '@/store/session/selectors';
 
 const rehypePlugins = markdownElements.map((element) => element.rehypePlugin).filter(Boolean);
 const remarkPlugins = markdownElements.map((element) => element.remarkPlugin).filter(Boolean);
@@ -89,6 +91,8 @@ const Item = memo<ChatListItemProps>(
       s.toggleMessageEditing,
       s.modifyMessageContent,
     ]);
+
+    console.log("Message Item", item);
 
     // when the message is in RAG flow or the AI generating, it should be in loading state
     const isProcessing = isInRAGFlow || generating;
@@ -183,10 +187,10 @@ const Item = memo<ChatListItemProps>(
           item?.role === 'user'
             ? undefined
             : item?.search?.citations &&
-              // if the citations are all empty, we should not show the citations
-              item?.search?.citations.length > 0 &&
-              // if the citations's url and title are all the same, we should not show the citations
-              item?.search?.citations.every((item) => item.title !== item.url),
+            // if the citations are all empty, we should not show the citations
+            item?.search?.citations.length > 0 &&
+            // if the citations's url and title are all the same, we should not show the citations
+            item?.search?.citations.every((item) => item.title !== item.url),
       }),
       [animated, components, markdownCustomRender, item?.role, item?.search],
     );

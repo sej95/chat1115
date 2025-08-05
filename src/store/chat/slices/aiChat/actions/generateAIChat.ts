@@ -28,7 +28,6 @@ import { ChatImageItem } from '@/types/message/image';
 import { MessageSemanticSearchChunk } from '@/types/rag';
 import { Action, setNamespace } from '@/utils/storeDebug';
 
-// Group chat imports
 import { GroupChatSupervisor, SupervisorContext, SupervisorDecision } from '../../message/supervisor';
 
 import { chatSelectors, topicSelectors } from '../../../selectors';
@@ -436,6 +435,7 @@ export const generateAIChat: StateCreator<
       fromModel: "gemini-2.5-flash",
       fromProvider: "google",
 
+      agentId: params?.agentId,
       parentId: userMessageId,
       // TODO: [Group Chat] Better implementation for group chat
       sessionId: params?.groupId ? undefined : get().activeId,
@@ -999,6 +999,7 @@ export const generateAIChat: StateCreator<
     }
   },
 
+  // For group member responsing
   internal_processAgentMessage: async (groupId: string, agentId: string) => {
     const {
       messagesMap,
@@ -1016,11 +1017,10 @@ export const generateAIChat: StateCreator<
       const messages = messagesMap[messageMapKey(groupId, activeTopicId)] || [];
       // if (messages.length === 0) return;
 
-      // Get agent configuration
       const agentStoreState = getAgentStoreState();
       const agentConfig = agentSelectors.getAgentConfigById(agentId)(agentStoreState);
       const { model, provider } = agentConfig;
-      
+
       if (!provider) {
         console.error(`No provider configured for agent ${agentId}`);
         return;
@@ -1047,15 +1047,14 @@ Please respond as this agent would, considering the full conversation history pr
       const lastMessage = messages.at(-1);
       if (!lastMessage) return;
 
-      // Create assistant message for this agent's response
+      // TODO: [Group Chat] Use real agent config
       const assistantMessage: CreateMessageParams = {
         role: 'assistant',
         content: LOADING_FLAT,
-        fromModel: model,
-        fromProvider: provider,
+        fromModel: "gemini-2.5-flash",
+        fromProvider: "google",
         groupId: groupId,
         topicId: activeTopicId,
-        // Note: Agent messages don't use sessionId in group chat context
       };
 
       const assistantId = await internal_createMessage(assistantMessage);
@@ -1071,7 +1070,6 @@ Please respond as this agent would, considering the full conversation history pr
         meta: {},
       };
 
-      // Build full message history for context
       const messagesWithSystem = [systemMessage, ...messages];
 
       // Start loading state
@@ -1085,36 +1083,35 @@ Please respond as this agent would, considering the full conversation history pr
       await internal_fetchAIChatMessage({
         messages: messagesWithSystem,
         messageId: assistantId,
-        model,
-        provider,
+        model: "gemini-2.5-flash",
+        provider: "google",
         params: {
           traceId: `group-${groupId}-agent-${agentId}`,
         },
       });
 
-      // Refresh messages to ensure consistency
       await refreshMessages();
 
     } catch (error) {
       console.error(`Failed to process message for agent ${agentId}:`, error);
-      
+
       // Update error state if we have an assistant message
       const currentMessages = get().messagesMap[groupId] || [];
-      const errorMessage = currentMessages.find(m => 
-        m.role === 'assistant' && 
-        m.groupId === groupId && 
+      const errorMessage = currentMessages.find(m =>
+        m.role === 'assistant' &&
+        m.groupId === groupId &&
         m.content === LOADING_FLAT
       );
-      
+
       if (errorMessage) {
         internal_dispatchMessage({
           id: errorMessage.id,
           type: 'updateMessage',
-          value: { 
+          value: {
             content: `Error: Failed to generate response. ${error instanceof Error ? error.message : 'Unknown error'}`,
-            error: { 
-              type: ChatErrorType.CreateMessageError, 
-              message: error instanceof Error ? error.message : 'Unknown error' 
+            error: {
+              type: ChatErrorType.CreateMessageError,
+              message: error instanceof Error ? error.message : 'Unknown error'
             }
           },
         });

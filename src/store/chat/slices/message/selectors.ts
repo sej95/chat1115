@@ -9,10 +9,12 @@ import { useUserStore } from '@/store/user';
 import { userProfileSelectors } from '@/store/user/selectors';
 import { ChatFileItem, ChatMessage } from '@/types/message';
 import { ChatGroupAgentItem, ChatGroupItem } from '@/database/schemas/chatGroup';
+import { LobeSessionType } from '@/types/session';
 
 import { chatHelpers } from '../../helpers';
 import type { ChatStoreState } from '../../initialState';
 
+// TODO: [Group Chat] Better implementation for group chat
 const getMeta = (message: ChatMessage) => {
   switch (message.role) {
     case 'user': {
@@ -26,6 +28,28 @@ const getMeta = (message: ChatMessage) => {
     }
 
     default: {
+      // If message belongs to a group chat and has an agentId, find the corresponding agent session
+      if (message.groupId && message.agentId) {
+        console.log("Fetching group member meta", message.agentId);
+        const sessionState = useSessionStore.getState();
+
+        // Find agent session where config.id matches the agentId (same pattern as MemberSelectionModal)
+        const agentSession = sessionState.sessions?.find(
+          session => session.type === LobeSessionType.Agent && session.config?.id === message.agentId
+        );
+
+        if (agentSession?.meta) {
+          return agentSession.meta;
+        }
+
+        // Fallback: Create default meta for group chat agents
+        return {
+          avatar: '🤖', // Default avatar for group chat agents
+          title: `Agent ${message.agentId.slice(-6)}`, // Show last 6 chars of agent ID
+        };
+      }
+
+      // Otherwise, use the current session's agent meta
       return sessionMetaSelectors.currentAgentMeta(useSessionStore.getState());
     }
   }
@@ -33,11 +57,11 @@ const getMeta = (message: ChatMessage) => {
 
 const getBaseChatsByKey =
   (key: string) =>
-  (s: ChatStoreState): ChatMessage[] => {
-    const messages = s.messagesMap[key] || [];
+    (s: ChatStoreState): ChatMessage[] => {
+      const messages = s.messagesMap[key] || [];
 
-    return messages.map((i) => ({ ...i, meta: getMeta(i) }));
-  };
+      return messages.map((i) => ({ ...i, meta: getMeta(i) }));
+    };
 
 const currentChatKey = (s: ChatStoreState) => messageMapKey(s.activeId, s.activeTopicId);
 
@@ -211,15 +235,15 @@ const currentGroup = (s: ChatStoreState): ChatGroupItem | undefined => {
   return groupId ? s.groupMaps[groupId] : undefined;
 };
 
-const getGroupById = (groupId: string) => (s: ChatStoreState): ChatGroupItem | undefined => 
+const getGroupById = (groupId: string) => (s: ChatStoreState): ChatGroupItem | undefined =>
   s.groupMaps[groupId];
 
-const allGroups = (s: ChatStoreState): ChatGroupItem[] => 
+const allGroups = (s: ChatStoreState): ChatGroupItem[] =>
   Object.values(s.groupMaps);
 
 const groupsInitialized = (s: ChatStoreState): boolean => s.groupsInit;
 
-const getGroupAgents = (groupId: string) => (s: ChatStoreState): ChatGroupAgentItem[] => 
+const getGroupAgents = (groupId: string) => (s: ChatStoreState): ChatGroupAgentItem[] =>
   s.groupAgentMaps[groupId] || [];
 
 const currentGroupAgents = (s: ChatStoreState): ChatGroupAgentItem[] => {
@@ -227,7 +251,7 @@ const currentGroupAgents = (s: ChatStoreState): ChatGroupAgentItem[] => {
   return groupId ? getGroupAgents(groupId)(s) : [];
 };
 
-const getEnabledGroupAgents = (groupId: string) => (s: ChatStoreState): ChatGroupAgentItem[] => 
+const getEnabledGroupAgents = (groupId: string) => (s: ChatStoreState): ChatGroupAgentItem[] =>
   getGroupAgents(groupId)(s).filter(agent => agent.enabled);
 
 const currentEnabledGroupAgents = (s: ChatStoreState): ChatGroupAgentItem[] => {
@@ -235,7 +259,7 @@ const currentEnabledGroupAgents = (s: ChatStoreState): ChatGroupAgentItem[] => {
   return groupId ? getEnabledGroupAgents(groupId)(s) : [];
 };
 
-const getGroupMessages = (groupId: string) => (s: ChatStoreState): ChatMessage[] => 
+const getGroupMessages = (groupId: string) => (s: ChatStoreState): ChatMessage[] =>
   s.messagesMap[groupId] || [];
 
 const currentGroupMessages = (s: ChatStoreState): ChatMessage[] => {
@@ -243,7 +267,7 @@ const currentGroupMessages = (s: ChatStoreState): ChatMessage[] => {
   return groupId ? getGroupMessages(groupId)(s) : [];
 };
 
-const isSupervisorDecisionLoading = (groupId: string) => (s: ChatStoreState): boolean => 
+const isSupervisorDecisionLoading = (groupId: string) => (s: ChatStoreState): boolean =>
   s.supervisorDecisionLoading.includes(groupId);
 
 const isCurrentSupervisorLoading = (s: ChatStoreState): boolean => {
@@ -251,7 +275,7 @@ const isCurrentSupervisorLoading = (s: ChatStoreState): boolean => {
   return groupId ? isSupervisorDecisionLoading(groupId)(s) : false;
 };
 
-const isAgentSpeaking = (groupId: string, agentId: string) => (s: ChatStoreState): boolean => 
+const isAgentSpeaking = (groupId: string, agentId: string) => (s: ChatStoreState): boolean =>
   s.agentSpeakingStatus[groupId]?.[agentId] ?? false;
 
 const getGroupSpeakingAgents = (groupId: string) => (s: ChatStoreState): string[] => {
@@ -269,10 +293,10 @@ const currentGroupSpeakingAgents = (s: ChatStoreState): string[] => {
 const isCurrentGroupBusy = (s: ChatStoreState): boolean => {
   const groupId = activeGroupId(s);
   if (!groupId) return false;
-  
-  return isSupervisorDecisionLoading(groupId)(s) || 
-         getGroupSpeakingAgents(groupId)(s).length > 0 || 
-         isCreatingMessage(s);
+
+  return isSupervisorDecisionLoading(groupId)(s) ||
+    getGroupSpeakingAgents(groupId)(s).length > 0 ||
+    isCreatingMessage(s);
 };
 
 const getGroupStats = (groupId: string) => (s: ChatStoreState) => {
@@ -280,7 +304,7 @@ const getGroupStats = (groupId: string) => (s: ChatStoreState) => {
   const messages = getGroupMessages(groupId)(s);
   const enabledAgents = agents.filter(a => a.enabled);
   const speakingAgents = getGroupSpeakingAgents(groupId)(s);
-  
+
   return {
     totalAgents: agents.length,
     enabledAgents: enabledAgents.length,
