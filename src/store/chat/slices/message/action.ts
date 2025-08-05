@@ -34,14 +34,10 @@ import type { ChatStoreState } from '../../initialState';
 import { chatSelectors } from '../../selectors';
 import { preventLeavingFn, toggleBooleanList } from '../../utils';
 import { MessageDispatch, messagesReducer } from './reducer';
-import { GroupChatSupervisor, SupervisorContext, SupervisorDecision } from './supervisor';
 
 const n = setNamespace('m');
 
 const SWR_USE_FETCH_MESSAGES = 'SWR_USE_FETCH_MESSAGES';
-
-// Group chat supervisor instance
-const supervisor = new GroupChatSupervisor();
 
 export interface ChatMessageAction {
   // create
@@ -68,11 +64,7 @@ export interface ChatMessageAction {
   copyMessage: (id: string, content: string) => Promise<void>;
   refreshMessages: () => Promise<void>;
 
-  // ******* Group Chat Actions ******* //
-  /**
-   * Send a message to group chat and trigger supervisor decision
-   */
-  sendGroupMessage: (params: { groupId: string; message: string; files?: any[] }) => Promise<void>;
+
 
   // =========  ↓ Internal Method ↓  ========== //
   // ========================================== //
@@ -146,35 +138,7 @@ export interface ChatMessageAction {
     action?: Action,
   ) => AbortController | undefined;
 
-  // ******* Group Chat Internal Actions ******* //
-  /**
-   * Trigger supervisor decision for group chat
-   */
-  internal_triggerSupervisorDecision: (groupId: string) => Promise<void>;
-  /**
-   * Execute agent responses for selected agents
-   */
-  internal_executeAgentResponses: (groupId: string, agentIds: string[]) => Promise<void>;
-  /**
-   * Process individual agent message response
-   */
-  internal_processAgentMessage: (
-    groupId: string,
-    agentId: string,
-    userMessageId: string,
-  ) => Promise<void>;
-  /**
-   * Toggle supervisor loading state
-   */
-  internal_toggleSupervisorLoading: (loading: boolean, groupId?: string) => void;
-  /**
-   * Update agent speaking status
-   */
-  internal_updateAgentSpeakingStatus: (groupId: string, agentId: string, speaking: boolean) => void;
-  /**
-   * Set active group
-   */
-  internal_setActiveGroup: (groupId: string) => void;
+
   /**
    * Update group maps
    */
@@ -498,181 +462,7 @@ export const chatMessage: StateCreator<
     }
   },
 
-  // ******* Group Chat Actions Implementation ******* //
 
-  sendGroupMessage: async ({ groupId, message, files }) => {
-    const { internal_createMessage, internal_triggerSupervisorDecision, internal_setActiveGroup } =
-      get();
-
-    if (!message.trim() && (!files || files.length === 0)) return;
-
-    // Set active group
-    internal_setActiveGroup(groupId);
-
-    set({ isCreatingMessage: true }, false, n('creatingGroupMessage/start'));
-
-    try {
-      const userMessage: CreateMessageParams = {
-        content: message,
-        files: files?.map((f) => f.id),
-        role: 'user',
-        groupId, // Use groupId for group chat messages, no sessionId needed
-      };
-
-      const messageId = await internal_createMessage(userMessage);
-
-      // Trigger supervisor decision for group
-      if (messageId) {
-        await internal_triggerSupervisorDecision(groupId);
-      }
-    } catch (error) {
-      console.error('Failed to send group message:', error);
-    } finally {
-      set({ isCreatingMessage: false }, false, n('creatingGroupMessage/end'));
-    }
-  },
-
-  // ******* Group Chat Internal Actions ******* //
-
-  internal_triggerSupervisorDecision: async (groupId: string) => {
-    const {
-      messagesMap,
-      groupAgentMaps,
-      internal_toggleSupervisorLoading,
-      internal_executeAgentResponses,
-    } = get();
-
-    const messages = messagesMap[groupId] || [];
-    const agents = groupAgentMaps[groupId] || [];
-
-    if (messages.length === 0 || agents.length === 0) return;
-
-    internal_toggleSupervisorLoading(true, groupId);
-
-    try {
-      // Create supervisor context
-      const context: SupervisorContext = {
-        availableAgents: agents.filter((a) => a.enabled),
-        groupId,
-        messages,
-      };
-
-      // Make supervisor decision
-      const decision: SupervisorDecision = await supervisor.makeDecision(context);
-
-      // Validate decision
-      if (!supervisor.validateDecision(decision, context)) {
-        console.warn('Invalid supervisor decision:', decision);
-        return;
-      }
-
-      console.log('Supervisor decision:', decision);
-
-      // Execute agent responses if any agents selected
-      if (decision.nextSpeakers.length > 0) {
-        await internal_executeAgentResponses(groupId, decision.nextSpeakers);
-      }
-    } catch (error) {
-      console.error('Supervisor decision failed:', error);
-    } finally {
-      internal_toggleSupervisorLoading(false, groupId);
-    }
-  },
-
-  internal_executeAgentResponses: async (groupId: string, agentIds: string[]) => {
-    const { messagesMap, internal_processAgentMessage } = get();
-
-    const messages = messagesMap[groupId] || [];
-    const lastUserMessage = messages.findLast((m) => m.role === 'user');
-
-    if (!lastUserMessage) return;
-
-    // Process each agent response in parallel
-    const responsePromises = agentIds.map((agentId) =>
-      internal_processAgentMessage(groupId, agentId, lastUserMessage.id),
-    );
-
-    try {
-      await Promise.all(responsePromises);
-    } catch (error) {
-      console.error('Failed to execute agent responses:', error);
-    }
-  },
-
-  internal_processAgentMessage: async (groupId: string, agentId: string, userMessageId: string) => {
-    const {
-      messagesMap,
-      internal_createMessage,
-      internal_updateAgentSpeakingStatus,
-      internal_coreProcessMessage,
-    } = get();
-
-    internal_updateAgentSpeakingStatus(groupId, agentId, true);
-
-    try {
-      // Create assistant message placeholder for this specific agent
-      const assistantMessage: CreateMessageParams = {
-        role: 'assistant',
-        content: '',
-        groupId: groupId, // Use groupId instead of sessionId for group chat messages
-        parentId: userMessageId,
-        agentId, // Mark which agent is responding
-        fromModel: agentId, // TODO: Get actual model from agent config
-        fromProvider: 'openai', // TODO: Get from agent config
-      };
-
-      const messageId = await internal_createMessage(assistantMessage, { skipRefresh: true });
-
-      if (messageId) {
-        // Get group messages for context
-        const messages = messagesMap[groupId] || [];
-
-        // Reuse existing core processing logic
-        await internal_coreProcessMessage(messages, messageId, {
-          // Pass group-specific context
-          groupId,
-          agentId,
-        });
-      }
-    } catch (error) {
-      console.error(`Failed to process message for agent ${agentId}:`, error);
-    } finally {
-      internal_updateAgentSpeakingStatus(groupId, agentId, false);
-    }
-  },
-
-  internal_toggleSupervisorLoading: (loading: boolean, groupId?: string) => {
-    set(
-      {
-        supervisorDecisionLoading: groupId
-          ? toggleBooleanList(get().supervisorDecisionLoading, groupId, loading)
-          : loading
-            ? get().supervisorDecisionLoading
-            : [],
-      },
-      false,
-      n(`toggleSupervisorLoading/${loading ? 'start' : 'end'}`),
-    );
-  },
-
-  internal_updateAgentSpeakingStatus: (groupId: string, agentId: string, speaking: boolean) => {
-    set(
-      produce((state: ChatStoreState) => {
-        if (!state.agentSpeakingStatus[groupId]) {
-          state.agentSpeakingStatus[groupId] = {};
-        }
-        state.agentSpeakingStatus[groupId][agentId] = speaking;
-      }),
-      false,
-      n(`updateAgentSpeakingStatus/${groupId}/${agentId}`),
-    );
-  },
-
-  internal_setActiveGroup: (groupId: string) => {
-    if (get().activeGroupId === groupId) return;
-
-    set({ activeGroupId: groupId }, false, n('setActiveGroup'));
-  },
 
   internal_updateGroupMaps: (groups: ChatGroupItem[]) => {
     const nextGroupMaps = groups.reduce(

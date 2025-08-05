@@ -30,6 +30,13 @@ export interface SendThreadMessageParams {
   onlyAddUserMessage?: boolean;
 }
 
+export interface SendGroupMessageParams {
+  files?: UploadFileItem[];
+  groupId: string;
+  message: string;
+  onlyAddUserMessage?: boolean;
+}
+
 export interface ModelRankItem {
   count: number;
   id: string | null;

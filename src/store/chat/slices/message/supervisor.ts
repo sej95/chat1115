@@ -34,19 +34,19 @@ Examples: ["agent1", "agent2"] or [] or ["agent3"]`;
    */
   async makeDecision(context: SupervisorContext): Promise<SupervisorDecision> {
     const { messages, availableAgents } = context;
-    
+
     // If no agents available, stop conversation
     if (availableAgents.length === 0) {
-      return { nextSpeakers: [] };
+      // return { nextSpeakers: [] };k
     }
 
     try {
       // Prepare agent descriptions for the supervisor
       const agentDescriptions = this.buildAgentDescriptions(availableAgents);
-      
+
       // Create supervisor prompt with conversation context
       const conversationHistory = groupSupervisorPrompts(messages);
-      
+
       const supervisorPrompt = `${this.systemPrompt}
 
 Available agents:
@@ -58,14 +58,14 @@ Which agents should respond next?`;
 
       // Call LLM to make decision
       const response = await this.callLLMForDecision(supervisorPrompt);
-      
+
       // Parse and validate response
       const decision = this.parseDecision(response, availableAgents);
-      
+
       return decision;
     } catch (error) {
       console.error('Supervisor decision failed:', error);
-      
+
       // Fallback: select one random agent if error occurs
       return this.getFallbackDecision(availableAgents, messages);
     }
@@ -85,30 +85,40 @@ Which agents should respond next?`;
    * Call LLM service to get supervisor decision
    */
   private async callLLMForDecision(prompt: string): Promise<string> {
-    // Use a lightweight model for supervisor decisions to reduce latency
     const supervisorConfig = {
-      model: 'gpt-4o-mini', // Fast and cost-effective for simple decisions
-      temperature: 0.3, // Lower temperature for more consistent decisions
       max_tokens: 100, // Short response expected
+      model: 'gemini-2.5-flash', // Fast and cost-effective for simple decisions
+      provider: 'google',
+      temperature: 0.3, // Lower temperature for more consistent decisions
     };
 
     let response = '';
-    
-    await chatService.createAssistantMessage(
-      {
-        messages: [{ role: 'user', content: prompt, id: 'supervisor-query' }],
-        ...supervisorConfig,
-      },
-      {
+    const abortController = new AbortController();
+
+    return new Promise((resolve, reject) => {
+      chatService.fetchPresetTaskResult({
+        abortController,
+        onError: (error) => {
+          reject(error);
+        },
+        onFinish: async () => {
+          resolve(response.trim());
+        },
+        onLoadingChange: (loading) => {
+          // Optional: Could emit loading state if needed for UI feedback
+          console.log('Supervisor LLM loading state:', loading);
+        },
         onMessageHandle: (chunk) => {
           if (chunk.type === 'text') {
             response += chunk.text;
           }
         },
-      },
-    );
-
-    return response.trim();
+        params: {
+          messages: [{ content: prompt, role: 'user' }],
+          ...supervisorConfig,
+        },
+      });
+    });
   }
 
   /**
@@ -120,13 +130,13 @@ Which agents should respond next?`;
   ): SupervisorDecision {
     try {
       // Extract JSON from response (handle cases where LLM adds extra text)
-      const jsonMatch = response.match(/\[.*?\]/);
+      const jsonMatch = response.match(/\[.*?]/);
       if (!jsonMatch) {
         throw new Error('No JSON array found in response');
       }
 
       const agentIds = JSON.parse(jsonMatch[0]) as string[];
-      
+
       // Validate agent IDs exist in available agents
       const validAgentIds = agentIds.filter((id) =>
         availableAgents.some((agent) => agent.agentId === id && agent.enabled),
@@ -147,20 +157,20 @@ Which agents should respond next?`;
     messages: ChatMessage[],
   ): SupervisorDecision {
     const enabledAgents = availableAgents.filter((agent) => agent.enabled);
-    
+
     if (enabledAgents.length === 0) {
       return { nextSpeakers: [] };
     }
 
     // Determine last speaker from messages to avoid consecutive responses
-    const lastMessage = messages[messages.length - 1];
+    const lastMessage = messages.at(-1);
     const lastSpeakerId = lastMessage?.role === 'user' ? 'user' : lastMessage?.agentId;
 
     // Avoid consecutive responses from same agent
     const eligibleAgents = enabledAgents.filter((agent) => agent.agentId !== lastSpeakerId);
-    
+
     const candidateAgents = eligibleAgents.length > 0 ? eligibleAgents : enabledAgents;
-    
+
     // Select first agent as fallback (could be randomized)
     return { nextSpeakers: [candidateAgents[0].agentId] };
   }
