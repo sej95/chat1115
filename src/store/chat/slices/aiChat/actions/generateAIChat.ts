@@ -1,12 +1,13 @@
 /* eslint-disable sort-keys-fix/sort-keys-fix, typescript-sort-keys/interface */
 // Disable the auto sort key eslint rule to make the code more logic and readable
-import { TraceEventType, TraceNameMap } from '@lobechat/types';
+import { TraceEventType, TraceNameMap, ChatErrorType } from '@lobechat/types';
 import { t } from 'i18next';
 import { produce } from 'immer';
 import { template } from 'lodash-es';
 import { StateCreator } from 'zustand/vanilla';
 
 import { LOADING_FLAT, MESSAGE_CANCEL_FLAT } from '@/const/message';
+import { TraceEventType, TraceNameMap } from '@/const/trace';
 import { isDesktop, isServerMode } from '@/const/version';
 import { knowledgeBaseQAPrompts } from '@/prompts/knowledgeBaseQA';
 import { chatService } from '@/services/chat';
@@ -437,11 +438,13 @@ export const generateAIChat: StateCreator<
     const assistantMessage: CreateMessageParams = {
       role: 'assistant',
       content: LOADING_FLAT,
-      fromModel: model,
-      fromProvider: provider,
+      fromModel: "gemini-2.5-flash",
+      fromProvider: "google",
 
       parentId: userMessageId,
-      sessionId: get().activeId,
+      // TODO: [Group Chat] Better implementation for group chat
+      sessionId: params?.groupId ? undefined : get().activeId,
+      groupId: params?.groupId,
       topicId: activeTopicId, // if there is activeTopicId，then add it to topicId
       threadId: params?.threadId,
       fileChunks,
@@ -995,7 +998,6 @@ export const generateAIChat: StateCreator<
   internal_executeAgentResponses: async (groupId: string, agentIds: string[]) => {
     const { internal_processAgentMessage } = get();
 
-
     const responsePromises = agentIds.map((agentId) =>
       internal_processAgentMessage(groupId, agentId),
     );
@@ -1010,36 +1012,125 @@ export const generateAIChat: StateCreator<
   internal_processAgentMessage: async (groupId: string, agentId: string) => {
     const {
       messagesMap,
-      internal_createMessage,
       internal_updateAgentSpeakingStatus,
-      internal_coreProcessMessage,
+      internal_createMessage,
+      internal_fetchAIChatMessage,
+      refreshMessages,
+      activeTopicId,
+      internal_dispatchMessage,
     } = get();
 
     internal_updateAgentSpeakingStatus(groupId, agentId, true);
 
     try {
+      const messages = messagesMap[messageMapKey(groupId, activeTopicId)] || [];
+      // if (messages.length === 0) return;
+
+      // Get agent configuration
+      const agentStoreState = getAgentStoreState();
+      const agentConfig = agentSelectors.getAgentConfigById(agentId)(agentStoreState);
+      const { model, provider } = agentConfig;
+
+      if (!provider) {
+        console.error(`No provider configured for agent ${agentId}`);
+        return;
+      }
+
+      // Build group chat system prompt
+      const baseSystemRole = agentConfig.systemRole || '';
+      const groupChatSystemPrompt = `${baseSystemRole}
+
+## Group Chat Context
+You are participating in a group chat with multiple AI agents. Please follow these guidelines:
+- You can reference and respond to other participants by mentioning their agent IDs
+- Engage naturally in the conversation flow
+- Be collaborative and build upon others' responses when appropriate
+- Keep your responses concise and relevant to the ongoing discussion
+- You can ask questions to other agents or continue previous topics
+
+## Current Group ID: ${groupId}
+## Your Agent ID: ${agentId}
+
+Please respond as this agent would, considering the full conversation history provided below.`;
+
+      // Get the most recent user or assistant message to determine parentId
+      const lastMessage = messages.at(-1);
+      if (!lastMessage) return;
+
+      // Create assistant message for this agent's response
       const assistantMessage: CreateMessageParams = {
         role: 'assistant',
-        content: '',
-        groupId: groupId, // Use groupId instead of sessionId for group chat messages
-        agentId, // Mark which agent is responding
-        fromModel: agentId, // TODO: Get actual model from agent config
-        fromProvider: 'openai', // TODO: Get from agent config
+        content: LOADING_FLAT,
+        fromModel: model,
+        fromProvider: provider,
+        groupId: groupId,
+        topicId: activeTopicId,
+        // Note: Agent messages don't use sessionId in group chat context
       };
 
-      const messageId = await internal_createMessage(assistantMessage, { skipRefresh: true });
+      const assistantId = await internal_createMessage(assistantMessage);
+      if (!assistantId) return;
 
-      if (messageId) {
-        const messages = messagesMap[groupId] || [];
+      // Prepare messages with custom system prompt for group chat
+      const systemMessage: ChatMessage = {
+        id: 'group-system',
+        role: 'system',
+        content: groupChatSystemPrompt,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        meta: {},
+      };
 
-        await internal_coreProcessMessage(messages, messageId, {
-          groupId,
-          agentId,
-        });
-      }
+      // Build full message history for context
+      const messagesWithSystem = [systemMessage, ...messages];
+
+      // Start loading state
+      get().internal_toggleChatLoading(
+        true,
+        assistantId,
+        n('processAgentMessage(start)', { agentId, groupId, assistantId }),
+      );
+
+      // Fetch AI response
+      await internal_fetchAIChatMessage({
+        messages: messagesWithSystem,
+        messageId: assistantId,
+        model,
+        provider,
+        params: {
+          traceId: `group-${groupId}-agent-${agentId}`,
+        },
+      });
+
+      // Refresh messages to ensure consistency
+      await refreshMessages();
+
     } catch (error) {
       console.error(`Failed to process message for agent ${agentId}:`, error);
+
+      // Update error state if we have an assistant message
+      const currentMessages = get().messagesMap[groupId] || [];
+      const errorMessage = currentMessages.find(m =>
+        m.role === 'assistant' &&
+        m.groupId === groupId &&
+        m.content === LOADING_FLAT
+      );
+
+      if (errorMessage) {
+        internal_dispatchMessage({
+          id: errorMessage.id,
+          type: 'updateMessage',
+          value: {
+            content: `Error: Failed to generate response. ${error instanceof Error ? error.message : 'Unknown error'}`,
+            error: {
+              type: ChatErrorType.CreateMessageError,
+              message: error instanceof Error ? error.message : 'Unknown error'
+            }
+          },
+        });
+      }
     } finally {
+      get().internal_toggleChatLoading(false, undefined, n('processAgentMessage(end)'));
       internal_updateAgentSpeakingStatus(groupId, agentId, false);
     }
   },
