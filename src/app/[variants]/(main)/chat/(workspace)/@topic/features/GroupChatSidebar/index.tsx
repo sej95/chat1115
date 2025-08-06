@@ -12,11 +12,11 @@ import { useSessionStore } from '@/store/session';
 import { sessionSelectors } from '@/store/session/selectors';
 import { useUserStore } from '@/store/user';
 import { userProfileSelectors } from '@/store/user/selectors';
-import { LobeGroupSession } from '@/types/session';
 
 import { MemberSelectionModal } from '@/components/MemberSelectionModal';
 import { ChatGroupAgentItem } from '@/database/schemas/chatGroup';
 import TopicListContent from '../TopicListContent';
+import { LobeGroupSession } from 'packages/types/src/session';
 import Header from '../Header';
 
 const useStyles = createStyles(({ css, token }) => ({
@@ -24,6 +24,7 @@ const useStyles = createStyles(({ css, token }) => ({
     padding: 0 ${token.paddingSM}px;
     min-height: 200px;
     height: fit-content;
+    overflow-y: auto;
   `,
   emptyState: css`
     color: ${token.colorTextSecondary};
