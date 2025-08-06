@@ -618,6 +618,8 @@ export const generateAIChat: StateCreator<
       internal_toggleChatReasoning,
     } = get();
 
+    console.log("internal_fetchAIChatMessage", { messages, messageId, params, provider, model });
+
     const abortController = internal_toggleChatLoading(
       true,
       messageId,
@@ -686,6 +688,8 @@ export const generateAIChat: StateCreator<
     // to upload image
     const uploadTasks: Map<string, Promise<{ id?: string; url?: string }>> = new Map();
 
+    console.log("internal_fetchAIChatMessage", { preprocessMsgs, model, provider, agentConfig });
+
     const historySummary = chatConfig.enableCompressHistory
       ? topicSelectors.currentActiveTopicSummary(get())
       : undefined;
@@ -714,6 +718,7 @@ export const generateAIChat: StateCreator<
         content,
         { traceId, observationId, toolCalls, reasoning, grounding, usage, speed },
       ) => {
+        console.log("internal_fetchAIChatMessage: onFinish", { content, traceId, observationId, toolCalls, reasoning, grounding, usage, speed });
         // if there is traceId, update it
         if (traceId) {
           msgTraceId = traceId;
@@ -1063,12 +1068,12 @@ Please respond as this agent would, considering the full conversation history pr
         content: LOADING_FLAT,
         fromModel: "gemini-2.5-flash",
         fromProvider: "google",
-        groupId: groupId,
+        groupId,
+        agentId,
         topicId: activeTopicId,
       };
 
       const assistantId = await internal_createMessage(assistantMessage);
-      if (!assistantId) return;
 
       // Prepare messages with custom system prompt for group chat
       const systemMessage: ChatMessage = {
@@ -1082,14 +1087,6 @@ Please respond as this agent would, considering the full conversation history pr
 
       const messagesWithSystem = [systemMessage, ...messages];
 
-      // Start loading state
-      get().internal_toggleChatLoading(
-        true,
-        assistantId,
-        n('processAgentMessage(start)', { agentId, groupId, assistantId }),
-      );
-
-      // Fetch AI response
       await internal_fetchAIChatMessage({
         messages: messagesWithSystem,
         messageId: assistantId,
