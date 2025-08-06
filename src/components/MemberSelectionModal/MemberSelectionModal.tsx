@@ -198,7 +198,6 @@ const MemberSelectionModal = memo<MemberSelectionModalProps>(({
     });
   }, [availableAgents, searchTerm]);
 
-  // Get selected agent sessions and format them for LobeUI List
   const selectedAgentListItems = useMemo(() => {
     return selectedAgents
       .map(agentId => {
