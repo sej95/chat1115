@@ -260,8 +260,8 @@ export const chatMessage: StateCreator<
   },
   useFetchMessages: (enable, sessionId, activeTopicId, groupId) =>
     useClientDataSWR<ChatMessage[]>(
-      enable ? [SWR_USE_FETCH_MESSAGES, sessionId, activeTopicId] : null,
-      async ([, sessionId, topicId]: [string, string, string | undefined]) =>
+      enable ? [SWR_USE_FETCH_MESSAGES, sessionId, activeTopicId, groupId] : null,
+      async ([, sessionId, topicId, groupId]: [string, string, string | undefined, string | undefined]) =>
         messageService.getMessages(sessionId, topicId, groupId),
       {
         onSuccess: (messages, key) => {
@@ -269,6 +269,9 @@ export const chatMessage: StateCreator<
             ...get().messagesMap,
             [messageMapKey(sessionId || groupId || '', activeTopicId)]: messages,
           };
+
+          console.log("useFetchMessages, onSuccess", { nextMap, messages, key });
+
           // no need to update map if the messages have been init and the map is the same
           if (get().messagesInit && isEqual(nextMap, get().messagesMap)) return;
 
@@ -281,7 +284,13 @@ export const chatMessage: StateCreator<
       },
     ),
   refreshMessages: async () => {
-    await mutate([SWR_USE_FETCH_MESSAGES, get().activeId, get().activeTopicId]);
+    const { activeId, activeTopicId, activeGroupId } = get();
+    // For group chats, use activeGroupId; for regular chats, use activeId
+    const sessionId = activeGroupId || activeId;
+
+    console.log("refreshMessages", { sessionId, activeTopicId, activeGroupId });
+
+    await mutate([SWR_USE_FETCH_MESSAGES, sessionId, activeTopicId, activeGroupId]);
   },
 
   // the internal process method of the AI message

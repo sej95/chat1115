@@ -1,11 +1,11 @@
 'use client';
 
-import { Avatar, Modal } from '@lobehub/ui';
-import { Button, Empty, Input, List, Typography } from 'antd';
+import { ActionIcon, Avatar, List, Modal, SearchBar } from '@lobehub/ui';
+import { Button, Checkbox, Empty, List as AntdList, Typography } from 'antd';
 import { useHover } from 'ahooks';
 import { createStyles } from 'antd-style';
-import { Search, X } from 'lucide-react';
-import { memo, useMemo, useRef, useState } from 'react';
+import { X } from 'lucide-react';
+import { type ChangeEvent, memo, useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Flexbox } from 'react-layout-kit';
 
@@ -14,7 +14,6 @@ import { LobeAgentSession, LobeSessionType } from '@/types/session';
 
 const { Text } = Typography;
 
-// Separate component for available agent items to properly use hooks
 const AvailableAgentItem = memo<{
   agent: LobeAgentSession;
   cx: any;
@@ -25,7 +24,7 @@ const AvailableAgentItem = memo<{
 }>(({ agent, isSelected, onToggle, styles, cx, t }) => {
   const ref = useRef(null);
   const isHovering = useHover(ref);
-  
+
   const _agentId = agent.config?.id;
   const title = agent.meta?.title || t('untitledAgent', { ns: 'chat' });
   const description = agent.meta?.description || '';
@@ -35,22 +34,25 @@ const AvailableAgentItem = memo<{
   if (!_agentId) return null;
 
   return (
-    <List.Item
-      className={cx(styles.listItem, isSelected && styles.selectedItem)}
+    <AntdList.Item
+      className={cx(styles.listItem)}
       onClick={() => onToggle(_agentId)}
       ref={ref}
     >
       <Flexbox align="center" gap={12} horizontal width="100%">
+        <Checkbox
+          checked={isSelected}
+          onChange={(e) => {
+            e.stopPropagation();
+            onToggle(_agentId);
+          }}
+        />
         <Avatar
           animation={isHovering}
           avatar={avatar}
           background={avatarBackground}
           shape="circle"
           size={40}
-          style={{
-            border: isSelected ? '2px solid #1890ff' : '2px solid transparent',
-            transition: 'border-color 0.2s ease',
-          }}
         />
         <Flexbox flex={1} gap={2}>
           <Text className={styles.title}>{title}</Text>
@@ -60,101 +62,49 @@ const AvailableAgentItem = memo<{
             </Text>
           )}
         </Flexbox>
-        {isSelected && (
-          <div className={styles.selectedIndicator}>
-            ✓
-          </div>
-        )}
       </Flexbox>
-    </List.Item>
+    </AntdList.Item>
   );
 });
 
 AvailableAgentItem.displayName = 'AvailableAgentItem';
 
-// Separate component for selected agent items to properly use hooks
-const SelectedAgentItem = memo<{
-  agent: LobeAgentSession;
-  onRemove: (_agentId: string) => void;
-  styles: any;
-  t: any;
-}>(({ agent, onRemove, styles, t }) => {
-  const ref = useRef(null);
-  const isHovering = useHover(ref);
-  
-  const _agentId = agent.config?.id;
-  const title = agent.meta?.title || t('untitledAgent', { ns: 'chat' });
-  const description = agent.meta?.description || '';
-  const avatar = agent.meta?.avatar;
-  const avatarBackground = agent.meta?.backgroundColor;
-
-  if (!_agentId) return null;
-
-  return (
-    <List.Item className={styles.memberCard} ref={ref}>
-      <Flexbox align="center" gap={12} horizontal width="100%">
-        <Avatar
-          animation={isHovering}
-          avatar={avatar}
-          background={avatarBackground}
-          shape="circle"
-          size={40}
-        />
-        <Flexbox flex={1} gap={2}>
-          <Text className={styles.title}>{title}</Text>
-          {description && (
-            <Text className={styles.description} ellipsis>
-              {description}
-            </Text>
-          )}
-        </Flexbox>
-        <Button
-          icon={<X size={14} />}
-          onClick={() => onRemove(_agentId)}
-          size="small"
-          style={{ color: '#999' }}
-          type="text"
-        />
-      </Flexbox>
-    </List.Item>
-  );
-});
-
-SelectedAgentItem.displayName = 'SelectedAgentItem';
-
 const useStyles = createStyles(({ css, token }) => ({
+  container: css`
+    display: flex;
+    flex-direction: row;
+    height: 500px;
+    border: 1px solid ${token.colorBorderSecondary};
+    border-radius: ${token.borderRadius}px;
+  `,
   description: css`
     color: ${token.colorTextSecondary};
     font-size: 11px;
     line-height: 1.2;
   `,
+  leftColumn: css`
+    flex: 1;
+    overflow-y: auto;
+    border-right: 1px solid ${token.colorBorderSecondary};
+    padding: ${token.paddingSM}px;
+    select: none;
+  `,
   listItem: css`
     position: relative;
     margin-block: 2px;
-    padding: 12px 8px;
-    border-radius: ${token.borderRadius}px;
     cursor: pointer;
     transition: all 0.2s ease;
+    padding: ${token.paddingSM}px !important;
+    border-radius: ${token.borderRadius}px;
 
     &:hover {
       background: ${token.colorFillTertiary};
     }
   `,
-  memberCard: css`
-    background: ${token.colorFillQuaternary};
-    border-radius: ${token.borderRadius}px;
-    margin: 4px 0;
-    padding: 12px 8px;
-  `,
-  selectedIndicator: css`
-    background: ${token.colorPrimary};
-    border-radius: 50%;
-    color: white;
-    font-size: 10px;
-    height: 16px;
-    line-height: 16px;
-    text-align: center;
-    width: 16px;
+  rightColumn: css`
+    flex: 1;
+    overflow-y: auto;
+    padding: ${token.paddingSM}px;
   `,
   selectedItem: css`
     background: ${token.colorFillQuaternary};
@@ -185,10 +135,10 @@ export interface MemberSelectionModalProps {
   preSelectedAgents?: string[];
 }
 
-const MemberSelectionModal = memo<MemberSelectionModalProps>(({ 
+const MemberSelectionModal = memo<MemberSelectionModalProps>(({
   mode,
-  open, 
-  onCancel, 
+  open,
+  onCancel,
   onConfirm,
   preSelectedAgents = []
 }) => {
@@ -203,6 +153,25 @@ const MemberSelectionModal = memo<MemberSelectionModalProps>(({
   });
 
   const currentSessionId = useSessionStore((s) => s.activeId);
+
+  const handleAgentToggle = (agentId: string) => {
+    setSelectedAgents((prev) =>
+      prev.includes(agentId)
+        ? prev.filter((id) => id !== agentId)
+        : [...prev, agentId],
+    );
+  };
+
+  const handleRemoveAgent = (agentId: string) => {
+    setSelectedAgents((prev) => prev.filter((id) => id !== agentId));
+  };
+
+  const handleSearchChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      setSearchTerm(e.target.value);
+    },
+    [],
+  );
 
   // Filter logic based on mode
   const availableAgents = useMemo(() => {
@@ -229,24 +198,43 @@ const MemberSelectionModal = memo<MemberSelectionModalProps>(({
     });
   }, [availableAgents, searchTerm]);
 
-  // Get selected agent sessions
-  const selectedAgentSessions = useMemo(() => {
-    return selectedAgents.map(agentId =>
-      agentSessions.find(agent => agent.config.id === agentId)
-    ).filter(Boolean) as LobeAgentSession[];
-  }, [selectedAgents, agentSessions]);
+  // Get selected agent sessions and format them for LobeUI List
+  const selectedAgentListItems = useMemo(() => {
+    return selectedAgents
+      .map(agentId => {
+        const agent = agentSessions.find(session => session.config.id === agentId);
+        if (!agent) return null;
 
-  const handleAgentToggle = (agentId: string) => {
-    setSelectedAgents((prev) =>
-      prev.includes(agentId)
-        ? prev.filter((id) => id !== agentId)
-        : [...prev, agentId],
-    );
-  };
+        const title = agent.meta?.title || t('untitledAgent', { ns: 'chat' });
+        const avatar = agent.meta?.avatar;
+        const avatarBackground = agent.meta?.backgroundColor;
+        const description = agent.meta?.description || '';
 
-  const handleRemoveAgent = (agentId: string) => {
-    setSelectedAgents((prev) => prev.filter((id) => id !== agentId));
-  };
+        return {
+          actions: (
+            <ActionIcon
+              icon={X}
+              onClick={() => handleRemoveAgent(agentId)}
+              size="small"
+              style={{ color: '#999' }}
+            />
+          ),
+          avatar: (
+            <Avatar
+              avatar={avatar}
+              background={avatarBackground}
+              shape="circle"
+              size={40}
+            />
+          ),
+          description,
+          key: agentId,
+          showAction: true,
+          title,
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null);
+  }, [selectedAgents, agentSessions, t, handleRemoveAgent]);
 
   const handleReset = () => {
     setSelectedAgents(preSelectedAgents);
@@ -264,7 +252,7 @@ const MemberSelectionModal = memo<MemberSelectionModalProps>(({
   };
 
   // Dynamic content based on mode
-  const modalTitle = mode === 'create' 
+  const modalTitle = mode === 'create'
     ? 'Select Initial Members'
     : t('inviteMembers', { ns: 'chat' });
 
@@ -297,18 +285,16 @@ const MemberSelectionModal = memo<MemberSelectionModalProps>(({
       title={modalTitle}
       width={800}
     >
-      <Flexbox gap={16} horizontal style={{ border: '1px solid #f0f0f0', borderRadius: 8, height: 500 }}>
+      <Flexbox className={styles.container} horizontal>
         {/* Left Column - Available Agents */}
-        <Flexbox flex={1} gap={12} style={{ borderRight: '1px solid #f0f0f0', padding: 16 }}>
-          <Flexbox gap={8}>
-            <Input
-              allowClear
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder={t('searchAgents', { ns: 'chat' })}
-              prefix={<Search size={16} />}
-              value={searchTerm}
-            />
-          </Flexbox>
+        <Flexbox className={styles.leftColumn} flex={1} gap={12}>
+          <SearchBar
+            allowClear
+            onChange={handleSearchChange}
+            placeholder={t('searchAgents', { ns: 'chat' })}
+            value={searchTerm}
+            variant="filled"
+          />
 
           <Flexbox flex={1} style={{ overflowY: 'auto' }}>
             {filteredAvailableAgents.length === 0 ? (
@@ -317,7 +303,7 @@ const MemberSelectionModal = memo<MemberSelectionModalProps>(({
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
               />
             ) : (
-              <List
+              <AntdList
                 dataSource={filteredAvailableAgents}
                 renderItem={(agent) => {
                   const agentId = agent.config?.id;
@@ -344,39 +330,20 @@ const MemberSelectionModal = memo<MemberSelectionModalProps>(({
         </Flexbox>
 
         {/* Right Column - Selected Agents */}
-        <Flexbox flex={1} style={{ padding: 16 }}>
-          <Flexbox flex={1} style={{ overflowY: 'auto' }}>
-            {selectedAgentSessions.length === 0 ? (
-              <Flexbox align="center" flex={1} justify="center">
-                <Empty
-                  description={mode === 'create' 
-                    ? 'No members selected'
-                    : t('noSelectedAgents', { ns: 'chat' })
-                  }
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                />
-              </Flexbox>
-            ) : (
-              <List
-                dataSource={selectedAgentSessions}
-                renderItem={(agent) => {
-                  const agentId = agent.config?.id;
-                  if (!agentId) return null;
-
-                  return (
-                    <SelectedAgentItem
-                      agent={agent}
-                      key={agentId}
-                      onRemove={handleRemoveAgent}
-                      styles={styles}
-                      t={t}
-                    />
-                  );
-                }}
-                split={false}
+        <Flexbox className={styles.rightColumn} flex={1}>
+          {selectedAgentListItems.length === 0 ? (
+            <Flexbox align="center" flex={1} justify="center">
+              <Empty
+                description={mode === 'create'
+                  ? 'No members selected'
+                  : t('noSelectedAgents', { ns: 'chat' })
+                }
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
               />
-            )}
-          </Flexbox>
+            </Flexbox>
+          ) : (
+            <List items={selectedAgentListItems} />
+          )}
         </Flexbox>
       </Flexbox>
     </Modal>
