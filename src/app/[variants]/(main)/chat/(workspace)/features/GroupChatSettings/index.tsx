@@ -11,6 +11,7 @@ import { TITLE_BAR_HEIGHT } from '@/features/ElectronTitlebar';
 import { GroupCategory, GroupSettings } from '@/features/GroupChatSettings';
 import { useChatGroupStore } from '@/store/chatGroup';
 import { GroupSettingsTabs } from '@/store/global/initialState';
+import Footer from '@/features/Setting/Footer';
 
 const GroupChatSettings = memo(() => {
   const [showGroupSetting] = useChatGroupStore((s) => [s.showGroupSetting]);
@@ -48,6 +49,7 @@ const GroupChatSettings = memo(() => {
       }}
     >
       <GroupSettings tab={tab} />
+      <Footer />
     </Drawer>
   );
 });
