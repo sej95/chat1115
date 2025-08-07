@@ -12,9 +12,8 @@ export interface CreateTopicParams {
 
 export interface QueryTopicParams {
   current?: number;
-  groupId?: string | null;
+  containerId?: string | null; // sessionId or groupId
   pageSize?: number;
-  sessionId?: string | null;
 }
 
 export interface ITopicService {

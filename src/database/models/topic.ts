@@ -1,5 +1,5 @@
 import { count, sql } from 'drizzle-orm';
-import { and, desc, eq, gt, ilike, inArray, isNull } from 'drizzle-orm/expressions';
+import { and, desc, eq, gt, ilike, inArray, isNull, or } from 'drizzle-orm/expressions';
 
 import { LobeChatDatabase } from '@/database/type';
 import {
@@ -23,10 +23,9 @@ export interface CreateTopicParams {
 }
 
 interface QueryTopicParams {
+  containerId?: string | null; // sessionId or groupId
   current?: number;
-  groupId?: string | null;
   pageSize?: number;
-  sessionId?: string | null;
 }
 
 export class TopicModel {
@@ -39,7 +38,7 @@ export class TopicModel {
   }
   // **************** Query *************** //
 
-  query = async ({ current = 0, pageSize = 9999, sessionId, groupId }: QueryTopicParams = {}) => {
+  query = async ({ current = 0, pageSize = 9999, containerId }: QueryTopicParams = {}) => {
     const offset = current * pageSize;
     return (
       this.db
@@ -53,7 +52,7 @@ export class TopicModel {
           updatedAt: topics.updatedAt,
         })
         .from(topics)
-        .where(and(eq(topics.userId, this.userId), this.matchContainer(sessionId, groupId)))
+        .where(and(eq(topics.userId, this.userId), this.matchContainer(containerId)))
         // In boolean sorting, false is considered "smaller" than true.
         // So here we use desc to ensure that topics with favorite as true are in front.
         .orderBy(desc(topics.favorite), desc(topics.updatedAt))
@@ -76,7 +75,7 @@ export class TopicModel {
       .where(eq(topics.userId, this.userId));
   };
 
-  queryByKeyword = async (keyword: string, sessionId?: string | null, groupId?: string | null): Promise<TopicItem[]> => {
+  queryByKeyword = async (keyword: string, containerId?: string | null): Promise<TopicItem[]> => {
     if (!keyword) return [];
 
     const keywordLowerCase = keyword.toLowerCase();
@@ -86,7 +85,7 @@ export class TopicModel {
       orderBy: [desc(topics.updatedAt)],
       where: and(
         eq(topics.userId, this.userId),
-        this.matchContainer(sessionId, groupId),
+        this.matchContainer(containerId),
         ilike(topics.title, `%${keywordLowerCase}%`),
       ),
     });
@@ -101,7 +100,7 @@ export class TopicModel {
           eq(messages.userId, this.userId),
           ilike(messages.content, `%${keywordLowerCase}%`),
           eq(topics.userId, this.userId),
-          this.matchContainer(sessionId, groupId),
+          this.matchContainer(containerId),
         ),
       )
       .groupBy(messages.topicId);
@@ -184,22 +183,21 @@ export class TopicModel {
     id: string = this.genId(),
   ): Promise<TopicItem> => {
     return this.db.transaction(async (tx) => {
-      // Ensure mutual exclusivity: a topic can have either sessionId OR groupId, but not both
       const insertData = {
         ...params,
-        groupId: params.groupId ? null : params.groupId,
-        id: id,
-        sessionId: params.sessionId ? null : params.sessionId,
+        groupId: params.groupId || null,
+        id,
+        sessionId: params.sessionId || null,
         userId: this.userId,
       };
 
-      // 在 topics 表中插入新的 topic
+      // Insert new topic
       const [topic] = await tx
         .insert(topics)
         .values(insertData)
         .returning();
 
-      // 如果有关联的 messages, 更新它们的 topicId
+      // Update associated messages' topicId
       if (messageIds && messageIds.length > 0) {
         await tx
           .update(messages)
@@ -358,9 +356,8 @@ export class TopicModel {
   private matchGroup = (groupId?: string | null) =>
     groupId ? eq(topics.groupId, groupId) : isNull(topics.groupId);
 
-  private matchContainer = (sessionId?: string | null, groupId?: string | null) => {
-    if (sessionId) return eq(topics.sessionId, sessionId);
-    if (groupId) return eq(topics.groupId, groupId);
+  private matchContainer = (containerId?: string | null) => {
+    if (containerId) return or(eq(topics.sessionId, containerId), eq(topics.groupId, containerId));
     // If neither is provided, match topics with no session or group
     return and(isNull(topics.sessionId), isNull(topics.groupId));
   };

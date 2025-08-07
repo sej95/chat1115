@@ -78,16 +78,15 @@ export const chatTopic: StateCreator<
   },
 
   createTopic: async (sessionId, groupId) => {
-    const { activeId, internal_createTopic } = get();
+    const { activeId, activeSessionType, internal_createTopic } = get();
 
     const messages = chatSelectors.activeBaseChats(get());
 
     set({ creatingTopic: true }, false, n('creatingTopic/start'));
     const topicId = await internal_createTopic({
-      sessionId: sessionId || (groupId ? undefined : activeId),
-      groupId,
       title: t('defaultTitle', { ns: 'topic' }),
       messages: messages.map((m) => m.id),
+      ...(activeSessionType === 'group' ? { groupId: groupId || activeId } : { sessionId: sessionId || activeId }),
     });
     set({ creatingTopic: false }, false, n('creatingTopic/end'));
 
@@ -99,14 +98,13 @@ export const chatTopic: StateCreator<
     const messages = chatSelectors.activeBaseChats(get());
     if (messages.length === 0) return;
 
-    const { activeId, summaryTopicTitle, internal_createTopic } = get();
+    const { activeId, activeSessionType, summaryTopicTitle, internal_createTopic } = get();
 
     // 1. create topic and bind these messages
     const topicId = await internal_createTopic({
-      sessionId: sessionId || (groupId ? undefined : activeId),
-      groupId,
       title: t('defaultTitle', { ns: 'topic' }),
       messages: messages.map((m) => m.id),
+      ...(activeSessionType === 'group' ? { groupId: groupId || activeId } : { sessionId: sessionId || activeId }),
     });
 
     get().internal_updateTopicLoading(topicId, true);
@@ -194,18 +192,17 @@ export const chatTopic: StateCreator<
   },
 
   // query
-  useFetchTopics: (enable, sessionId, groupId) =>
+  useFetchTopics: (enable, containerId) =>
     useClientDataSWR<ChatTopic[]>(
-      enable ? [SWR_USE_FETCH_TOPIC, sessionId, groupId] : null,
-      async ([, sessionId, groupId]: [string, string | undefined, string | undefined]) => 
-        topicService.getTopics({ sessionId, groupId }),
+      enable ? [SWR_USE_FETCH_TOPIC, containerId] : null,
+      async ([, containerId]: [string, string | undefined]) =>
+        topicService.getTopics({ containerId }),
       {
         suspense: true,
         fallbackData: [],
         onSuccess: (topics) => {
-          const containerId = sessionId || groupId;
           if (!containerId) return;
-          
+
           const nextMap = { ...get().topicMaps, [containerId]: topics };
 
           // no need to update map if the topics have been init and the map is the same
@@ -214,7 +211,7 @@ export const chatTopic: StateCreator<
           set(
             { topicMaps: nextMap, topicsInit: true },
             false,
-            n('useFetchTopics(success)', { sessionId, groupId }),
+            n('useFetchTopics(success)', { containerId }),
           );
         },
       },
@@ -262,11 +259,11 @@ export const chatTopic: StateCreator<
     // Get topics for this specific group from the topic map
     const groupTopics = get().topicMaps[groupId] || [];
     const topicIds = groupTopics.map(t => t.id);
-    
+
     if (topicIds.length > 0) {
       await topicService.batchRemoveTopics(topicIds);
     }
-    
+
     await refreshTopic();
 
     // switch to default topic
