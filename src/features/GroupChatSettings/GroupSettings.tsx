@@ -5,21 +5,25 @@ import { GroupSettingsTabs } from '@/store/global/initialState';
 import { useServerConfigStore } from '@/store/serverConfig';
 
 import GroupSettingsContent from './GroupSettingsContent';
+import { GroupChatSettingsProvider } from './GroupChatSettingsProvider';
+import { StoreUpdaterProps } from './StoreUpdater';
 
-export interface GroupSettingsProps {
-  tab: GroupSettingsTabs;
+export interface GroupSettingsProps extends StoreUpdaterProps {
+  tab?: GroupSettingsTabs;
 }
 
-const GroupSettings = memo<GroupSettingsProps>(({ tab = GroupSettingsTabs.Settings }) => {
+const GroupSettings = memo<GroupSettingsProps>(({ tab = GroupSettingsTabs.Settings, ...rest }) => {
   const isMobile = useServerConfigStore((s) => s.isMobile);
   const loadingSkeleton = (
     <Skeleton active paragraph={{ rows: 6 }} style={{ padding: isMobile ? 16 : 0 }} title={false} />
   );
 
   return (
-    <Suspense fallback={loadingSkeleton}>
-      <GroupSettingsContent loadingSkeleton={loadingSkeleton} tab={tab} />
-    </Suspense>
+    <GroupChatSettingsProvider {...rest}>
+      <Suspense fallback={loadingSkeleton}>
+        <GroupSettingsContent loadingSkeleton={loadingSkeleton} tab={tab} />
+      </Suspense>
+    </GroupChatSettingsProvider>
   );
 });
 

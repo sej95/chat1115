@@ -3,55 +3,37 @@
 import { Form, type FormGroupItemType } from '@lobehub/ui';
 import { Input } from 'antd';
 import { useUpdateEffect } from 'ahooks';
+import isEqual from 'fast-deep-equal';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { FORM_STYLE } from '@/const/layoutTokens';
-import { useChatGroupStore } from '@/store/chatGroup';
-import { chatGroupSelectors } from '@/store/chatGroup/selectors';
-import { useSessionStore } from '@/store/session';
+
+import { selectors, useStore } from './store';
 
 const { TextArea } = Input;
 
 /**
  * General Settings for Group Chat
  */
-const GroupSettingsForm = memo(() => {
+const GroupMeta = memo(() => {
   const { t } = useTranslation(['setting', 'common']);
   const [form] = Form.useForm();
 
-  const activeGroupId = useSessionStore((s) => s.activeId);
-  const currentGroup = useChatGroupStore((s) =>
-    activeGroupId ? chatGroupSelectors.getGroupById(activeGroupId)(s) : null,
-  );
-
-  const updateGroup = useChatGroupStore((s) => s.updateGroup);
+  const updateMeta = useStore((s) => s.updateGroupMeta);
+  const meta = useStore(selectors.meta, isEqual) || {};
 
   const groupData = {
-    description: currentGroup?.description || '',
-    title: currentGroup?.title || '',
+    description: meta.description || '',
+    title: meta.title || '',
   };
 
   useUpdateEffect(() => {
     form.setFieldsValue(groupData);
   }, [groupData]);
 
-  const handleFinish = async (values: { title: string; description: string }) => {
-    if (!activeGroupId) return;
-
-    const updates: { description?: string; title?: string } = {};
-
-    if (values.description !== currentGroup?.description) {
-      updates.description = values.description;
-    }
-
-    if (values.title !== currentGroup?.title) {
-      updates.title = values.title;
-    }
-
-    if (Object.keys(updates).length > 0) {
-      await updateGroup(activeGroupId, updates);
-    }
+  const handleFinish = async (values: { description: string; title: string }) => {
+    await updateMeta(values);
   };
 
   const groupSettings: FormGroupItemType = {
@@ -99,6 +81,4 @@ const GroupSettingsForm = memo(() => {
   );
 });
 
-GroupSettingsForm.displayName = 'GroupSettingsForm';
-
-export default GroupSettingsForm;
+export default GroupMeta;
