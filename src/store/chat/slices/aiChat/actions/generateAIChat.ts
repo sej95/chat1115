@@ -153,6 +153,22 @@ export interface AIGenerateAction {
   internal_triggerSupervisorDecision: (groupId: string) => Promise<void>;
 
   /**
+   * Triggers supervisor decision with debounce logic (3 seconds threshold)
+   * Cancels previous pending decisions and schedules a new one
+   */
+  internal_triggerSupervisorDecisionDebounced: (groupId: string) => void;
+
+  /**
+   * Cancels pending supervisor decision for a group
+   */
+  internal_cancelSupervisorDecision: (groupId: string) => void;
+
+  /**
+   * Cancels all pending supervisor decisions (cleanup method)
+   */
+  internal_cancelAllSupervisorDecisions: () => void;
+
+  /**
    * Executes agent responses for group chat
    */
   internal_executeAgentResponses: (groupId: string, agentIds: string[]) => Promise<void>;
@@ -343,7 +359,7 @@ export const generateAIChat: StateCreator<
   },
 
   sendGroupMessage: async ({ groupId, message, files, onlyAddUserMessage }) => {
-    const { internal_createMessage, internal_triggerSupervisorDecision, internal_setActiveGroup } = get();
+    const { internal_createMessage, internal_triggerSupervisorDecisionDebounced, internal_setActiveGroup } = get();
 
     if (!message.trim() && (!files || files.length === 0)) return;
 
@@ -370,7 +386,7 @@ export const generateAIChat: StateCreator<
       }
 
       if (messageId) {
-        await internal_triggerSupervisorDecision(groupId);
+        internal_triggerSupervisorDecisionDebounced(groupId);
       }
     } catch (error) {
       console.error('Failed to send group message:', error);
@@ -1097,6 +1113,9 @@ Please respond as this agent would, considering the full conversation history pr
 
       await refreshMessages();
 
+      // After successful agent response, trigger debounced supervisor decision
+      get().internal_triggerSupervisorDecisionDebounced(groupId);
+
     } catch (error) {
       console.error(`Failed to process message for agent ${agentId}:`, error);
 
@@ -1157,5 +1176,87 @@ Please respond as this agent would, considering the full conversation history pr
       false,
       n(`toggleSupervisorLoading/${loading ? 'start' : 'end'}`),
     );
+  },
+
+  internal_triggerSupervisorDecisionDebounced: (groupId: string) => {
+    const { internal_cancelSupervisorDecision, internal_triggerSupervisorDecision } = get();
+
+    console.log("Supervisor decision debounced triggered for group", groupId);
+
+    // Cancel any existing timer for this group
+    internal_cancelSupervisorDecision(groupId);
+
+    // Set a new timer with 3-second debounce
+    const timerId = setTimeout(async () => {
+      console.log(`Debounced supervisor decision triggered for group ${groupId}`);
+
+      // Clean up the timer from state before executing
+      set(
+        produce((state: ChatStoreState) => {
+          delete state.supervisorDebounceTimers[groupId];
+        }),
+        false,
+        n(`cleanupSupervisorTimer/${groupId}`),
+      );
+
+      // Execute the supervisor decision
+      try {
+        await internal_triggerSupervisorDecision(groupId);
+      } catch (error) {
+        console.error(`Failed to execute supervisor decision for group ${groupId}:`, error);
+      }
+    }, 3000); // 3 seconds debounce
+
+    // Store the timer in state
+    set(
+      produce((state: ChatStoreState) => {
+        state.supervisorDebounceTimers[groupId] = timerId;
+      }),
+      false,
+      n(`setSupervisorTimer/${groupId}`),
+    );
+  },
+
+  internal_cancelSupervisorDecision: (groupId: string) => {
+    const { supervisorDebounceTimers } = get();
+    const existingTimer = supervisorDebounceTimers[groupId];
+
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+      console.log(`Cancelled pending supervisor decision for group ${groupId}`);
+
+      // Remove timer from state
+      set(
+        produce((state: ChatStoreState) => {
+          delete state.supervisorDebounceTimers[groupId];
+        }),
+        false,
+        n(`cancelSupervisorTimer/${groupId}`),
+      );
+    }
+  },
+
+  internal_cancelAllSupervisorDecisions: () => {
+    const { supervisorDebounceTimers } = get();
+    const groupIds = Object.keys(supervisorDebounceTimers);
+
+    if (groupIds.length > 0) {
+      console.log('Cancelling all pending supervisor decisions for session change/cleanup');
+
+      // Cancel all timers
+      groupIds.forEach(groupId => {
+        const timer = supervisorDebounceTimers[groupId];
+        if (timer) {
+          clearTimeout(timer);
+        }
+      });
+
+      // Clear all timers from state
+      set(
+        { supervisorDebounceTimers: {} },
+        false,
+        n('cancelAllSupervisorTimers'),
+      );
+    }
   },
 });

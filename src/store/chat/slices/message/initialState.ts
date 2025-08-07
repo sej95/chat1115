@@ -43,6 +43,14 @@ export interface ChatMessageState {
    * Supervisor decision loading states
    */
   supervisorDecisionLoading: string[];
+  /**
+   * Supervisor decision debounce timers by group ID
+   */
+  supervisorDebounceTimers: Record<string, NodeJS.Timeout>;
+  /**
+   * Agent speaking status by group ID and agent ID
+   */
+  agentSpeakingStatus: Record<string, Record<string, boolean>>;
 }
 
 export const initialMessageState: ChatMessageState = {
@@ -57,4 +65,6 @@ export const initialMessageState: ChatMessageState = {
   messagesInit: false,
   messagesMap: {},
   supervisorDecisionLoading: [],
+  supervisorDebounceTimers: {},
+  agentSpeakingStatus: {},
 };

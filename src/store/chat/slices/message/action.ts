@@ -151,6 +151,11 @@ export interface ChatMessageAction {
    * Update active session type
    */
   internal_updateActiveSessionType: (sessionType?: 'agent' | 'group') => void;
+
+  /**
+   * Update active session ID with cleanup of pending operations
+   */
+  internal_updateActiveId: (activeId: string) => void;
 }
 
 export const chatMessage: StateCreator<
@@ -505,7 +510,17 @@ export const chatMessage: StateCreator<
 
   internal_updateActiveSessionType: (sessionType?: 'agent' | 'group') => {
     if (get().activeSessionType === sessionType) return;
-    
+
     set({ activeSessionType: sessionType }, false, n('updateActiveSessionType'));
+  },
+
+  internal_updateActiveId: (activeId: string) => {
+    const currentActiveId = get().activeId;
+    if (currentActiveId === activeId) return;
+
+    // Before switching sessions, cancel all pending supervisor decisions
+    get().internal_cancelAllSupervisorDecisions();
+
+    set({ activeId }, false, n(`updateActiveId/${activeId}`));
   },
 });
