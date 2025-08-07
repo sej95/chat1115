@@ -13,15 +13,18 @@ import { useSessionStore } from '@/store/session';
 
 const { TextArea } = Input;
 
+/**
+ * General Settings for Group Chat
+ */
 const GroupSettingsForm = memo(() => {
   const { t } = useTranslation(['setting', 'common']);
   const [form] = Form.useForm();
-  
+
   const activeGroupId = useSessionStore((s) => s.activeId);
   const currentGroup = useChatGroupStore((s) =>
     activeGroupId ? chatGroupSelectors.getGroupById(activeGroupId)(s) : null,
   );
-  
+
   const updateGroup = useChatGroupStore((s) => s.updateGroup);
 
   const groupData = {
@@ -35,17 +38,17 @@ const GroupSettingsForm = memo(() => {
 
   const handleFinish = async (values: { title: string; description: string }) => {
     if (!activeGroupId) return;
-    
+
     const updates: { description?: string; title?: string } = {};
-    
+
     if (values.description !== currentGroup?.description) {
       updates.description = values.description;
     }
-    
+
     if (values.title !== currentGroup?.title) {
       updates.title = values.title;
     }
-    
+
     if (Object.keys(updates).length > 0) {
       await updateGroup(activeGroupId, updates);
     }
@@ -54,23 +57,23 @@ const GroupSettingsForm = memo(() => {
   const groupSettings: FormGroupItemType = {
     children: [
       {
-        children: <Input placeholder={t('settingAgent.name.placeholder')} />,
-        label: t('settingAgent.name.title'),
+        children: <Input placeholder={t('settingGroup.name.placeholder')} />,
+        label: t('settingGroup.name.title'),
         name: 'title',
       },
       {
         children: (
           <TextArea
             autoSize={{ maxRows: 8, minRows: 3 }}
-            placeholder="Group description..."
+            placeholder={t('settingGroup.description.placeholder')}
             rows={4}
           />
         ),
-        label: t('settingAgent.description.title'),
+        label: t('settingGroup.description.title'),
         name: 'description',
       },
     ],
-    title: 'Group Settings',
+    title: t('settingGroup.title'),
   };
 
   return (

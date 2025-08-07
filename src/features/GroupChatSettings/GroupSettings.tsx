@@ -18,7 +18,7 @@ const GroupSettings = memo<GroupSettingsProps>(({ tab = GroupSettingsTabs.Settin
 
   return (
     <Suspense fallback={loadingSkeleton}>
-      <GroupSettingsContent tab={tab} />
+      <GroupSettingsContent loadingSkeleton={loadingSkeleton} tab={tab} />
     </Suspense>
   );
 });
