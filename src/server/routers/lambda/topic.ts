@@ -95,13 +95,15 @@ export const topicRouter = router({
   getTopics: publicProcedure
     .input(
       z.object({
+        containerId: z.string().nullable().optional(),
         current: z.number().optional(),
         pageSize: z.number().optional(),
-        sessionId: z.string().nullable().optional(),
       }),
     )
     .query(async ({ input, ctx }) => {
       if (!ctx.userId) return [];
+
+      console.log('LAMBDA getTopics', input);
 
       const serverDB = await getServerDB();
       const topicModel = new TopicModel(serverDB, ctx.userId);
