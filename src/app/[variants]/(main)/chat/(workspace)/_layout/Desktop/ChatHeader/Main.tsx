@@ -34,7 +34,7 @@ const useStyles = createStyles(({ css }) => ({
 
     font-size: 14px;
     font-weight: bold;
-    line-height: 1;
+    line-height: 1.2;
     text-overflow: ellipsis;
     white-space: nowrap;
   `,
