@@ -103,8 +103,6 @@ export const topicRouter = router({
     .query(async ({ input, ctx }) => {
       if (!ctx.userId) return [];
 
-      console.log('LAMBDA getTopics', input);
-
       const serverDB = await getServerDB();
       const topicModel = new TopicModel(serverDB, ctx.userId);
 

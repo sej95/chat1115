@@ -515,6 +515,11 @@ export default {
       modelDesc: '指定用于 AI 绘画自动命名话题的模型',
       title: 'AI 绘画自动命名话题',
     },
+    groupChatSupervisor: {
+      label: '群聊监督模型',
+      modelDesc: '指定用于监督和管理群聊对话的模型',
+      title: '群聊监督管理',
+    },
     helpInfo: '当创建新助手时，将以默认助手设置作为预设值。',
     historyCompress: {
       label: '会话历史模型',
