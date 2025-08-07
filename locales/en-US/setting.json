@@ -509,7 +509,7 @@
     },
     "groupChatSupervisor": {
       "label": "Group Chat Supervisor Model",
-      "modelDesc": "Model designated for supervising and moderating group chat conversations",
+      "modelDesc": "Model designated for multi-agent orchestration",
       "title": "Group Chat Supervision"
     },
     "helpInfo": "When creating a new assistant, the default assistant settings will be used as preset values.",

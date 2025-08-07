@@ -38,4 +38,4 @@ export const useGroupCategory = ({ mobile }: UseGroupCategoryOptions = {}) => {
   );
 
   return cateItems;
-}; 
+};
