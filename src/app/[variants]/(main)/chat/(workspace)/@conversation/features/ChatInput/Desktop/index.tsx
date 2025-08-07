@@ -25,7 +25,8 @@ const leftActions = [
   'mainToken',
 ] as ActionKeys[];
 
-const leftActionsForGroup = ['model', 'mention', 'fileUpload', 'knowledgeBase'] as ActionKeys[];
+// Group Chat Actions
+const leftActionsForGroup = ['stt', 'mention', 'fileUpload', 'knowledgeBase'] as ActionKeys[];
 
 const rightActions = ['clear'] as ActionKeys[];
 

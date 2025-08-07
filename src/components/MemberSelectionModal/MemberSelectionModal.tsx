@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { Flexbox } from 'react-layout-kit';
 
 import { useSessionStore } from '@/store/session';
-import { LobeAgentSession, LobeSessionType } from '@/types/session';
+import { LobeAgentSession, LobeSessionType } from 'packages/types/src/session';
 
 const { Text } = Typography;
 

@@ -58,13 +58,12 @@ export interface ChatMessageAction {
   // query
   useFetchMessages: (
     enable: boolean,
-    sessionId: string,
-    topicId?: string,
-    groupId?: string,
+    messageContextId: string,
+    activeTopicId: string,
+    type?: 'session' | 'group',
   ) => SWRResponse<ChatMessage[]>;
   copyMessage: (id: string, content: string) => Promise<void>;
   refreshMessages: () => Promise<void>;
-
 
 
   // =========  ↓ Internal Method ↓  ========== //
@@ -148,6 +147,10 @@ export interface ChatMessageAction {
    * Update group agent maps
    */
   internal_updateGroupAgentMaps: (groupId: string, agents: ChatGroupAgentItem[]) => void;
+  /**
+   * Update active session type
+   */
+  internal_updateActiveSessionType: (sessionType?: 'agent' | 'group') => void;
 }
 
 export const chatMessage: StateCreator<
@@ -258,19 +261,22 @@ export const chatMessage: StateCreator<
 
     await get().internal_updateMessageContent(id, content);
   },
-  useFetchMessages: (enable, sessionId, activeTopicId, groupId) =>
+
+  /**
+   * @param enable - whether to enable the fetch
+   * @param messageContextId - Can be sessionId or groupId
+   */
+  useFetchMessages: (enable, messageContextId, activeTopicId, type = 'session') =>
     useClientDataSWR<ChatMessage[]>(
-      enable ? [SWR_USE_FETCH_MESSAGES, sessionId, activeTopicId, groupId] : null,
-      async ([, sessionId, topicId, groupId]: [string, string, string | undefined, string | undefined]) =>
-        messageService.getMessages(sessionId, topicId, groupId),
+      enable ? [SWR_USE_FETCH_MESSAGES, messageContextId, activeTopicId, type] : null,
+      async ([, sessionId, topicId, type]: [string, string, string | undefined, string]) =>
+        type === 'session' ? messageService.getMessages(sessionId, topicId) : messageService.getGroupMessages(sessionId, topicId),
       {
         onSuccess: (messages, key) => {
           const nextMap = {
             ...get().messagesMap,
-            [messageMapKey(sessionId || groupId || '', activeTopicId)]: messages,
+            [messageMapKey(messageContextId || '', activeTopicId)]: messages,
           };
-
-          console.log("useFetchMessages, onSuccess", { nextMap, messages, key });
 
           // no need to update map if the messages have been init and the map is the same
           if (get().messagesInit && isEqual(nextMap, get().messagesMap)) return;
@@ -283,14 +289,11 @@ export const chatMessage: StateCreator<
         },
       },
     ),
+  // TODO: The mutate should only be called once, but since we haven't merge session and group,
+  // we need to call it twice
   refreshMessages: async () => {
-    const { activeId, activeTopicId, activeGroupId } = get();
-    // For group chats, use activeGroupId; for regular chats, use activeId
-    const sessionId = activeGroupId || activeId;
-
-    console.log("refreshMessages", { sessionId, activeTopicId, activeGroupId });
-
-    await mutate([SWR_USE_FETCH_MESSAGES, sessionId, activeTopicId, activeGroupId]);
+    await mutate([SWR_USE_FETCH_MESSAGES, get().activeId, get().activeTopicId, 'session']);
+    await mutate([SWR_USE_FETCH_MESSAGES, get().activeId, get().activeTopicId, 'group']);
   },
 
   // the internal process method of the AI message
@@ -498,5 +501,11 @@ export const chatMessage: StateCreator<
       false,
       n(`updateGroupAgentMaps/${groupId}`),
     );
+  },
+
+  internal_updateActiveSessionType: (sessionType?: 'agent' | 'group') => {
+    if (get().activeSessionType === sessionType) return;
+    
+    set({ activeSessionType: sessionType }, false, n('updateActiveSessionType'));
   },
 });

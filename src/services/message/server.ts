@@ -27,6 +27,14 @@ export class ServerService implements IMessageService {
     return data as unknown as ChatMessage[];
   };
 
+  getGroupMessages: IMessageService['getGroupMessages'] = async (groupId, topicId) => {
+    const data = await lambdaClient.message.getMessages.query({
+      groupId,
+      topicId,
+    });
+    return data as unknown as ChatMessage[];
+  };
+
   getAllMessages: IMessageService['getAllMessages'] = async () => {
     return lambdaClient.message.getAllMessages.query();
   };

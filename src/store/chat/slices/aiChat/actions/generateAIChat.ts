@@ -977,11 +977,7 @@ export const generateAIChat: StateCreator<
 
     try {
       const context: SupervisorContext = {
-        availableAgents: agents!.map(a => ({
-          name: a.title,
-          id: a.id,
-          role: a.systemRole,
-        })),
+        availableAgents: agents!,
         groupId,
         messages,
       };
@@ -1034,7 +1030,7 @@ export const generateAIChat: StateCreator<
 
       const agentStoreState = getAgentStoreState();
       const agentConfig = agentSelectors.getAgentConfigById(agentId)(agentStoreState);
-      const { model, provider } = agentConfig;
+      const { provider } = agentConfig;
 
       if (!provider) {
         console.error(`No provider configured for agent ${agentId}`);
@@ -1087,15 +1083,17 @@ Please respond as this agent would, considering the full conversation history pr
 
       const messagesWithSystem = [systemMessage, ...messages];
 
-      await internal_fetchAIChatMessage({
-        messages: messagesWithSystem,
-        messageId: assistantId,
-        model: "gemini-2.5-flash",
-        provider: "google",
-        params: {
-          traceId: `group-${groupId}-agent-${agentId}`,
-        },
-      });
+      if (assistantId) {
+        await internal_fetchAIChatMessage({
+          messages: messagesWithSystem,
+          messageId: assistantId,
+          model: "gemini-2.5-flash",
+          provider: "google",
+          params: {
+            traceId: `group-${groupId}-agent-${agentId}`,
+          },
+        });
+      }
 
       await refreshMessages();
 
@@ -1142,10 +1140,9 @@ Please respond as this agent would, considering the full conversation history pr
     );
   },
 
-  internal_setActiveGroup: (groupId: string) => {
-    if (get().activeGroupId === groupId) return;
-
-    set({ activeGroupId: groupId }, false, n('setActiveGroup'));
+  internal_setActiveGroup: () => {
+    // Update the active session type to 'group' when setting an active group
+    get().internal_updateActiveSessionType('group');
   },
 
   internal_toggleSupervisorLoading: (loading: boolean, groupId?: string) => {

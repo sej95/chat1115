@@ -19,6 +19,7 @@ export interface IMessageService {
   batchCreateMessages(messages: MessageItem[]): Promise<any>;
 
   getMessages(sessionId: string, topicId?: string, groupId?: string): Promise<ChatMessage[]>;
+  getGroupMessages(groupId: string, topicId?: string): Promise<ChatMessage[]>;
   getAllMessages(): Promise<ChatMessage[]>;
   getAllMessagesInSession(sessionId: string): Promise<ChatMessage[]>;
   countMessages(params?: {

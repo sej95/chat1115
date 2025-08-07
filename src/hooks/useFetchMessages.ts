@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 import { useChatStore } from '@/store/chat';
 import { useGlobalStore } from '@/store/global';
 import { systemStatusSelectors } from '@/store/global/selectors';
@@ -6,13 +8,26 @@ import { sessionSelectors } from '@/store/session/selectors';
 
 export const useFetchMessages = () => {
   const isDBInited = useGlobalStore(systemStatusSelectors.isDBInited);
-  const [sessionId] = useSessionStore((s) => [s.activeId]);
-  const [activeTopicId, useFetchMessages] = useChatStore((s) => [
+  const sessionId = useSessionStore((s) => s.activeId);
+  const [activeTopicId, useFetchMessages, internal_updateActiveSessionType] = useChatStore((s) => [
     s.activeTopicId,
     s.useFetchMessages,
+    s.internal_updateActiveSessionType,
   ]);
 
-  const isGroupSession = useSessionStore(sessionSelectors.isCurrentSessionGroupSession);
+  const [currentSession, isGroupSession] = useSessionStore((s) => [
+    sessionSelectors.currentSession(s),
+    sessionSelectors.isCurrentSessionGroupSession(s),
+  ]);
 
-  useFetchMessages(isDBInited, isGroupSession ? undefined : sessionId, activeTopicId, isGroupSession ? sessionId : undefined);
+  // Update active session type when session changes
+  useEffect(() => {
+    if (currentSession?.type) {
+      internal_updateActiveSessionType(currentSession.type as 'agent' | 'group');
+    } else {
+      internal_updateActiveSessionType(undefined);
+    }
+  }, [currentSession?.id, currentSession?.type, internal_updateActiveSessionType]);
+
+  useFetchMessages(isDBInited, sessionId, activeTopicId, isGroupSession ? 'group' : 'session');
 };
