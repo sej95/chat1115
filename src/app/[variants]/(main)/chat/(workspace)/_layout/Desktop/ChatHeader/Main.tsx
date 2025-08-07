@@ -46,7 +46,7 @@ const Main = memo<{ className?: string }>(({ className }) => {
   useInitAgentConfig();
   const [isPinned] = useQueryState('pinned', parseAsBoolean);
 
-  const [init, isInbox, title, avatar, backgroundColor, sessionType] = useSessionStore((s) => {
+  const [init, isInbox, title, avatar, backgroundColor, members, sessionType] = useSessionStore((s) => {
     const session = sessionSelectors.currentSession(s);
 
     return [
@@ -55,9 +55,12 @@ const Main = memo<{ className?: string }>(({ className }) => {
       sessionMetaSelectors.currentAgentTitle(s),
       sessionMetaSelectors.currentAgentAvatar(s),
       sessionMetaSelectors.currentAgentBackgroundColor(s),
+      session?.members,
       session?.type,
     ];
   });
+
+  const isGroup = sessionType === 'group';
 
   const openChatSettings = useOpenChatSettings();
 
@@ -77,17 +80,19 @@ const Main = memo<{ className?: string }>(({ className }) => {
       </Flexbox>
     );
 
-  if (sessionType === 'group') {
+  if (isGroup) {
     return (
       <Flexbox align={'center'} className={className} gap={12} horizontal>
         {!isPinned && !showSessionPanel && <TogglePanelButton />}
-        {/* <GroupAvatar
-          avatars={[avatar]}
-          background={backgroundColor}
+        <GroupAvatar
+          avatars={members?.map((member) => ({
+            avatar: member.avatar,
+            background: member.backgroundColor,
+          }))}
           onClick={() => openChatSettings()}
           size={32}
           title={title}
-        /> */}
+        />
         <Flexbox align={'center'} className={styles.container} gap={8} horizontal>
           <div className={styles.title}>{displayTitle}</div>
           <Tags />
