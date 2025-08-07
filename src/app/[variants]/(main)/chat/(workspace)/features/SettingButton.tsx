@@ -19,7 +19,7 @@ const AgentSettings = dynamic(() => import('./AgentSettings'), {
   ssr: false,
 });
 
-const GroupSettings = dynamic(() => import('./GroupSettings'), {
+const GroupSettings = dynamic(() => import('./GroupChatSettings'), {
   ssr: false,
 });
 

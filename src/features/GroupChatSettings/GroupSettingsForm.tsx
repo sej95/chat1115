@@ -3,7 +3,6 @@
 import { Form, type FormGroupItemType } from '@lobehub/ui';
 import { Input } from 'antd';
 import { useUpdateEffect } from 'ahooks';
-import isEqual from 'fast-deep-equal';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -14,7 +13,7 @@ import { useSessionStore } from '@/store/session';
 
 const { TextArea } = Input;
 
-const GroupSettingsContent = memo(() => {
+const GroupSettingsForm = memo(() => {
   const { t } = useTranslation(['setting', 'common']);
   const [form] = Form.useForm();
   
@@ -26,8 +25,8 @@ const GroupSettingsContent = memo(() => {
   const updateGroup = useChatGroupStore((s) => s.updateGroup);
 
   const groupData = {
-    title: currentGroup?.title || '',
     description: currentGroup?.description || '',
+    title: currentGroup?.title || '',
   };
 
   useUpdateEffect(() => {
@@ -37,14 +36,14 @@ const GroupSettingsContent = memo(() => {
   const handleFinish = async (values: { title: string; description: string }) => {
     if (!activeGroupId) return;
     
-    const updates: { title?: string; description?: string } = {};
-    
-    if (values.title !== currentGroup?.title) {
-      updates.title = values.title;
-    }
+    const updates: { description?: string; title?: string } = {};
     
     if (values.description !== currentGroup?.description) {
       updates.description = values.description;
+    }
+    
+    if (values.title !== currentGroup?.title) {
+      updates.title = values.title;
     }
     
     if (Object.keys(updates).length > 0) {
@@ -55,19 +54,19 @@ const GroupSettingsContent = memo(() => {
   const groupSettings: FormGroupItemType = {
     children: [
       {
-        children: <Input placeholder={t('common:name')} />,
-        label: t('common:name'),
+        children: <Input placeholder={t('settingAgent.name.placeholder')} />,
+        label: t('settingAgent.name.title'),
         name: 'title',
       },
       {
         children: (
           <TextArea
-            autoSize={{ minRows: 3, maxRows: 8 }}
+            autoSize={{ maxRows: 8, minRows: 3 }}
             placeholder="Group description..."
             rows={4}
           />
         ),
-        label: t('common:description'),
+        label: t('settingAgent.description.title'),
         name: 'description',
       },
     ],
@@ -97,6 +96,6 @@ const GroupSettingsContent = memo(() => {
   );
 });
 
-GroupSettingsContent.displayName = 'GroupSettingsContent';
+GroupSettingsForm.displayName = 'GroupSettingsForm';
 
-export default GroupSettingsContent; 
+export default GroupSettingsForm;

@@ -27,4 +27,4 @@ const GroupCategory = memo<GroupCategoryProps>(({ setTab, tab }) => {
   );
 });
 
-export default GroupCategory; 
+export default GroupCategory;

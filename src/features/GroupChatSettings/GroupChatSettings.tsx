@@ -128,4 +128,4 @@ const GroupChatSettings = memo(() => {
 
 GroupChatSettings.displayName = 'GroupChatSettings';
 
-export default GroupChatSettings; 
+export default GroupChatSettings;
