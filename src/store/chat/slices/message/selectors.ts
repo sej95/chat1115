@@ -4,7 +4,7 @@ import { useAgentStore } from '@/store/agent';
 import { agentChatConfigSelectors } from '@/store/agent/selectors';
 import { messageMapKey } from '@/store/chat/utils/messageMapKey';
 import { useSessionStore } from '@/store/session';
-import { sessionMetaSelectors } from '@/store/session/selectors';
+import { sessionMetaSelectors, sessionSelectors } from '@/store/session/selectors';
 import { useUserStore } from '@/store/user';
 import { userProfileSelectors } from '@/store/user/selectors';
 import { ChatFileItem, ChatMessage } from '@/types/message';
@@ -223,7 +223,30 @@ const inboxActiveTopicMessages = (state: ChatStoreState) => {
 
 // ******* Group Chat Selectors ******* //
 
-const activeGroupId = (s: ChatStoreState): string | undefined => s.activeGroupId;
+// Helper to get current session info from session store
+const getCurrentSessionInfo = () => {
+  const sessionStore = useSessionStore.getState();
+  const session = sessionSelectors.currentSession(sessionStore);
+  return {
+    isGroupSession: session?.type === 'group',
+    sessionId: sessionStore.activeId,
+    sessionType: session?.type as 'agent' | 'group' | undefined,
+  };
+};
+
+// Get the active session type (prefer cached value, fallback to session store)
+const activeSessionType = (s: ChatStoreState): 'agent' | 'group' | undefined => {
+  if (s.activeSessionType) return s.activeSessionType;
+  const { sessionType } = getCurrentSessionInfo();
+  return sessionType;
+};
+
+// Get the active group ID (same as activeId when session type is 'group')
+const activeGroupId = (s: ChatStoreState): string | undefined => {
+  const sessionType = activeSessionType(s);
+  const { sessionId } = getCurrentSessionInfo();
+  return sessionType === 'group' ? sessionId : undefined;
+};
 
 const currentGroup = (s: ChatStoreState): ChatGroupItem | undefined => {
   const groupId = activeGroupId(s);
@@ -276,7 +299,7 @@ const isAgentSpeaking = (groupId: string, agentId: string) => (s: ChatStoreState
 const getGroupSpeakingAgents = (groupId: string) => (s: ChatStoreState): string[] => {
   const speakingStatus = s.agentSpeakingStatus[groupId] || {};
   return Object.entries(speakingStatus)
-    .filter(([_, speaking]) => speaking)
+    .filter(([, speaking]) => speaking)
     .map(([agentId]) => agentId);
 };
 
@@ -298,15 +321,12 @@ const getGroupStats = (groupId: string) => (s: ChatStoreState) => {
   const agents = getGroupAgents(groupId)(s);
   const messages = getGroupMessages(groupId)(s);
   const enabledAgents = agents.filter(a => a.enabled);
-  const speakingAgents = getGroupSpeakingAgents(groupId)(s);
 
   return {
-    totalAgents: agents.length,
     enabledAgents: enabledAgents.length,
-    totalMessages: messages.length,
-    speakingAgents: speakingAgents.length,
     isActive: groupId === activeGroupId(s),
-    isBusy: isSupervisorDecisionLoading(groupId)(s) || speakingAgents.length > 0,
+    totalAgents: agents.length,
+    totalMessages: messages.length,
   };
 };
 
@@ -348,17 +368,15 @@ export const chatSelectors = {
   mainAILatestMessageReasoningContent,
   mainDisplayChatIDs,
   mainDisplayChats,
-  showInboxWelcome,
 
-  // Group Chat Selectors
-  activeGroupId,
+  activeSessionType,
   allGroups,
+  currentEnabledGroupAgents,
   currentGroup,
   currentGroupAgents,
   currentGroupMessages,
   currentGroupSpeakingAgents,
   currentGroupStats,
-  currentEnabledGroupAgents,
   getEnabledGroupAgents,
   getGroupAgents,
   getGroupById,
@@ -370,4 +388,5 @@ export const chatSelectors = {
   isCurrentGroupBusy,
   isCurrentSupervisorLoading,
   isSupervisorDecisionLoading,
+  showInboxWelcome,
 };

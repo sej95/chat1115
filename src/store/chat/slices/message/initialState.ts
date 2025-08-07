@@ -8,6 +8,23 @@ export interface ChatMessageState {
    */
   activeId: string;
 
+  /**
+   * Type of the currently active session ('agent' | 'group')
+   * Derived from session.type, used for caching to avoid repeated lookups
+   */
+  activeSessionType?: 'agent' | 'group';
+  /**
+   * Group agents maps by group ID  
+   */
+  groupAgentMaps: Record<string, ChatGroupAgentItem[]>;
+  /**
+   * Group data maps by group ID
+   */
+  groupMaps: Record<string, ChatGroupItem>;
+  /**
+   * Groups initialization status
+   */
+  groupsInit: boolean;
   isCreatingMessage: boolean;
   /**
    * is the message is editing
@@ -22,47 +39,22 @@ export interface ChatMessageState {
    */
   messagesInit: boolean;
   messagesMap: Record<string, ChatMessage[]>;
-
-  // ******* Group Chat State ******* //
-  /**
-   * Currently active group chat ID
-   */
-  activeGroupId?: string;
-  /**
-   * Group data maps by group ID
-   */
-  groupMaps: Record<string, ChatGroupItem>;
-  /**
-   * Group agents maps by group ID  
-   */
-  groupAgentMaps: Record<string, ChatGroupAgentItem[]>;
   /**
    * Supervisor decision loading states
    */
   supervisorDecisionLoading: string[];
-  /**
-   * Agent speaking status per group
-   */
-  agentSpeakingStatus: Record<string, Record<string, boolean>>;
-  /**
-   * Groups initialization status
-   */
-  groupsInit: boolean;
 }
 
 export const initialMessageState: ChatMessageState = {
   activeId: 'inbox',
+  activeSessionType: undefined,
+  groupAgentMaps: {},
+  groupMaps: {},
+  groupsInit: false,
   isCreatingMessage: false,
   messageEditingIds: [],
   messageLoadingIds: [],
   messagesInit: false,
   messagesMap: {},
-
-  // Group Chat Initial State
-  activeGroupId: undefined,
-  groupMaps: {},
-  groupAgentMaps: {},
   supervisorDecisionLoading: [],
-  agentSpeakingStatus: {},
-  groupsInit: false,
 };

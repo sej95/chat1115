@@ -44,6 +44,23 @@ export class ClientService extends BaseClientService implements IMessageService 
     return data as unknown as ChatMessage[];
   };
 
+  getGroupMessages: IMessageService['getGroupMessages'] = async (groupId, topicId) => {
+    const data = await this.messageModel.queryBySessionId(
+      groupId,
+      topicId,
+      {
+        postProcessUrl: async (url, file) => {
+          const hash = (url as string).replace('client-s3://', '');
+          const base64 = await this.getBase64ByFileHash(hash);
+
+          return `data:${file.fileType};base64,${base64}`;
+        },
+      },
+    );
+
+    return data as unknown as ChatMessage[];
+  };
+
   getAllMessages: IMessageService['getAllMessages'] = async () => {
     const data = await this.messageModel.queryAll();
 

@@ -75,6 +75,7 @@ export const topicRouter = router({
     .input(
       z.object({
         favorite: z.boolean().optional(),
+        groupId: z.string().nullable().optional(),
         messages: z.array(z.string()).optional(),
         sessionId: z.string().nullable().optional(),
         title: z.string(),
