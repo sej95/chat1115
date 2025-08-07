@@ -6,50 +6,53 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { FORM_STYLE } from '@/const/layoutTokens';
-import { useChatGroupStore } from '@/store/chatGroup';
-import { chatGroupSelectors } from '@/store/chatGroup/selectors';
-import { useSessionStore } from '@/store/session';
+
+import { selectors, useStore } from './store';
+
+// Convert response order to numerical value for slider
+const getResponseSpeedValue = (responseOrder?: 'sequential' | 'random' | 'smart') => {
+  switch (responseOrder) {
+    case 'sequential': {
+      return 1;
+    }
+    case 'smart': {
+      return 2;
+    }
+    case 'random': {
+      return 3;
+    }
+    default: {
+      return 2; // default to smart
+    }
+  }
+};
+
+// Convert numerical value back to response order
+const getResponseOrder = (value: number): 'sequential' | 'random' | 'smart' => {
+  switch (value) {
+    case 1: {
+      return 'sequential';
+    }
+    case 2: {
+      return 'smart';
+    }
+    case 3: {
+      return 'random';
+    }
+    default: {
+      return 'smart';
+    }
+  }
+};
 
 const GroupChatSettings = memo(() => {
   const { t } = useTranslation(['setting', 'common']);
   const [form] = Form.useForm();
   
-  const activeGroupId = useSessionStore((s) => s.activeId);
-  const currentGroup = useChatGroupStore((s) =>
-    activeGroupId ? chatGroupSelectors.getGroupById(activeGroupId)(s) : null,
-  );
-  
-  const updateGroup = useChatGroupStore((s) => s.updateGroup);
+  const updateConfig = useStore((s) => s.updateGroupConfig);
+  const config = useStore(selectors.config) || {};
 
-  // Convert response order to numerical value for slider
-  const getResponseSpeedValue = (responseOrder?: 'sequential' | 'random' | 'smart') => {
-    switch (responseOrder) {
-      case 'sequential':
-        return 1;
-      case 'smart':
-        return 2;
-      case 'random':
-        return 3;
-      default:
-        return 2; // default to smart
-    }
-  };
-
-  // Convert numerical value back to response order
-  const getResponseOrder = (value: number): 'sequential' | 'random' | 'smart' => {
-    switch (value) {
-      case 1:
-        return 'sequential';
-      case 2:
-        return 'smart';
-      case 3:
-        return 'random';
-      default:
-        return 'smart';
-    }
-  };
-
-  const responseSpeedValue = getResponseSpeedValue(currentGroup?.config?.responseOrder);
+  const responseSpeedValue = getResponseSpeedValue(config.responseOrder);
 
   const chatData = {
     responseSpeed: responseSpeedValue,
@@ -60,15 +63,13 @@ const GroupChatSettings = memo(() => {
   }, [chatData]);
 
   const handleFinish = async (values: { responseSpeed: number }) => {
-    if (!activeGroupId) return;
-    
     const responseOrder = getResponseOrder(values.responseSpeed);
     const newConfig = {
-      ...currentGroup?.config,
+      ...config,
       responseOrder,
     };
     
-    await updateGroup(activeGroupId, { config: newConfig });
+    await updateConfig(newConfig);
   };
 
   const responseSpeedMarks = {
@@ -94,7 +95,7 @@ const GroupChatSettings = memo(() => {
       },
     ],
     extra: (
-      <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
+      <div style={{ color: '#666', fontSize: '12px', marginTop: '8px' }}>
         <strong>Sequential:</strong> Agents respond one by one in order<br />
         <strong>Smart:</strong> AI determines the best agent to respond<br />
         <strong>Random:</strong> Agents respond in random order
