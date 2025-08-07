@@ -77,7 +77,7 @@ const GroupChatSidebar = memo(() => {
 
   const currentUser = useUserStore((s) => ({
     avatar: userProfileSelectors.userAvatar(s),
-    name: userProfileSelectors.displayUserName(s) || userProfileSelectors.nickName(s) || 'You',
+    name: userProfileSelectors.nickName(s),
   }));
 
   const removeAgentFromGroup = useChatGroupStore((s) => s.removeAgentFromGroup);
