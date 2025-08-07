@@ -46,6 +46,7 @@ const SettingButton = memo<{ mobile?: boolean }>(({ mobile }) => {
           placement: 'bottom',
         }}
       />
+
       {isGroupSession ? <GroupSettings key={id} /> : <AgentSettings key={id} />}
     </>
   );

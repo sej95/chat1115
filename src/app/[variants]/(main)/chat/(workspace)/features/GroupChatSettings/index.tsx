@@ -8,11 +8,11 @@ import BrandWatermark from '@/components/BrandWatermark';
 import PanelTitle from '@/components/PanelTitle';
 import { isDesktop } from '@/const/version';
 import { TITLE_BAR_HEIGHT } from '@/features/ElectronTitlebar';
-import { GroupCategory, GroupSettings as Settings } from '@/features/GroupChatSettings';
+import { GroupCategory, GroupSettings } from '@/features/GroupChatSettings';
 import { useChatGroupStore } from '@/store/chatGroup';
 import { GroupSettingsTabs } from '@/store/global/initialState';
 
-const GroupSettings = memo(() => {
+const GroupChatSettings = memo(() => {
   const [showGroupSetting] = useChatGroupStore((s) => [s.showGroupSetting]);
   const [tab, setTab] = useState(GroupSettingsTabs.Settings);
 
@@ -47,9 +47,9 @@ const GroupSettings = memo(() => {
         },
       }}
     >
-      <Settings tab={tab} />
+      <GroupSettings tab={tab} />
     </Drawer>
   );
 });
 
-export default GroupSettings;
+export default GroupChatSettings;
