@@ -25,6 +25,7 @@ const useStyles = createStyles(({ css, token }) => ({
     min-height: 200px;
     height: fit-content;
     overflow-y: auto;
+    padding-bottom: ${token.padding}px;
   `,
   emptyState: css`
     color: ${token.colorTextSecondary};
@@ -105,7 +106,7 @@ const GroupChatSidebar = memo(() => {
         style={{ cursor: 'pointer' }}
         title={
           <Flexbox align={'center'} gap={8} horizontal>
-            Members
+            Members {currentSession?.members?.length}
           </Flexbox>
         }
       />
