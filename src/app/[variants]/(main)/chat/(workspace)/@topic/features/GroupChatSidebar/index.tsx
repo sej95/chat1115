@@ -128,7 +128,7 @@ const useStyles = createStyles(({ css, token }) => ({
 
 const GroupChatSidebar = memo(() => {
   const { styles } = useStyles();
-  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [addModalOpen, setAddModalOpen] = useState(false);
 
   const activeGroupId = useSessionStore((s) => s.activeId);
   const currentSession = useSessionStore(sessionSelectors.currentSession) as LobeGroupSession;
@@ -140,15 +140,13 @@ const GroupChatSidebar = memo(() => {
     name: userProfileSelectors.nickName(s),
   }));
 
-
-
-  const handleInviteMembers = async (selectedAgents: string[]) => {
+  const handleAddMembers = async (selectedAgents: string[]) => {
     if (!activeGroupId) {
       console.error('No active group to add members to');
       return;
     }
     await addAgentsToGroup(activeGroupId, selectedAgents);
-    setInviteModalOpen(false);
+    setAddModalOpen(false);
   };
 
   return (
@@ -158,7 +156,7 @@ const GroupChatSidebar = memo(() => {
           <ActionIcon
             icon={UserPlus}
             key="addMember"
-            onClick={() => setInviteModalOpen(true)}
+            onClick={() => setAddModalOpen(true)}
             size={'small'}
             title="Add Member"
           />
@@ -207,11 +205,12 @@ const GroupChatSidebar = memo(() => {
       </Flexbox>
 
       <MemberSelectionModal
+        existingMembers={currentSession?.members?.map((member: any) => member.id) || []}
         groupId={activeGroupId}
-        mode="invite"
-        onCancel={() => setInviteModalOpen(false)}
-        onConfirm={handleInviteMembers}
-        open={inviteModalOpen}
+        mode="add"
+        onCancel={() => setAddModalOpen(false)}
+        onConfirm={handleAddMembers}
+        open={addModalOpen}
       />
 
     </Flexbox>
