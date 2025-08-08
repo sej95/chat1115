@@ -9,6 +9,7 @@ import { type ChangeEvent, memo, useCallback, useMemo, useRef, useState } from '
 import { useTranslation } from 'react-i18next';
 import { Flexbox } from 'react-layout-kit';
 
+import { useActionSWR } from '@/libs/swr';
 import { useSessionStore } from '@/store/session';
 import { LobeAgentSession, LobeSessionType } from 'packages/types/src/session';
 
@@ -121,13 +122,17 @@ export type MemberSelectionMode = 'create' | 'invite';
 
 export interface MemberSelectionModalProps {
   /**
+   * Group ID for invite mode (required when mode is 'invite')
+   */
+  groupId?: string;
+  /**
    * The mode of the modal:
    * - 'create': For selecting initial members when creating a new group
    * - 'invite': For adding members to an existing group
    */
   mode: MemberSelectionMode;
   onCancel: () => void;
-  onConfirm: (selectedAgents: string[]) => void;
+  onConfirm: (selectedAgents: string[]) => void | Promise<void>;
   open: boolean;
   /**
    * Pre-selected agent IDs (useful for editing existing groups)
@@ -140,7 +145,8 @@ const MemberSelectionModal = memo<MemberSelectionModalProps>(({
   open,
   onCancel,
   onConfirm,
-  preSelectedAgents = []
+  preSelectedAgents = [],
+  groupId
 }) => {
   const { t } = useTranslation(['chat', 'common']);
   const { styles, cx } = useStyles();
@@ -241,9 +247,16 @@ const MemberSelectionModal = memo<MemberSelectionModalProps>(({
     setSearchTerm('');
   };
 
+  const { mutate: confirmAction, isValidating: isInviting } = useActionSWR(
+    ['memberSelectionModal.confirm', mode, groupId],
+    async () => {
+      await onConfirm(selectedAgents);
+      handleReset();
+    }
+  );
+
   const handleConfirm = () => {
-    onConfirm(selectedAgents);
-    handleReset();
+    confirmAction();
   };
 
   const handleCancel = () => {
@@ -261,7 +274,7 @@ const MemberSelectionModal = memo<MemberSelectionModalProps>(({
     : 'Invite';
 
   const minMembersRequired = mode === 'create' ? 1 : 0; // At least 1 member for group creation
-  const isConfirmDisabled = selectedAgents.length < minMembersRequired;
+  const isConfirmDisabled = selectedAgents.length < minMembersRequired || isInviting;
 
   return (
     <Modal
@@ -273,6 +286,7 @@ const MemberSelectionModal = memo<MemberSelectionModalProps>(({
           </Button>
           <Button
             disabled={isConfirmDisabled}
+            loading={isInviting}
             onClick={handleConfirm}
             type="primary"
           >

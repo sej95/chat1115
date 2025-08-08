@@ -7,6 +7,7 @@ import { memo, useState } from 'react';
 import { Flexbox } from 'react-layout-kit';
 
 import SidebarHeader from '@/components/SidebarHeader';
+import { useActionSWR } from '@/libs/swr';
 import { useChatGroupStore } from '@/store/chatGroup';
 import { useSessionStore } from '@/store/session';
 import { sessionSelectors } from '@/store/session/selectors';
@@ -14,10 +15,69 @@ import { useUserStore } from '@/store/user';
 import { userProfileSelectors } from '@/store/user/selectors';
 
 import { MemberSelectionModal } from '@/components/MemberSelectionModal';
-import { ChatGroupAgentItem } from '@/database/schemas/chatGroup';
+
 import TopicListContent from '../TopicListContent';
 import { LobeGroupSession } from 'packages/types/src/session';
 import Header from '../Header';
+
+const MemberItem = memo<{
+  activeGroupId: string;
+  member: any; // Runtime is AgentItem but TypeScript thinks it's ChatGroupAgentItem
+  styles: any;
+}>(({ activeGroupId, member, styles }) => {
+  const removeAgentFromGroup = useChatGroupStore((s) => s.removeAgentFromGroup);
+
+  const { mutate: removeMember, isValidating: isRemoving } = useActionSWR(
+    ['groupChatSidebar.removeMember', activeGroupId, member.id],
+    async () => {
+      await removeAgentFromGroup(activeGroupId, member.id);
+    }
+  );
+
+  return (
+    <div className={styles.memberItem}>
+      <Flexbox align={'center'} gap={12} horizontal>
+        <Avatar avatar={member.avatar} background={member.backgroundColor!} size={32} />
+        <Flexbox flex={1} gap={2}>
+          <div
+            style={{
+              fontSize: '14px',
+              fontWeight: 500,
+            }}
+          >
+            {member.title}
+          </div>
+          <div
+            style={{
+              color: '#666',
+              fontSize: '12px',
+            }}
+          >
+            {member.systemRole}
+          </div>
+        </Flexbox>
+        <ActionIcon
+          icon={Edit}
+          onClick={() => {
+            // TODO: Implement edit member logic
+          }}
+          size={'small'}
+          title="Edit Member"
+        />
+        <ActionIcon
+          danger
+          icon={UserMinus}
+          loading={isRemoving}
+          onClick={() => removeMember()}
+          size={'small'}
+          title="Remove Member"
+        />
+      </Flexbox>
+    </div>
+  );
+});
+
+MemberItem.displayName = 'MemberItem';
 
 const useStyles = createStyles(({ css, token }) => ({
   content: css`
@@ -80,7 +140,7 @@ const GroupChatSidebar = memo(() => {
     name: userProfileSelectors.nickName(s),
   }));
 
-  const removeAgentFromGroup = useChatGroupStore((s) => s.removeAgentFromGroup);
+
 
   const handleInviteMembers = async (selectedAgents: string[]) => {
     if (!activeGroupId) {
@@ -106,7 +166,7 @@ const GroupChatSidebar = memo(() => {
         style={{ cursor: 'pointer' }}
         title={
           <Flexbox align={'center'} gap={8} horizontal>
-            Members {currentSession?.members?.length}
+            Members {(currentSession?.members?.length || 0) + 1}
           </Flexbox>
         }
       />
@@ -130,50 +190,14 @@ const GroupChatSidebar = memo(() => {
         </div>
 
         <div>
-          {currentSession?.members?.map((member: ChatGroupAgentItem) => {
-            return (
-              <div className={styles.memberItem} key={member.id}>
-                <Flexbox align={'center'} gap={12} horizontal>
-                  <Avatar avatar={member.avatar} background={member.backgroundColor!} size={32} />
-                  <Flexbox flex={1} gap={2}>
-                    <div
-                      style={{
-                        fontSize: '14px',
-                        fontWeight: 500,
-                      }}
-                    >
-                      {member.title}
-                    </div>
-                    <div
-                      style={{
-                        color: '#666',
-                        fontSize: '12px',
-                      }}
-                    >
-                      {member.systemRole}
-                    </div>
-                  </Flexbox>
-                  <ActionIcon
-                    icon={Edit}
-                    onClick={() => {
-                      // TODO: Implement edit member logic
-                    }}
-                    size={'small'}
-                    title="Edit Member"
-                  />
-                  <ActionIcon
-                    danger
-                    icon={UserMinus}
-                    onClick={() => {
-                      removeAgentFromGroup(activeGroupId!, member.id);
-                    }}
-                    size={'small'}
-                    title="Remove Member"
-                  />
-                </Flexbox>
-              </div>
-            );
-          })}
+          {currentSession?.members?.map((member: any) => (
+            <MemberItem
+              activeGroupId={activeGroupId!}
+              key={member.id}
+              member={member}
+              styles={styles}
+            />
+          ))}
         </div>
       </Flexbox>
 
@@ -183,6 +207,7 @@ const GroupChatSidebar = memo(() => {
       </Flexbox>
 
       <MemberSelectionModal
+        groupId={activeGroupId}
         mode="invite"
         onCancel={() => setInviteModalOpen(false)}
         onConfirm={handleInviteMembers}
