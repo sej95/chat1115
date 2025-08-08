@@ -118,17 +118,21 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
 }));
 
-export type MemberSelectionMode = 'create' | 'invite';
+export type MemberSelectionMode = 'create' | 'add';
 
 export interface MemberSelectionModalProps {
   /**
-   * Group ID for invite mode (required when mode is 'invite')
+   * Existing group members to exclude from available agents (for add mode)
+   */
+  existingMembers?: string[];
+  /**
+   * Group ID for add mode (required when mode is 'add')
    */
   groupId?: string;
   /**
    * The mode of the modal:
    * - 'create': For selecting initial members when creating a new group
-   * - 'invite': For adding members to an existing group
+   * - 'add': For adding members to an existing group
    */
   mode: MemberSelectionMode;
   onCancel: () => void;
@@ -141,12 +145,13 @@ export interface MemberSelectionModalProps {
 }
 
 const MemberSelectionModal = memo<MemberSelectionModalProps>(({
+  existingMembers = [],
+  groupId,
   mode,
-  open,
   onCancel,
   onConfirm,
-  preSelectedAgents = [],
-  groupId
+  open,
+  preSelectedAgents = []
 }) => {
   const { t } = useTranslation(['chat', 'common']);
   const { styles, cx } = useStyles();
@@ -185,10 +190,13 @@ const MemberSelectionModal = memo<MemberSelectionModalProps>(({
       // When creating a new group, all agents are available
       return agentSessions;
     } else {
-      // When inviting to existing group, filter out the current session to avoid self-invitation
-      return agentSessions.filter((agent) => agent.id !== currentSessionId);
+      // When adding to existing group, filter out the current session and existing members
+      return agentSessions.filter((agent) => 
+        agent.id !== currentSessionId && 
+        !existingMembers.includes(agent.config?.id || '')
+      );
     }
-  }, [agentSessions, currentSessionId, mode]);
+  }, [agentSessions, currentSessionId, mode, existingMembers]);
 
   // Filter available agents based on search term
   const filteredAvailableAgents = useMemo(() => {
@@ -247,7 +255,7 @@ const MemberSelectionModal = memo<MemberSelectionModalProps>(({
     setSearchTerm('');
   };
 
-  const { mutate: confirmAction, isValidating: isInviting } = useActionSWR(
+  const { mutate: confirmAction, isValidating: isAdding } = useActionSWR(
     ['memberSelectionModal.confirm', mode, groupId],
     async () => {
       await onConfirm(selectedAgents);
@@ -267,14 +275,14 @@ const MemberSelectionModal = memo<MemberSelectionModalProps>(({
   // Dynamic content based on mode
   const modalTitle = mode === 'create'
     ? 'Select Initial Members'
-    : t('inviteMembers', { ns: 'chat' });
+    : 'Add Members';
 
   const confirmButtonText = mode === 'create'
     ? 'Create Group'
-    : 'Invite';
+    : 'Add';
 
   const minMembersRequired = mode === 'create' ? 1 : 0; // At least 1 member for group creation
-  const isConfirmDisabled = selectedAgents.length < minMembersRequired || isInviting;
+  const isConfirmDisabled = selectedAgents.length < minMembersRequired || isAdding;
 
   return (
     <Modal
@@ -286,7 +294,7 @@ const MemberSelectionModal = memo<MemberSelectionModalProps>(({
           </Button>
           <Button
             disabled={isConfirmDisabled}
-            loading={isInviting}
+            loading={isAdding}
             onClick={handleConfirm}
             type="primary"
           >
