@@ -10,6 +10,7 @@ import { LOADING_FLAT, MESSAGE_CANCEL_FLAT } from '@/const/message';
 import { TraceEventType, TraceNameMap } from '@/const/trace';
 import { isDesktop, isServerMode } from '@/const/version';
 import { knowledgeBaseQAPrompts } from '@/prompts/knowledgeBaseQA';
+import { consolidateGroupChatHistory } from '@/prompts/chatMessages';
 import { chatService } from '@/services/chat';
 import { messageService } from '@/services/message';
 import { useAgentStore } from '@/store/agent';
@@ -1053,26 +1054,49 @@ export const generateAIChat: StateCreator<
         return;
       }
 
-      // Build group chat system prompt
+      console.log("MESSAGE HISTORY", messages);
+
+      // Get all agents for group chat history formatting
+      const agents = sessionSelectors.currentGroupAgents(useSessionStore.getState());
+      const agentTitleMap = agents?.map(agent => ({
+        id: agent.agentId,
+        title: agent.title
+      }));
+
+      // Consolidate message history into a single formatted string
+      const consolidatedHistory = consolidateGroupChatHistory(messages, agentTitleMap);
+
+      console.log("CONSOLIDATED HISTORY:", consolidatedHistory);
+
+      // Build group members info similar to supervisor
+      const groupMembersInfo = JSON.stringify(
+        agentTitleMap,
+        null,
+        2
+      );
+
+      // Build group chat system prompt with consolidated history
       const baseSystemRole = agentConfig.systemRole || '';
       const groupChatSystemPrompt = `${baseSystemRole}
+You are participating in a group chat in real world. Please follow these guidelines:
 
-## Group Chat Context
-You are participating in a group chat with multiple AI agents. Please follow these guidelines:
-- You can reference and respond to other participants by mentioning their agent IDs
+Guidelines:
+- Stay in character as ${agentId}
+- Be concise and natural, behave like a real person
 - Engage naturally in the conversation flow
 - Be collaborative and build upon others' responses when appropriate
 - Keep your responses concise and relevant to the ongoing discussion
-- You can ask questions to other agents or continue previous topics
+- Each message should no more than 100 words
 
-## Current Group ID: ${groupId}
-## Your Agent ID: ${agentId}
+<GroupMembers>
+${groupMembersInfo}
+</GroupMembers>
 
-Please respond as this agent would, considering the full conversation history provided below.`;
+<ConversationHistory>
+${consolidatedHistory}
+</ConversationHistory>
 
-      // Get the most recent user or assistant message to determine parentId
-      const lastMessage = messages.at(-1);
-      if (!lastMessage) return;
+Please respond as this agent would, considering the full conversation history provided above. Directly return the message content, no other text. You do not need add author name or anything else.`;
 
       // TODO: [Group Chat] Use real agent config
       const assistantMessage: CreateMessageParams = {
@@ -1087,7 +1111,6 @@ Please respond as this agent would, considering the full conversation history pr
 
       const assistantId = await internal_createMessage(assistantMessage);
 
-      // Prepare messages with custom system prompt for group chat
       const systemMessage: ChatMessage = {
         id: 'group-system',
         role: 'system',
@@ -1097,11 +1120,20 @@ Please respond as this agent would, considering the full conversation history pr
         meta: {},
       };
 
-      const messagesWithSystem = [systemMessage, ...messages];
+      const userMessage: ChatMessage = {
+        id: 'group-user',
+        role: 'user',
+        content: 'Please respond based on the conversation history provided.',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        meta: {},
+      };
+
+      const messagesForAPI = [systemMessage, userMessage];
 
       if (assistantId) {
         await internal_fetchAIChatMessage({
-          messages: messagesWithSystem,
+          messages: messagesForAPI,
           messageId: assistantId,
           model: "gemini-2.5-flash",
           provider: "google",

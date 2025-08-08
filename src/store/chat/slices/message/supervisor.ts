@@ -23,13 +23,13 @@ export class GroupChatSupervisor {
 
 Rules:
 1. Analyze the conversation history and determine which agents are most relevant to respond
-2. You can select 0-3 agents to respond (empty = conversation ends naturally)
+2. You can select 0-4 members to respond (empty = conversation ends naturally)
 3. Consider agent specialties and the current topic
 4. Avoid having the same agent respond consecutively unless necessary
 5. Ensure balanced participation when possible
 
 Response format: Return ONLY a JSON array of agent IDs, nothing else.
-Examples: ["agent1", "agent2"] or [] or ["agent3"]`;
+Examples: ["agt_01", "agt_02"] or [] or ["agt_03"]`;
 
   /**
    * Make decision on who should speak next
@@ -51,12 +51,14 @@ Examples: ["agent1", "agent2"] or [] or ["agent3"]`;
 
       const supervisorPrompt = `${this.systemPrompt}
 
-Available agents:
+<GroupMembers>
 ${agentDescriptions}
+</GroupMembers>
 
+<ConversationHistory>
 ${conversationHistory}
-
-Which agents should respond next?`;
+</ConversationHistory>
+`;
 
       const response = await this.callLLMForDecision(supervisorPrompt);
 
@@ -66,8 +68,8 @@ Which agents should respond next?`;
     } catch (error) {
       console.error('Supervisor decision failed:', error);
 
-      // Fallback: select one random agent if error occurs
-      return this.getFallbackDecision(availableAgents, messages);
+      // Fallback: return empty result to stop conversation when error occurs
+      return { nextSpeakers: [] };
     }
   }
 
@@ -75,7 +77,11 @@ Which agents should respond next?`;
    * Build agent description text for supervisor
    */
   private buildAgentDescriptions(agents: ChatGroupAgentItem[]): string {
-    return JSON.stringify(agents, null, 2);
+    const simplifiedAgents = agents.map(agent => ({
+      id: agent.id,
+      title: agent.title
+    }));
+    return JSON.stringify(simplifiedAgents, null, 2);
   }
 
   /**
