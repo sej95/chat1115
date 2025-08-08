@@ -2,8 +2,10 @@
 
 import { ActionIcon, Block, Grid, Text } from '@lobehub/ui';
 import { createStyles } from 'antd-style';
+import { shuffle } from 'lodash-es';
 import { RefreshCw } from 'lucide-react';
 import { memo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Flexbox } from 'react-layout-kit';
 
 const useStyles = createStyles(({ css, token, responsive }) => ({
@@ -52,78 +54,25 @@ const useStyles = createStyles(({ css, token, responsive }) => ({
   `,
 }));
 
-interface GroupActivity {
-  id: string;
-  title: string;
-  description: string;
-  emoji: string;
-}
-
-const GROUP_ACTIVITIES: GroupActivity[] = [
-  {
-    id: 'brainstorm',
-    title: 'Brain Storm',
-    description: 'Collaborative idea generation and creative problem solving with multiple perspectives',
-    emoji: '🧠',
-  },
-  {
-    id: 'werewolf',
-    title: 'Werewolf Game',
-    description: 'Social deduction game where players use strategy and discussion to find the werewolves',
-    emoji: '🐺',
-  },
-  {
-    id: 'mock-un',
-    title: 'Mock UN',
-    description: 'Simulate United Nations debates and diplomatic negotiations on global issues',
-    emoji: '🌍',
-  },
-  {
-    id: 'design-review',
-    title: 'Design Review',
-    description: 'Collaborative feedback session for design concepts, prototypes, or creative work',
-    emoji: '🎨',
-  },
-  {
-    id: 'code-review',
-    title: 'Code Review',
-    description: 'Technical discussion and peer review of code changes and implementations',
-    emoji: '💻',
-  },
-  {
-    id: 'planning-poker',
-    title: 'Planning Poker',
-    description: 'Agile estimation technique using cards to estimate project tasks and effort',
-    emoji: '🃏',
-  },
-  {
-    id: 'debate-club',
-    title: 'Debate Club',
-    description: 'Structured discussion and argumentation on various topics and current events',
-    emoji: '⚖️',
-  },
-  {
-    id: 'study-group',
-    title: 'Study Group',
-    description: 'Collaborative learning session to discuss concepts and solve problems together',
-    emoji: '📚',
-  },
+// All available activity keys
+const allActivities = [
+  'a01', 'a02', 'a03', 'a04', 'a05', 'a06', 'a07', 'a08', 'a09', 'a10',
+  'a11', 'a12', 'a13', 'a14', 'a15', 'a16', 'a17', 'a18', 'a19', 'a20',
 ];
 
 const GroupUsageSuggest = memo<{ mobile?: boolean }>(({ mobile }) => {
-  const [currentSet, setCurrentSet] = useState(0);
+  const { t } = useTranslation('welcome');
   const { styles } = useStyles();
-
+  
   const itemsPerPage = mobile ? 2 : 4;
-  const totalSets = Math.ceil(GROUP_ACTIVITIES.length / itemsPerPage);
-
-  const currentActivities = GROUP_ACTIVITIES.slice(
-    currentSet * itemsPerPage,
-    (currentSet + 1) * itemsPerPage
-  );
+  
+  // State for shuffled activities
+  const [shuffledActivities, setShuffledActivities] = useState(() => shuffle(allActivities));
+  
+  const displayedActivities = shuffledActivities.slice(0, itemsPerPage);
 
   const handleRefresh = () => {
-    setCurrentSet((prev) => (prev + 1) % totalSets);
+    setShuffledActivities(shuffle([...allActivities]));
   };
 
   return (
@@ -140,30 +89,36 @@ const GroupUsageSuggest = memo<{ mobile?: boolean }>(({ mobile }) => {
         />
       </Flexbox>
       <Grid gap={8} rows={2}>
-        {currentActivities.map((activity) => (
-          <Block
-            className={styles.card}
-            clickable
-            gap={12}
-            horizontal
-            key={activity.id}
-            variant={'outlined'}
-            onClick={() => {
-              // TODO: Implement activity creation logic
-              console.log('Selected activity:', activity.title);
-            }}
-          >
-            <div className={styles.emoji}>{activity.emoji}</div>
-            <Flexbox gap={2} style={{ overflow: 'hidden', width: '100%' }}>
-              <Text className={styles.cardTitle} ellipsis={{ rows: 1 }}>
-                {activity.title}
-              </Text>
-              <Text className={styles.cardDesc} ellipsis={{ rows: mobile ? 1 : 2 }}>
-                {activity.description}
-              </Text>
-            </Flexbox>
-          </Block>
-        ))}
+        {displayedActivities.map((activityKey) => {
+          const title = t(`guide.groupActivities.${activityKey}.title` as any);
+          const emoji = t(`guide.groupActivities.${activityKey}.emoji` as any);
+          const description = t(`guide.groupActivities.${activityKey}.description` as any);
+          
+          return (
+            <Block
+              className={styles.card}
+              clickable
+              gap={12}
+              horizontal
+              key={activityKey}
+              onClick={() => {
+                // TODO: Implement activity creation logic
+                console.log('Selected activity:', title);
+              }}
+              variant={'outlined'}
+            >
+              <div className={styles.emoji}>{emoji}</div>
+              <Flexbox gap={2} style={{ overflow: 'hidden', width: '100%' }}>
+                <Text className={styles.cardTitle} ellipsis={{ rows: 1 }}>
+                  {title}
+                </Text>
+                <Text className={styles.cardDesc} ellipsis={{ rows: mobile ? 1 : 2 }}>
+                  {description}
+                </Text>
+              </Flexbox>
+            </Block>
+          );
+        })}
       </Grid>
     </Flexbox>
   );

@@ -9,11 +9,9 @@ import { message } from '@/components/AntdStaticMethods';
 import { MESSAGE_CANCEL_FLAT } from '@/const/message';
 import {
   DEFAULT_AGENT_LOBE_SESSION,
-  DEFAULT_GROUP_LOBE_SESSION,
   INBOX_SESSION_ID,
 } from '@/const/session';
 import { useClientDataSWR } from '@/libs/swr';
-import { chatGroupService } from '@/services/chatGroup';
 import { sessionService } from '@/services/session';
 import { SessionStore } from '@/store/session';
 import { getUserStoreState, useUserStore } from '@/store/user';
@@ -22,7 +20,6 @@ import { MetaData } from '@/types/meta';
 import {
   ChatSessionList,
   LobeAgentSession,
-  LobeGroupSession,
   LobeSessionGroups,
   LobeSessionType,
   LobeSessions,
@@ -31,7 +28,6 @@ import {
 import { merge } from '@/utils/merge';
 import { setNamespace } from '@/utils/storeDebug';
 
-import { sessionGroupSelectors } from '../sessionGroup/selectors';
 import { SessionDispatch, sessionsReducer } from './reducers';
 import { sessionSelectors } from './selectors';
 import { sessionMetaSelectors } from './selectors/meta';
