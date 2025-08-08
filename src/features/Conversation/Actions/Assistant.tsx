@@ -10,12 +10,16 @@ import { useChatListActionsBar } from '../hooks/useChatListActionsBar';
 import { RenderAction } from '../types';
 import { ErrorActionsBar } from './Error';
 import { useCustomActions } from './customAction';
+import { sessionSelectors } from '@/store/session/selectors';
+import { useSessionStore } from '@/store/session';
 
 export const AssistantActionsBar: RenderAction = memo(({ onActionClick, error, tools, id }) => {
   const [isThreadMode, hasThread] = useChatStore((s) => [
     !!s.activeThreadId,
     threadSelectors.hasThreadBySourceMsgId(id)(s),
   ]);
+
+  const isGroupSession = useSessionStore(sessionSelectors.isCurrentSessionGroupSession);
 
   const {
     regenerate,
@@ -43,24 +47,37 @@ export const AssistantActionsBar: RenderAction = memo(({ onActionClick, error, t
 
   if (error) return <ErrorActionsBar onActionClick={onActionClick} />;
 
+  const groupActions = [
+    copy,
+    divider,
+    tts,
+    translate,
+    divider,
+    share,
+    divider,
+    del,
+  ]
+
+  const agentActions = [
+    edit,
+    copy,
+    divider,
+    tts,
+    translate,
+    divider,
+    share,
+    // exportPDF,
+    divider,
+    regenerate,
+    delAndRegenerate,
+    del,
+  ]
+
   return (
     <ActionIconGroup
       items={items}
       menu={{
-        items: [
-          edit,
-          copy,
-          divider,
-          tts,
-          translate,
-          divider,
-          share,
-          // exportPDF,
-          divider,
-          regenerate,
-          delAndRegenerate,
-          del,
-        ],
+        items: isGroupSession ? groupActions : agentActions,
       }}
       onActionClick={onActionClick}
     />
