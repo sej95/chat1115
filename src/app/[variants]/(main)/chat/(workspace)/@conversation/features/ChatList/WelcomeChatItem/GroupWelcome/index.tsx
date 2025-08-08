@@ -3,14 +3,12 @@
 import { FluentEmoji, Markdown } from '@lobehub/ui';
 import { createStyles } from 'antd-style';
 import { memo } from 'react';
-import { Trans } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import { Center, Flexbox } from 'react-layout-kit';
 
-import { BRANDING_NAME } from '@/const/branding';
 import { useGreeting } from '@/hooks/useGreeting';
 import { featureFlagsSelectors, useServerConfigStore } from '@/store/serverConfig';
 
-import GroupAddButton from './GroupAddButton';
 import GroupUsageSuggest from './GroupUsageSuggest';
 
 const useStyles = createStyles(({ css, responsive }) => ({
@@ -42,7 +40,8 @@ const GroupWelcome = memo(() => {
   const { styles } = useStyles();
   const mobile = useServerConfigStore((s) => s.isMobile);
   const greeting = useGreeting();
-  const { showWelcomeSuggest, showCreateSession } = useServerConfigStore(featureFlagsSelectors);
+  const { showWelcomeSuggest } = useServerConfigStore(featureFlagsSelectors);
+  const { t } = useTranslation('welcome');
 
   return (
     <Center padding={16} width={'100%'}>
@@ -53,30 +52,9 @@ const GroupWelcome = memo(() => {
         </Flexbox>
         <Markdown
           className={styles.desc}
-          customRender={(dom, context) => {
-            if (context.text.includes('<plus />')) {
-              return (
-                <Trans
-                  components={{
-                    br: <br />,
-                    plus: <GroupAddButton />,
-                  }}
-                >
-                  {showCreateSession 
-                    ? `Welcome to ${BRANDING_NAME} Group Chat! Collaborate with multiple AI assistants or team members in a shared conversation space.<br />Click <plus /> to create a new group chat and start collaborating.`
-                    : `Welcome to ${BRANDING_NAME} Group Chat! Collaborate with multiple AI assistants or team members in a shared conversation space.`
-                  }
-                </Trans>
-              );
-            }
-            return dom;
-          }}
           variant={'chat'}
         >
-          {showCreateSession 
-            ? `Welcome to ${BRANDING_NAME} Group Chat! Collaborate with multiple AI assistants or team members in a shared conversation space.<br />Click <plus /> to create a new group chat and start collaborating.`
-            : `Welcome to ${BRANDING_NAME} Group Chat! Collaborate with multiple AI assistants or team members in a shared conversation space.`
-          }
+          {t('guide.groupMessage')}
         </Markdown>
         {showWelcomeSuggest && (
           <GroupUsageSuggest mobile={mobile} />

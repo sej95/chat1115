@@ -6,8 +6,7 @@
     },
     "defaultMessage": "I am your personal intelligent assistant {{appName}}. How can I assist you today?<br />If you need a more professional or customized assistant, you can click <plus /> to create a custom assistant.",
     "defaultMessageWithoutCreate": "I am your personal intelligent assistant {{appName}}. How can I assist you today?",
-    "groupMessage": "Welcome to {{appName}} Group Chat! Collaborate with multiple AI assistants or team members in a shared conversation space.<br />Click <plus /> to create a new group chat and start collaborating.",
-    "groupMessageWithoutCreate": "Welcome to {{appName}} Group Chat! Collaborate with multiple AI assistants or team members in a shared conversation space.",
+    "groupMessage": "Welcome to Group Chat! Collaborate with multiple AI agents in a shared conversation space.",
     "qa": {
       "q01": "What is LobeHub?",
       "q02": "What is {{appName}}?",
@@ -34,6 +33,112 @@
       "morning": "Good Morning",
       "night": "Good Evening",
       "noon": "Good Noon"
+    },
+    "groupActivities": {
+      "a01": {
+        "title": "Brain Storm",
+        "emoji": "🧠",
+        "description": "Collaborative idea generation and creative problem solving with multiple perspectives"
+      },
+      "a02": {
+        "title": "Werewolf Game",
+        "emoji": "🐺",
+        "description": "Social deduction game where players use strategy and discussion to find the werewolves"
+      },
+      "a03": {
+        "title": "Mock UN",
+        "emoji": "🌍",
+        "description": "Simulate United Nations debates and diplomatic negotiations on global issues"
+      },
+      "a04": {
+        "title": "Design Review",
+        "emoji": "🎨",
+        "description": "Collaborative feedback session for design concepts, prototypes, or creative work"
+      },
+      "a05": {
+        "title": "Code Review",
+        "emoji": "💻",
+        "description": "Technical discussion and peer review of code changes and implementations"
+      },
+      "a06": {
+        "title": "Planning Poker",
+        "emoji": "🃏",
+        "description": "Agile estimation technique using cards to estimate project tasks and effort"
+      },
+      "a07": {
+        "title": "Debate Club",
+        "emoji": "⚖️",
+        "description": "Structured discussion and argumentation on various topics and current events"
+      },
+      "a08": {
+        "title": "Study Group",
+        "emoji": "📚",
+        "description": "Collaborative learning session to discuss concepts and solve problems together"
+      },
+      "a09": {
+        "title": "Book Club",
+        "emoji": "📖",
+        "description": "Literary discussion and analysis of books, stories, and written works"
+      },
+      "a10": {
+        "title": "Game Night",
+        "emoji": "🎲",
+        "description": "Fun interactive games and activities to build team bonds and have fun"
+      },
+      "a11": {
+        "title": "Movie Club",
+        "emoji": "🎬",
+        "description": "Watch and discuss films, documentaries, and visual media together"
+      },
+      "a12": {
+        "title": "Language Practice",
+        "emoji": "🗣️",
+        "description": "Practice speaking and learning new languages with native speakers"
+      },
+      "a13": {
+        "title": "Cooking Class",
+        "emoji": "👨‍🍳",
+        "description": "Learn and share cooking techniques, recipes, and culinary traditions"
+      },
+      "a14": {
+        "title": "Tech Talk",
+        "emoji": "🚀",
+        "description": "Discuss emerging technologies, innovations, and industry trends"
+      },
+      "a15": {
+        "title": "Music Jam",
+        "emoji": "🎵",
+        "description": "Collaborative music creation, sharing, and appreciation sessions"
+      },
+      "a16": {
+        "title": "Investment Club",
+        "emoji": "📈",
+        "description": "Analyze markets, discuss investment strategies, and share financial insights"
+      },
+      "a17": {
+        "title": "Fitness Challenge",
+        "emoji": "💪",
+        "description": "Set group fitness goals, share workouts, and motivate each other"
+      },
+      "a18": {
+        "title": "Travel Planning",
+        "emoji": "✈️",
+        "description": "Plan trips, share travel experiences, and discover new destinations"
+      },
+      "a19": {
+        "title": "Art Workshop",
+        "emoji": "🖼️",
+        "description": "Create, critique, and appreciate various forms of visual and digital art"
+      },
+      "a20": {
+        "title": "Science Fair",
+        "emoji": "🔬",
+        "description": "Explore scientific concepts, conduct experiments, and share discoveries"
+      }
+    },
+    "activities": {
+      "moreBtn": "Show More",
+      "title": "Popular Group Activities:"
     }
   },
   "header": "Welcome",

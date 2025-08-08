@@ -22,6 +22,18 @@ export const chatGroupReducers = {
       draft.groups = draft.groups.filter((group) => group.id !== id);
     }),
 
+  // Load groups into the state
+  loadGroups: (state, { payload }: { payload: ChatGroupItem[] }) =>
+    produce(state, (draft) => {
+      draft.groups = payload;
+      draft.isGroupsLoading = false;
+    }),
+
+  // Set the loading state for groups
+  setGroupsLoading: (state, { payload }) => {
+    return { ...state, isGroupsLoading: payload };
+  },
+
   // Update a group in the list
   updateGroup: (
     state,
@@ -32,18 +44,6 @@ export const chatGroupReducers = {
       if (group) {
         Object.assign(group, payload.value);
       }
-    }),
-
-  // Set the loading state for groups
-  setGroupsLoading: (state, { payload }) => {
-    return { ...state, isGroupsLoading: payload };
-  },
-
-  // Load groups into the state
-  loadGroups: (state, { payload }: { payload: ChatGroupItem[] }) =>
-    produce(state, (draft) => {
-      draft.groups = payload;
-      draft.isGroupsLoading = false;
     }),
 };
 
