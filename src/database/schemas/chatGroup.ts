@@ -52,9 +52,7 @@ export const chatGroups = pgTable(
 
     ...timestamps,
   },
-  (t) => ({
-    clientIdUnique: uniqueIndex('chat_groups_client_id_user_id_unique').on(t.clientId, t.userId),
-  }),
+  (t) => [uniqueIndex('chat_groups_client_id_user_id_unique').on(t.clientId, t.userId)],
 );
 
 export const insertChatGroupSchema = createInsertSchema(chatGroups);

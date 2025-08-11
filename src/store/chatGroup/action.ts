@@ -65,8 +65,12 @@ export const chatGroupAction: StateCreator<
     createGroup: async (newGroup, agentIds) => {
       const group = await chatGroupService.createGroup(newGroup);
 
-      if (agentIds) {
+      if (agentIds && agentIds.length > 0) {
         await chatGroupService.addAgentsToGroup(group.id, agentIds);
+        
+        // Wait a brief moment to ensure database transactions are committed
+        // This prevents race condition where loadGroups() executes before member addition is fully persisted
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
 
       dispatch({ payload: group, type: 'addGroup' });

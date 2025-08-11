@@ -7,10 +7,10 @@ import { StateCreator } from 'zustand/vanilla';
 
 import { LOADING_FLAT, MESSAGE_CANCEL_FLAT } from '@/const/message';
 import { TraceEventType, TraceNameMap } from '@/const/trace';
-import { ChatErrorType } from '@/types/fetch';
+
 import { isDesktop, isServerMode } from '@/const/version';
 import { knowledgeBaseQAPrompts } from '@/prompts/knowledgeBaseQA';
-import { consolidateGroupChatHistory } from '@/prompts/chatMessages';
+
 import { chatService } from '@/services/chat';
 import { messageService } from '@/services/message';
 import { useAgentStore } from '@/store/agent';
@@ -24,22 +24,16 @@ import { messageMapKey } from '@/store/chat/utils/messageMapKey';
 import { getFileStoreState } from '@/store/file/store';
 import { useSessionStore } from '@/store/session';
 import { WebBrowsingManifest } from '@/tools/web-browsing';
-import { ChatMessage, CreateMessageParams, SendMessageParams, SendGroupMessageParams } from '@/types/message';
+import { ChatMessage, CreateMessageParams, SendMessageParams } from '@/types/message';
 import { ChatImageItem } from '@/types/message/image';
 import { MessageSemanticSearchChunk } from '@/types/rag';
 import { Action, setNamespace } from '@/utils/storeDebug';
 
-import { GroupChatSupervisor, SupervisorContext, SupervisorDecision } from '../../message/supervisor';
-
 import { chatSelectors, topicSelectors } from '../../../selectors';
-import { toggleBooleanList } from '../../../utils';
-import type { ChatStoreState } from '../../../initialState';
-import { sessionSelectors } from '@/store/session/selectors';
+
+import { AIGroupChatAction, generateAIGroupChat } from './generateAIGroupChat';
 
 const n = setNamespace('ai');
-
-// Group chat supervisor instance
-const supervisor = new GroupChatSupervisor();
 
 interface ProcessMessageParams {
   traceId?: string;
@@ -57,15 +51,11 @@ interface ProcessMessageParams {
   agentId?: string;
 }
 
-export interface AIGenerateAction {
+export interface AIGenerateAction extends AIGroupChatAction {
   /**
    * Sends a new message to the AI chat system
    */
   sendMessage: (params: SendMessageParams) => Promise<void>;
-  /**
-   * Sends a new message to a group chat and triggers agent responses
-   */
-  sendGroupMessage: (params: SendGroupMessageParams) => Promise<void>;
   /**
    * Regenerates a specific message in the chat
    */
@@ -145,54 +135,6 @@ export interface AIGenerateAction {
   ) => AbortController | undefined;
 
   internal_toggleSearchWorkflow: (loading: boolean, id?: string) => void;
-
-  // ========= ↓ Group Chat Methods ↓ ========== //
-
-  /**
-   * Triggers supervisor decision for group chat
-   */
-  internal_triggerSupervisorDecision: (groupId: string) => Promise<void>;
-
-  /**
-   * Triggers supervisor decision with debounce logic (3 seconds threshold)
-   * Cancels previous pending decisions and schedules a new one
-   */
-  internal_triggerSupervisorDecisionDebounced: (groupId: string) => void;
-
-  /**
-   * Cancels pending supervisor decision for a group
-   */
-  internal_cancelSupervisorDecision: (groupId: string) => void;
-
-  /**
-   * Cancels all pending supervisor decisions (cleanup method)
-   */
-  internal_cancelAllSupervisorDecisions: () => void;
-
-  /**
-   * Executes agent responses for group chat
-   */
-  internal_executeAgentResponses: (groupId: string, agentIds: string[]) => Promise<void>;
-
-  /**
-   * Processes a single agent message in group chat
-   */
-  internal_processAgentMessage: (groupId: string, agentId: string) => Promise<void>;
-
-  /**
-   * Updates agent speaking status in group chat
-   */
-  internal_updateAgentSpeakingStatus: (groupId: string, agentId: string, speaking: boolean) => void;
-
-  /**
-   * Sets the active group
-   */
-  internal_setActiveGroup: (groupId: string) => void;
-
-  /**
-   * Toggles supervisor loading state for group chat
-   */
-  internal_toggleSupervisorLoading: (loading: boolean, groupId?: string) => void;
 }
 
 export const generateAIChat: StateCreator<
@@ -200,7 +142,10 @@ export const generateAIChat: StateCreator<
   [['zustand/devtools', never]],
   [],
   AIGenerateAction
-> = (set, get) => ({
+> = (...params) => {
+  const [set, get] = params;
+  return {
+    ...generateAIGroupChat(...params),
   delAndRegenerateMessage: async (id) => {
     const traceId = chatSelectors.getTraceIdByMessageId(id)(get());
     get().internal_resendMessage(id, { traceId });
@@ -359,42 +304,7 @@ export const generateAIChat: StateCreator<
     await Promise.all([summaryTitle(), addFilesToAgent()]);
   },
 
-  sendGroupMessage: async ({ groupId, message, files, onlyAddUserMessage }) => {
-    const { internal_createMessage, internal_triggerSupervisorDecisionDebounced, internal_setActiveGroup } = get();
 
-    if (!message.trim() && (!files || files.length === 0)) return;
-
-    console.log("generateAIChat: Start send group message", groupId, message, files, onlyAddUserMessage);
-
-    internal_setActiveGroup(groupId);
-
-    set({ isCreatingMessage: true }, false, n('creatingGroupMessage/start'));
-
-    try {
-      const userMessage: CreateMessageParams = {
-        content: message,
-        files: files?.map((f) => f.id),
-        role: 'user',
-        groupId,
-      };
-
-      const messageId = await internal_createMessage(userMessage);
-
-      // if only add user message, then stop
-      if (onlyAddUserMessage) {
-        set({ isCreatingMessage: false }, false, n('creatingGroupMessage/onlyUser'));
-        return;
-      }
-
-      if (messageId) {
-        internal_triggerSupervisorDecisionDebounced(groupId);
-      }
-    } catch (error) {
-      console.error('Failed to send group message:', error);
-    } finally {
-      set({ isCreatingMessage: false }, false, n('creatingGroupMessage/end'));
-    }
-  },
 
   stopGenerateMessage: () => {
     const { chatLoadingIdsAbortController, internal_toggleChatLoading } = get();
@@ -972,323 +882,8 @@ export const generateAIChat: StateCreator<
     );
   },
 
-  internal_toggleSearchWorkflow: (loading, id) => {
-    return get().internal_toggleLoadingArrays('searchWorkflowLoadingIds', loading, id);
-  },
-
-  // ========= ↓ Group Chat Internal Methods ↓ ========== //
-
-  internal_triggerSupervisorDecision: async (groupId: string) => {
-    const {
-      messagesMap,
-      internal_toggleSupervisorLoading,
-      internal_executeAgentResponses,
-    } = get();
-
-    const messages = messagesMap[messageMapKey(groupId, null)] || [];
-    const agents = sessionSelectors.currentGroupAgents(useSessionStore.getState());
-
-    if (messages.length === 0) return;
-
-    internal_toggleSupervisorLoading(true, groupId);
-
-    try {
-      const context: SupervisorContext = {
-        availableAgents: agents!,
-        groupId,
-        messages,
-      };
-
-      const decision: SupervisorDecision = await supervisor.makeDecision(context);
-
-      console.log('Supervisor decision:', decision);
-
-      if (decision.nextSpeakers.length > 0) {
-        await internal_executeAgentResponses(groupId, decision.nextSpeakers);
-      }
-    } catch (error) {
-      console.error('Supervisor decision failed:', error);
-    } finally {
-      internal_toggleSupervisorLoading(false, groupId);
-    }
-  },
-
-  internal_executeAgentResponses: async (groupId: string, agentIds: string[]) => {
-    const { internal_processAgentMessage } = get();
-
-    const responsePromises = agentIds.map((agentId) =>
-      internal_processAgentMessage(groupId, agentId),
-    );
-
-    try {
-      await Promise.all(responsePromises);
-    } catch (error) {
-      console.error('Failed to execute agent responses:', error);
-    }
-  },
-
-  // For group member responsing
-  internal_processAgentMessage: async (groupId: string, agentId: string) => {
-    const {
-      messagesMap,
-      internal_updateAgentSpeakingStatus,
-      internal_createMessage,
-      internal_fetchAIChatMessage,
-      refreshMessages,
-      activeTopicId,
-      internal_dispatchMessage,
-    } = get();
-
-    internal_updateAgentSpeakingStatus(groupId, agentId, true);
-
-    try {
-      const messages = messagesMap[messageMapKey(groupId, activeTopicId)] || [];
-      // if (messages.length === 0) return;
-
-      const agentStoreState = getAgentStoreState();
-      const agentConfig = agentSelectors.getAgentConfigById(agentId)(agentStoreState);
-      const { provider } = agentConfig;
-
-      if (!provider) {
-        console.error(`No provider configured for agent ${agentId}`);
-        return;
-      }
-
-      console.log("MESSAGE HISTORY", messages);
-
-      // Get all agents for group chat history formatting
-      const agents = sessionSelectors.currentGroupAgents(useSessionStore.getState());
-      const agentTitleMap = agents?.map(agent => ({
-        id: agent.agentId,
-        title: agent.title
-      }));
-
-      // Consolidate message history into a single formatted string
-      const consolidatedHistory = consolidateGroupChatHistory(messages, agentTitleMap);
-
-      console.log("CONSOLIDATED HISTORY:", consolidatedHistory);
-
-      // Build group members info similar to supervisor
-      const groupMembersInfo = JSON.stringify(
-        agentTitleMap,
-        null,
-        2
-      );
-
-      // Build group chat system prompt with consolidated history
-      const baseSystemRole = agentConfig.systemRole || '';
-      const groupChatSystemPrompt = `${baseSystemRole}
-You are participating in a group chat in real world. Please follow these guidelines:
-
-Guidelines:
-- Stay in character as ${agentId}
-- Be concise and natural, behave like a real person
-- Engage naturally in the conversation flow
-- Be collaborative and build upon others' responses when appropriate
-- Keep your responses concise and relevant to the ongoing discussion
-- Each message should no more than 100 words
-
-<GroupMembers>
-${groupMembersInfo}
-</GroupMembers>
-
-<ConversationHistory>
-${consolidatedHistory}
-</ConversationHistory>
-
-Please respond as this agent would, considering the full conversation history provided above. Directly return the message content, no other text. You do not need add author name or anything else.`;
-
-      // TODO: [Group Chat] Use real agent config
-      const assistantMessage: CreateMessageParams = {
-        role: 'assistant',
-        content: LOADING_FLAT,
-        fromModel: "gemini-2.5-flash",
-        fromProvider: "google",
-        groupId,
-        agentId,
-        topicId: activeTopicId,
-      };
-
-      const assistantId = await internal_createMessage(assistantMessage);
-
-      const systemMessage: ChatMessage = {
-        id: 'group-system',
-        role: 'system',
-        content: groupChatSystemPrompt,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        meta: {},
-      };
-
-      const userMessage: ChatMessage = {
-        id: 'group-user',
-        role: 'user',
-        content: 'Please respond based on the conversation history provided.',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        meta: {},
-      };
-
-      const messagesForAPI = [systemMessage, userMessage];
-
-      if (assistantId) {
-        await internal_fetchAIChatMessage({
-          messages: messagesForAPI,
-          messageId: assistantId,
-          model: "gemini-2.5-flash",
-          provider: "google",
-          params: {
-            traceId: `group-${groupId}-agent-${agentId}`,
-          },
-        });
-      }
-
-      await refreshMessages();
-
-      // After successful agent response, trigger debounced supervisor decision
-      get().internal_triggerSupervisorDecisionDebounced(groupId);
-
-    } catch (error) {
-      console.error(`Failed to process message for agent ${agentId}:`, error);
-
-      // Update error state if we have an assistant message
-      const currentMessages = get().messagesMap[groupId] || [];
-      const errorMessage = currentMessages.find(m =>
-        m.role === 'assistant' &&
-        m.groupId === groupId &&
-        m.content === LOADING_FLAT
-      );
-
-      if (errorMessage) {
-        internal_dispatchMessage({
-          id: errorMessage.id,
-          type: 'updateMessage',
-          value: {
-            content: `Error: Failed to generate response. ${error instanceof Error ? error.message : 'Unknown error'}`,
-            error: {
-              type: ChatErrorType.CreateMessageError,
-              message: error instanceof Error ? error.message : 'Unknown error'
-            }
-          },
-        });
-      }
-    } finally {
-      get().internal_toggleChatLoading(false, undefined, n('processAgentMessage(end)'));
-      internal_updateAgentSpeakingStatus(groupId, agentId, false);
-    }
-  },
-
-  internal_updateAgentSpeakingStatus: (groupId: string, agentId: string, speaking: boolean) => {
-    set(
-      produce((state: ChatStoreState) => {
-        if (!state.agentSpeakingStatus[groupId]) {
-          state.agentSpeakingStatus[groupId] = {};
-        }
-        state.agentSpeakingStatus[groupId][agentId] = speaking;
-      }),
-      false,
-      n(`updateAgentSpeakingStatus/${groupId}/${agentId}`),
-    );
-  },
-
-  internal_setActiveGroup: () => {
-    // Update the active session type to 'group' when setting an active group
-    get().internal_updateActiveSessionType('group');
-  },
-
-  internal_toggleSupervisorLoading: (loading: boolean, groupId?: string) => {
-    set(
-      {
-        supervisorDecisionLoading: groupId
-          ? toggleBooleanList(get().supervisorDecisionLoading, groupId, loading)
-          : loading
-            ? get().supervisorDecisionLoading
-            : [],
-      },
-      false,
-      n(`toggleSupervisorLoading/${loading ? 'start' : 'end'}`),
-    );
-  },
-
-  internal_triggerSupervisorDecisionDebounced: (groupId: string) => {
-    const { internal_cancelSupervisorDecision, internal_triggerSupervisorDecision } = get();
-
-    console.log("Supervisor decision debounced triggered for group", groupId);
-
-    // Cancel any existing timer for this group
-    internal_cancelSupervisorDecision(groupId);
-
-    // Set a new timer with 3-second debounce
-    const timerId = setTimeout(async () => {
-      console.log(`Debounced supervisor decision triggered for group ${groupId}`);
-
-      // Clean up the timer from state before executing
-      set(
-        produce((state: ChatStoreState) => {
-          delete state.supervisorDebounceTimers[groupId];
-        }),
-        false,
-        n(`cleanupSupervisorTimer/${groupId}`),
-      );
-
-      // Execute the supervisor decision
-      try {
-        await internal_triggerSupervisorDecision(groupId);
-      } catch (error) {
-        console.error(`Failed to execute supervisor decision for group ${groupId}:`, error);
-      }
-    }, 3000); // 3 seconds debounce
-
-    // Store the timer in state
-    set(
-      produce((state: ChatStoreState) => {
-        state.supervisorDebounceTimers[groupId] = timerId;
-      }),
-      false,
-      n(`setSupervisorTimer/${groupId}`),
-    );
-  },
-
-  internal_cancelSupervisorDecision: (groupId: string) => {
-    const { supervisorDebounceTimers } = get();
-    const existingTimer = supervisorDebounceTimers[groupId];
-
-    if (existingTimer) {
-      clearTimeout(existingTimer);
-      console.log(`Cancelled pending supervisor decision for group ${groupId}`);
-
-      // Remove timer from state
-      set(
-        produce((state: ChatStoreState) => {
-          delete state.supervisorDebounceTimers[groupId];
-        }),
-        false,
-        n(`cancelSupervisorTimer/${groupId}`),
-      );
-    }
-  },
-
-  internal_cancelAllSupervisorDecisions: () => {
-    const { supervisorDebounceTimers } = get();
-    const groupIds = Object.keys(supervisorDebounceTimers);
-
-    if (groupIds.length > 0) {
-      console.log('Cancelling all pending supervisor decisions for session change/cleanup');
-
-      // Cancel all timers
-      groupIds.forEach(groupId => {
-        const timer = supervisorDebounceTimers[groupId];
-        if (timer) {
-          clearTimeout(timer);
-        }
-      });
-
-      // Clear all timers from state
-      set(
-        { supervisorDebounceTimers: {} },
-        false,
-        n('cancelAllSupervisorTimers'),
-      );
-    }
-  },
-});
+    internal_toggleSearchWorkflow: (loading, id) => {
+      return get().internal_toggleLoadingArrays('searchWorkflowLoadingIds', loading, id);
+    },
+  };
+};
