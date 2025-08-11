@@ -16,6 +16,7 @@ import { useChatStore } from '@/store/chat';
 import { chatSelectors } from '@/store/chat/selectors';
 
 import Files from './Files';
+import MentionedUsers from './MentionedUsers';
 import InputArea from './InputArea';
 import SendButton from './Send';
 
@@ -28,6 +29,7 @@ const defaultLeftActions: ActionKeys[] = [
   'tools',
   'params',
   'mainToken',
+  'mention',
 ];
 
 const defaultRightActions: ActionKeys[] = ['clear'];
@@ -75,6 +77,7 @@ const MobileChatInput = memo(() => {
         ) : (
           <>
             <Files />
+            <MentionedUsers />
             <ActionBar
               leftActions={defaultLeftActions}
               padding={'0 8px'}

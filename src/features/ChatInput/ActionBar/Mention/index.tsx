@@ -5,48 +5,53 @@ import { useTranslation } from 'react-i18next';
 
 import { useSessionStore } from '@/store/session';
 import { sessionSelectors } from '@/store/session/selectors';
+import { useMentionStore } from '@/store/mention';
 import type { LobeGroupSession } from '@/types/session';
-import { ChatGroupAgentItem } from '@/database/schemas/chatGroup';
 
 import Action from '../components/Action';
 
-const handleMemberSelect = (agentId: string) => {
-  // TODO: [Group Chat] Implement member selection callback
-  console.log('Selected member:', agentId);
-};
-
-const useMentionItems = () => {
-  const currentSession = useSessionStore(sessionSelectors.currentSession) as LobeGroupSession;
-
-  const items: ItemType[] = useMemo(() => {
-    const memberItems: ItemType[] = [];
-
-    currentSession.members.forEach((agent: ChatGroupAgentItem) => {
-      memberItems.push({
-        icon: (
-          <Avatar
-            avatar={agent.avatar}
-            background={agent.backgroundColor}
-            shape="circle"
-            size={24}
-          />
-        ),
-        key: agent.agentId,
-        label: agent.title || agent.agentId,
-        onClick: () => handleMemberSelect(agent.agentId),
-      });
-    });
-
-    return memberItems;
-  }, [currentSession]);
-
-  return items;
-};
-
 const Mention = memo(() => {
   const { t } = useTranslation('chat');
+  const addMentionedUser = useMentionStore((s: any) => s.addMentionedUser);
+
+  const handleMemberSelect = (agentId: string) => {
+    console.log("ADD SELECTED MEMBER", agentId);
+
+    addMentionedUser(agentId);
+  };
+
+  const useMentionItems = () => {
+    const currentSession = useSessionStore(sessionSelectors.currentSession) as LobeGroupSession;
+
+    const items: ItemType[] = useMemo(() => {
+      const memberItems: ItemType[] = [];
+
+      currentSession.members?.forEach((agent: ChatGroupAgentItem) => {
+        memberItems.push({
+          icon: (
+            <Avatar
+              avatar={agent.avatar}
+              background={agent.backgroundColor}
+              shape="circle"
+              size={24}
+            />
+          ),
+          key: agent.id,
+          label: agent.title || agent.id,
+          onClick: () => handleMemberSelect(agent.id),
+        });
+      });
+
+      return memberItems;
+    }, [currentSession]);
+
+    return items;
+  };
 
   const items = useMentionItems();
+
+  // Only show for group sessions
+  if (!items.length) return null;
 
   return (
     <Action
