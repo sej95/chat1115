@@ -11,11 +11,6 @@
     "prompt": "角色设定",
     "tts": "语音服务"
   },
-  "groupTab": {
-    "chat": "聊天设置",
-    "members": "群组成员",
-    "settings": "群组设置"
-  },
   "analytics": {
     "telemetry": {
       "desc": "通过选择发送遥测数据，你可以帮助我们改善 {{appName}} 整体用户体验",
@@ -43,8 +38,6 @@
   "header": {
     "desc": "偏好与模型设置",
     "global": "全局设置",
-    "group": "群组设置",
-    "groupDesc": "群聊设置与成员管理",
     "session": "会话设置",
     "sessionDesc": "角色设定与会话偏好",
     "sessionWithName": "会话设置 · {{name}}",
@@ -517,6 +510,11 @@
       "label": "AI 绘画话题命名模型",
       "modelDesc": "指定用于 AI 绘画自动命名话题的模型",
       "title": "AI 绘画自动命名话题"
+    },
+    "groupChatSupervisor": {
+      "label": "群聊监督模型",
+      "modelDesc": "指定用于监督和管理群聊对话的模型",
+      "title": "群聊监督管理"
     },
     "helpInfo": "当创建新助手时，将以默认助手设置作为预设值。",
     "historyCompress": {
