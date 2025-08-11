@@ -8,6 +8,7 @@ import { CHAT_TEXTAREA_HEIGHT, CHAT_TEXTAREA_MAX_HEIGHT } from '@/const/layoutTo
 
 import { ActionKeys } from '../ActionBar/config';
 import LocalFiles from './FilePreview';
+import MentionedUsers from './MentionedUsers';
 import Head from './Header';
 
 export type FooterRender = (params: {
@@ -41,6 +42,7 @@ const DesktopChatInput = memo<DesktopChatInputProps>(
     return (
       <>
         {!expand && leftActions.includes('fileUpload') && <LocalFiles />}
+        {!expand && leftActions.includes('mention') && <MentionedUsers />}
         <DraggablePanel
           fullscreen={expand}
           maxHeight={CHAT_TEXTAREA_MAX_HEIGHT}
