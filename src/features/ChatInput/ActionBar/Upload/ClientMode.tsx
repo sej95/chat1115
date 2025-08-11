@@ -5,6 +5,7 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useModelSupportFiles } from '@/hooks/useModelSupportFiles';
+import { useModelSupportVideo } from '@/hooks/useModelSupportVideo';
 import { useModelSupportVision } from '@/hooks/useModelSupportVision';
 import { useAgentStore } from '@/store/agent';
 import { agentSelectors } from '@/store/agent/slices/chat';
@@ -20,11 +21,12 @@ const FileUpload = memo(() => {
 
   const enabledFiles = useModelSupportFiles(model, provider);
   const supportVision = useModelSupportVision(model, provider);
+  const supportVideo = useModelSupportVideo(model, provider);
   const canUpload = enabledFiles || supportVision;
 
   return (
     <Upload
-      accept={enabledFiles ? undefined : 'image/*'}
+      accept={enabledFiles ? undefined : supportVideo ? 'image/*,video/*' : 'image/*'}
       beforeUpload={async (file) => {
         await upload([file]);
 
