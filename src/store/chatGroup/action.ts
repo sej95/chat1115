@@ -15,12 +15,12 @@ export interface ChatGroupAction {
   internal_dispatchChatGroup: (
     payload:
       | {
-          type: keyof typeof chatGroupReducers;
-        }
+        type: keyof typeof chatGroupReducers;
+      }
       | {
-          payload: any;
-          type: keyof typeof chatGroupReducers;
-        },
+        payload: any;
+        type: keyof typeof chatGroupReducers;
+      },
   ) => void;
   internal_refreshGroups: () => Promise<void>;
 
@@ -62,12 +62,17 @@ export const chatGroupAction: StateCreator<
       await get().internal_refreshGroups();
     },
 
-    createGroup: async (newGroup, agentIds) => {
+    /**
+     * @param silent - if true, do not switch to the new group session
+     */
+    createGroup: async (newGroup, agentIds, silent = false) => {
+      const { switchSession } = getSessionStoreState();
+
       const group = await chatGroupService.createGroup(newGroup);
 
       if (agentIds && agentIds.length > 0) {
         await chatGroupService.addAgentsToGroup(group.id, agentIds);
-        
+
         // Wait a brief moment to ensure database transactions are committed
         // This prevents race condition where loadGroups() executes before member addition is fully persisted
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -77,6 +82,10 @@ export const chatGroupAction: StateCreator<
 
       await get().loadGroups();
       await getSessionStoreState().refreshSessions();
+
+      if (!silent) {
+        switchSession(group.id);
+      }
 
       return group.id;
     },
