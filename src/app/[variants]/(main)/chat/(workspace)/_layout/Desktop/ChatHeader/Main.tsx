@@ -17,6 +17,8 @@ import { sessionMetaSelectors, sessionSelectors } from '@/store/session/selector
 
 import TogglePanelButton from '../../../../features/TogglePanelButton';
 import Tags from './Tags';
+import { useUserStore } from '@/store/user';
+import { userProfileSelectors } from '@/store/user/selectors';
 
 const useStyles = createStyles(({ css }) => ({
   container: css`
@@ -60,6 +62,12 @@ const Main = memo<{ className?: string }>(({ className }) => {
     ];
   });
 
+  const currentUser = useUserStore((s) => ({
+    avatar: userProfileSelectors.userAvatar(s),
+    name: userProfileSelectors.displayUserName(s) || userProfileSelectors.nickName(s) || 'You',
+  }));
+
+
   const isGroup = sessionType === 'group';
 
   const openChatSettings = useOpenChatSettings();
@@ -85,10 +93,15 @@ const Main = memo<{ className?: string }>(({ className }) => {
       <Flexbox align={'center'} className={className} gap={12} horizontal>
         {!isPinned && !showSessionPanel && <TogglePanelButton />}
         <GroupAvatar
-          avatars={members?.map((member) => ({
-            avatar: member.avatar,
-            background: member.backgroundColor,
-          }))}
+          avatars={[
+            {
+              avatar: currentUser.avatar,
+            },
+            ...(members?.map((member) => ({
+              avatar: member.avatar,
+              background: member.backgroundColor,
+            })) || []),
+          ]}
           onClick={() => openChatSettings()}
           size={32}
           title={title}
