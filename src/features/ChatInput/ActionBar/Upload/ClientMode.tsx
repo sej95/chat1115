@@ -4,8 +4,8 @@ import { FileUp, LucideImage } from 'lucide-react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { message } from '@/components/AntdStaticMethods';
 import { useModelSupportFiles } from '@/hooks/useModelSupportFiles';
-import { useModelSupportVideo } from '@/hooks/useModelSupportVideo';
 import { useModelSupportVision } from '@/hooks/useModelSupportVision';
 import { useAgentStore } from '@/store/agent';
 import { agentSelectors } from '@/store/agent/slices/chat';
@@ -21,13 +21,18 @@ const FileUpload = memo(() => {
 
   const enabledFiles = useModelSupportFiles(model, provider);
   const supportVision = useModelSupportVision(model, provider);
-  const supportVideo = useModelSupportVideo(model, provider);
   const canUpload = enabledFiles || supportVision;
 
   return (
     <Upload
-      accept={enabledFiles ? undefined : supportVideo ? 'image/*,video/*' : 'image/*'}
+      accept={enabledFiles ? undefined : 'image/*'}
       beforeUpload={async (file) => {
+        // Check if trying to upload non-image files in client mode
+        if (!enabledFiles && !file.type.startsWith('image')) {
+          message.warning(t('upload.clientMode.fileNotSupported'));
+          return false;
+        }
+
         await upload([file]);
 
         return false;
