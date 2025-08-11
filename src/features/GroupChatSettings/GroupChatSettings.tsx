@@ -48,7 +48,7 @@ const getResponseOrder = (value: number): 'sequential' | 'random' | 'smart' => {
 const GroupChatSettings = memo(() => {
   const { t } = useTranslation(['setting', 'common']);
   const [form] = Form.useForm();
-  
+
   const updateConfig = useStore((s) => s.updateGroupConfig);
   const config = useStore(selectors.config) || {};
 
@@ -68,14 +68,14 @@ const GroupChatSettings = memo(() => {
       ...config,
       responseOrder,
     };
-    
+
     await updateConfig(newConfig);
   };
 
   const responseSpeedMarks = {
-    1: 'Sequential',
-    2: 'Smart',
-    3: 'Random',
+    1: 'Slow',
+    2: 'Medium',
+    3: 'Fast',
   };
 
   const chatSettings: FormGroupItemType = {
@@ -94,13 +94,6 @@ const GroupChatSettings = memo(() => {
         name: 'responseSpeed',
       },
     ],
-    extra: (
-      <div style={{ color: '#666', fontSize: '12px', marginTop: '8px' }}>
-        <strong>Sequential:</strong> Agents respond one by one in order<br />
-        <strong>Smart:</strong> AI determines the best agent to respond<br />
-        <strong>Random:</strong> Agents respond in random order
-      </div>
-    ),
     title: 'Chat Settings',
   };
 
