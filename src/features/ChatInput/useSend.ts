@@ -6,8 +6,6 @@ import { agentSelectors } from '@/store/agent/selectors';
 import { useChatStore } from '@/store/chat';
 import { chatSelectors, topicSelectors } from '@/store/chat/selectors';
 import { fileChatSelectors, useFileStore } from '@/store/file';
-import { useMentionStore } from '@/store/mention';
-import { mentionSelectors } from '@/store/mention/selectors';
 import { getUserStoreState } from '@/store/user';
 import { SendMessageParams } from '@/types/message';
 
@@ -24,7 +22,6 @@ export const useSendMessage = () => {
   const { analytics } = useAnalytics();
 
   const clearChatUploadFileList = useFileStore((s) => s.clearChatUploadFileList);
-  const clearMentionedUsers = useMentionStore((s: any) => s.clearMentionedUsers);
 
   const isUploadingFiles = useFileStore(fileChatSelectors.isUploadingFiles);
   const isSendButtonDisabledByMessage = useChatStore(chatSelectors.isSendButtonDisabledByMessage);
@@ -45,24 +42,17 @@ export const useSendMessage = () => {
     if (!canSend) return;
 
     const fileList = fileChatSelectors.chatUploadFileList(useFileStore.getState());
-    const mentionedUsers = mentionSelectors.mentionedUsers(useMentionStore.getState());
-    
     // if there is no message and no image, then we should not send the message
     if (!store.inputMessage && fileList.length === 0) return;
-
-    // Create metadata with mentioned users if any
-    const metadata = mentionedUsers.length > 0 ? { mentionedUsers } : undefined;
 
     sendMessage({
       files: fileList,
       message: store.inputMessage,
-      metadata,
       ...params,
     });
 
     updateInputMessage('');
     clearChatUploadFileList();
-    clearMentionedUsers();
 
     // 获取分析数据
     const userStore = getUserStoreState();
@@ -78,12 +68,10 @@ export const useSendMessage = () => {
         chat_id: store.activeId || 'unknown',
         current_topic: topicSelectors.currentActiveTopic(store)?.title || null,
         has_attachments: fileList.length > 0,
-        has_mentions: mentionedUsers.length > 0,
         history_message_count: chatSelectors.activeBaseChats(store).length,
         message: store.inputMessage,
         message_length: store.inputMessage.length,
         message_type: messageType,
-        mentioned_users_count: mentionedUsers.length,
         selected_model: agentSelectors.currentAgentModel(agentStore),
         session_id: store.activeId || 'inbox', // 当前活跃的会话ID
         user_id: userStore.user?.id || 'anonymous',
@@ -108,26 +96,17 @@ export const useSendGroupMessage = () => {
   ]);
   const { analytics } = useAnalytics();
 
-  const clearMentionedUsers = useMentionStore((s: any) => s.clearMentionedUsers);
-
   const send = useCallback((params: UseSendMessageParams = {}) => {
     const store = useChatStore.getState();
     if (!store.activeId) return;
 
-    const mentionedUsers = mentionSelectors.mentionedUsers(useMentionStore.getState());
-    
-    // Create metadata with mentioned users if any
-    const metadata = mentionedUsers.length > 0 ? { mentionedUsers } : undefined;
-
     sendGroupMessage({
       groupId: store.activeId,
       message: store.inputMessage,
-      metadata,
       ...params,
     });
 
     updateInputMessage('');
-    clearMentionedUsers();
 
     // 获取分析数据
     const userStore = getUserStoreState();
@@ -138,11 +117,9 @@ export const useSendGroupMessage = () => {
       properties: {
         chat_id: store.activeId || 'unknown',
         current_topic: topicSelectors.currentActiveTopic(store)?.title || null,
-        has_mentions: mentionedUsers.length > 0,
         history_message_count: chatSelectors.activeBaseChats(store).length,
         message: store.inputMessage,
         message_length: store.inputMessage.length,
-        mentioned_users_count: mentionedUsers.length,
         selected_model: agentSelectors.currentAgentModel(agentStore),
         session_id: store.activeId || 'inbox', // 当前活跃的会话ID
         user_id: userStore.user?.id || 'anonymous',

@@ -63,8 +63,6 @@ const allActivities = [
   'a11', 'a12', 'a13', 'a14', 'a15', 'a16', 'a17', 'a18', 'a19', 'a20',
 ];
 
-
-
 const GroupUsageSuggest = memo<{ mobile?: boolean }>(({ mobile }) => {
   const { t } = useTranslation('welcome');
   const [updateInputMessage] = useChatStore((s) => [s.updateInputMessage]);
