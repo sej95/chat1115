@@ -2,6 +2,7 @@
   "ModelSwitch": {
     "title": "Model"
   },
+  "addMember": "Add Member",
   "agentDefaultMessage": "Hello, I am **{{name}}**. You can start a conversation with me right away, or you can go to [Assistant Settings]({{url}}) to complete my information.",
   "agentDefaultMessageWithSystemRole": "Hello, I'm **{{name}}**, {{systemRole}}. Let's start chatting!",
   "agentDefaultMessageWithoutEdit": "Hello, I'm **{{name}}**, let's start chatting!",
@@ -51,6 +52,11 @@
     },
     "title": "Model Extension Features"
   },
+  "groupChat": {
+    "memberTooltip": "{{count}} members in this group chat"
+  },
+  "groupSettings": "Group Settings",
+  "groupSettingsPlaceholder": "Group settings coming soon",
   "history": {
     "title": "The assistant will only remember the last {{count}} messages."
   },
@@ -91,6 +97,7 @@
     "uploadGuide": "Uploaded files can be viewed in the 'Knowledge Base'.",
     "viewMore": "View More"
   },
+  "members": "Members",
   "messageAction": {
     "delAndRegenerate": "Delete and Regenerate",
     "deleteDisabledByThreads": "There are subtopics, deletion is not allowed",
@@ -140,15 +147,7 @@
     }
   },
   "newAgent": "New Assistant",
-  "newGroup": "Create Group Chat",
-  "groupChat": {
-    "memberTooltip": "{{count}} members in this group chat"
-  },
-  "groupSettings": "Group Settings",
-  "groupSettingsPlaceholder": "Group settings coming soon",
-  "addMember": "Add Member",
-  "members": "Members",
-  "recentActivity": "Recent Activity",
+  "newGroup": "New Group Chat",
   "noRecentActivity": "No recent activity",
   "pin": "Pin",
   "pinOff": "Unpin",
@@ -161,6 +160,7 @@
       }
     }
   },
+  "recentActivity": "Recent Activity",
   "regenerate": "Regenerate",
   "roleAndArchive": "Role and Archive",
   "search": {
@@ -255,21 +255,6 @@
     "openNewTopic": "Open New Topic",
     "saveCurrentMessages": "Save current session as topic"
   },
-  "inviteMembers": "Invite Members",
-  "availableAgents": "Available Agents",
-  "selectedAgents": "Selected Agents",
-  "searchAgents": "Search agents...",
-  "noAvailableAgents": "No available agents to invite",
-  "noMatchingAgents": "No agents match your search",
-  "noSelectedAgents": "No agents selected yet",
-  "untitledAgent": "Untitled Agent",
-  "groupDescription": "Group Description",
-  "noMembersYet": "No members in this group yet. Click the + button to invite agents.",
-  "noAgentsYet": "No agents in this group yet. Click the + button to invite agents.",
-  "you": "You",
-  "owner": "Owner",
-  "active": "Active",
-  "inactive": "Inactive",
   "translate": {
     "action": "Translate",
     "clear": "Clear Translation"

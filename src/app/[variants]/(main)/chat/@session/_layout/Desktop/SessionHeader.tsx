@@ -95,7 +95,7 @@ const Header = memo(() => {
                   },
                   {
                     key: 'newGroup',
-                    label: 'Create Group Chat',
+                    label: t('newGroup'),
                     onClick: () => {
                       setIsGroupModalOpen(true);
                     },

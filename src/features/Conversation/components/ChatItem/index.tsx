@@ -92,7 +92,7 @@ const Item = memo<ChatListItemProps>(
       s.modifyMessageContent,
     ]);
 
-    console.log("Message Item", item);
+    const isGroupSession = useSessionStore(sessionSelectors.isCurrentSessionGroupSession);
 
     // when the message is in RAG flow or the AI generating, it should be in loading state
     const isProcessing = isInRAGFlow || generating;
@@ -251,6 +251,7 @@ const Item = memo<ChatListItemProps>(
               placement={type === 'chat' ? (item.role === 'user' ? 'right' : 'left') : 'left'}
               primary={item.role === 'user'}
               renderMessage={renderMessage}
+              showTitle={isGroupSession && item.role !== 'user'}
               text={text}
               time={item.updatedAt || item.createdAt}
               variant={type === 'chat' ? 'bubble' : 'docs'}
