@@ -206,12 +206,18 @@ export const generateAIGroupChat: StateCreator<
 
       console.log("MESSAGE HISTORY", messages);
 
-      // Get all agents for group chat history formatting
+      // TODO: [Group Chat] Replace with real user name
       const agents = sessionSelectors.currentGroupAgents(useSessionStore.getState());
-      const agentTitleMap = agents?.map(agent => ({
-        id: agent.agentId,
-        title: agent.title
-      }));
+      const agentTitleMap = [
+        {
+          id: "user",
+          title: "Rene Wang"
+        },
+        ...(agents?.map(agent => ({
+          id: agent.id,
+          title: agent.title
+        })) || [])
+      ];
 
       // Consolidate message history into a single formatted string
       const consolidatedHistory = consolidateGroupChatHistory(messages, agentTitleMap);
