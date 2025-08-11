@@ -83,7 +83,7 @@ export const chatGroupsAgents = pgTable(
     enabled: boolean('enabled').default(true),
 
     /**
-     * Display order of the agent in the group
+     * Display or speaking order of the agent in the group
      */
     order: text('order').default('0'),
 
