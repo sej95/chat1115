@@ -16,6 +16,7 @@ export { LobeOllamaAI } from './ollama';
 export { LobeOpenAI } from './openai';
 export { LobeOpenRouterAI } from './openrouter';
 export { LobePerplexityAI } from './perplexity';
+export { LobePoe } from './poe';
 export { LobeQwenAI } from './qwen';
 export { LobeTogetherAI } from './togetherai';
 export * from './types';

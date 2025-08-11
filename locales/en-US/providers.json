@@ -104,6 +104,9 @@
   "perplexity": {
     "description": "Perplexity is a leading provider of conversational generation models, offering various advanced Llama 3.1 models that support both online and offline applications, particularly suited for complex natural language processing tasks."
   },
+  "poe": {
+    "description": "Poe lets people ask questions, get instant answers, and have back-and-forth conversations with AI. Poe API provides access to various AI models from different providers including Claude, GPT, and Gemini models."
+  },
   "ppio": {
     "description": "PPIO supports stable and cost-efficient open-source LLM APIs, such as DeepSeek, Llama, Qwen etc."
   },
