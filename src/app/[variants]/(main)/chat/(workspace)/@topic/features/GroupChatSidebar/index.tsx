@@ -77,8 +77,6 @@ const MemberItem = memo<{
   );
 });
 
-MemberItem.displayName = 'MemberItem';
-
 const useStyles = createStyles(({ css, token }) => ({
   content: css`
     padding: 0 ${token.paddingSM}px;
@@ -216,7 +214,5 @@ const GroupChatSidebar = memo(() => {
     </Flexbox>
   );
 });
-
-GroupChatSidebar.displayName = 'GroupChat';
 
 export default GroupChatSidebar;

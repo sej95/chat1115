@@ -8,6 +8,8 @@ import { useTranslation } from 'react-i18next';
 import { FORM_STYLE } from '@/const/layoutTokens';
 
 import { selectors, useStore } from './store';
+import { Switch } from 'antd';
+import ModelSelect from '../ModelSelect';
 
 // Convert response order to numerical value for slider
 const getResponseSpeedValue = (responseOrder?: 'sequential' | 'random' | 'smart') => {
@@ -92,6 +94,33 @@ const GroupChatSettings = memo(() => {
         desc: "Choose how agents respond in group conversations",
         label: "Response Speed",
         name: 'responseSpeed',
+      },
+      {
+        children: (
+          <ModelSelect
+            onChange={async (props) => {
+
+            }}
+            showAbility={false}
+          // value={value}
+          />
+        ),
+        desc: "Choose the model to use for group conversations",
+        label: "Orchestrator Model",
+        name: 'model',
+      },
+      {
+        children: <Switch />,
+        desc: "Agents will respond in the order they are set in the group",
+        label: "Ordered Response",
+        name: 'orderedResponse',
+      },
+      {
+        children: <SliderWithInput max={8} min={0} unlimitedInput={true} />,
+        desc: "Choose how many messages members can respond in a row. This will reset after an user message.",
+        divider: false,
+        label: "Max Messages in a row",
+        name: 'autoCreateTopicThreshold',
       },
     ],
     title: 'Chat Settings',
