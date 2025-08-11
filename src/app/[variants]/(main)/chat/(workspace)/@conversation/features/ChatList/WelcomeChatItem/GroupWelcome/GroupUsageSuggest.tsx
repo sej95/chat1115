@@ -8,6 +8,9 @@ import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Flexbox } from 'react-layout-kit';
 
+import { useSendMessage } from '@/features/ChatInput/useSend';
+import { useChatStore } from '@/store/chat';
+
 const useStyles = createStyles(({ css, token, responsive }) => ({
   card: css`
     position: relative;
@@ -60,13 +63,16 @@ const allActivities = [
   'a11', 'a12', 'a13', 'a14', 'a15', 'a16', 'a17', 'a18', 'a19', 'a20',
 ];
 
+
+
 const GroupUsageSuggest = memo<{ mobile?: boolean }>(({ mobile }) => {
   const { t } = useTranslation('welcome');
+  const [updateInputMessage] = useChatStore((s) => [s.updateInputMessage]);
   const { styles } = useStyles();
+  const { send: sendMessage } = useSendMessage();
   
   const itemsPerPage = mobile ? 2 : 4;
   
-  // State for shuffled activities
   const [shuffledActivities, setShuffledActivities] = useState(() => shuffle(allActivities));
   
   const displayedActivities = shuffledActivities.slice(0, itemsPerPage);
@@ -102,8 +108,9 @@ const GroupUsageSuggest = memo<{ mobile?: boolean }>(({ mobile }) => {
               horizontal
               key={activityKey}
               onClick={() => {
-                // TODO: Implement activity creation logic
-                console.log('Selected activity:', title);
+                const prompt = t(`guide.groupActivities.${activityKey}.prompt` as any);
+                updateInputMessage(prompt);
+                sendMessage({ isWelcomeQuestion: true });
               }}
               variant={'outlined'}
             >

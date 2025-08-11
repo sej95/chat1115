@@ -110,7 +110,6 @@ const GroupMembers = memo(() => {
   const membersContent = (
     <Flexbox className={styles.container} flex={1} gap={2}>
 
-
       {/* Current User - Always shown first */}
       <div className={styles.memberItem}>
         <Flexbox align={'center'} gap={12} horizontal>
