@@ -7,7 +7,6 @@ import { template } from 'lodash-es';
 import { StateCreator } from 'zustand/vanilla';
 
 import { LOADING_FLAT, MESSAGE_CANCEL_FLAT } from '@/const/message';
-import { TraceEventType, TraceNameMap } from '@/const/trace';
 
 import { isDesktop, isServerMode } from '@/const/version';
 import { knowledgeBaseQAPrompts } from '@/prompts/knowledgeBaseQA';

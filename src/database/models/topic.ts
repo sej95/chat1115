@@ -1,5 +1,4 @@
-import { count, sql } from 'drizzle-orm';
-import { and, desc, eq, gt, ilike, inArray, isNull, or } from 'drizzle-orm/expressions';
+import { and, count, desc, eq, gt, ilike, inArray, isNull, or, sql } from 'drizzle-orm';
 
 import { LobeChatDatabase } from '@/database/type';
 import {
