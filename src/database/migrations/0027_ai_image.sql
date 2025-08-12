@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS "generation_batches" (
+CREATE TABLE "generation_batches" (
 	"id" text PRIMARY KEY NOT NULL,
 	"user_id" text NOT NULL,
 	"generation_topic_id" text NOT NULL,
@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS "generation_batches" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "generation_topics" (
+CREATE TABLE "generation_topics" (
 	"id" text PRIMARY KEY NOT NULL,
 	"user_id" text NOT NULL,
 	"title" text,
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS "generation_topics" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE  IF NOT EXISTS "generations" (
+CREATE TABLE "generations" (
 	"id" text PRIMARY KEY NOT NULL,
 	"user_id" text NOT NULL,
 	"generation_batch_id" varchar(64) NOT NULL,
@@ -37,7 +37,7 @@ CREATE TABLE  IF NOT EXISTS "generations" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-ALTER TABLE "files" ADD COLUMN IF NOT EXISTS "source" text;--> statement-breakpoint
+ALTER TABLE "files" ADD COLUMN "source" text;--> statement-breakpoint
 ALTER TABLE "generation_batches" ADD CONSTRAINT "generation_batches_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "generation_batches" ADD CONSTRAINT "generation_batches_generation_topic_id_generation_topics_id_fk" FOREIGN KEY ("generation_topic_id") REFERENCES "public"."generation_topics"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "generation_topics" ADD CONSTRAINT "generation_topics_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
