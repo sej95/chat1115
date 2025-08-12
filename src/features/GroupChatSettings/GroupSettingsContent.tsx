@@ -2,9 +2,9 @@ import { memo, ReactNode } from 'react';
 
 import { GroupSettingsTabs } from '@/store/global/initialState';
 
-import GroupChatSettings from './GroupChatSettings';
+import ChatGroupSettings from './ChatGroupSettings';
 import GroupMembers from './GroupMembers';
-import GroupMeta from './GroupMeta';
+import ChatGroupMeta from './ChatGroupMeta';
 
 export interface GroupSettingsContentProps {
   loadingSkeleton?: ReactNode;
@@ -14,9 +14,9 @@ export interface GroupSettingsContentProps {
 const GroupSettingsContent = memo<GroupSettingsContentProps>(({ tab }) => {
   return (
     <>
-      {tab === GroupSettingsTabs.Settings && <GroupMeta />}
+      {tab === GroupSettingsTabs.Settings && <ChatGroupMeta />}
       {tab === GroupSettingsTabs.Members && <GroupMembers />}
-      {tab === GroupSettingsTabs.Chat && <GroupChatSettings />}
+      {tab === GroupSettingsTabs.Chat && <ChatGroupSettings />}
     </>
   );
 });

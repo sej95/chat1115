@@ -9,14 +9,6 @@ import { State, initialState } from './initialState';
 
 export interface PublicAction {
   /**
-   * Update group configuration
-   */
-  updateGroupConfig: (config: Partial<LobeGroupSession['config']>) => Promise<void>;
-  /**
-   * Update group metadata
-   */
-  updateGroupMeta: (meta: Partial<LobeGroupSession['meta']>) => Promise<void>;
-  /**
    * Reset group configuration to default
    */
   resetGroupConfig: () => Promise<void>;
@@ -24,6 +16,14 @@ export interface PublicAction {
    * Reset group metadata to default
    */
   resetGroupMeta: () => Promise<void>;
+  /**
+   * Update group configuration
+   */
+  updateGroupConfig: (config: Partial<LobeGroupSession['config']>) => Promise<void>;
+  /**
+   * Update group metadata
+   */
+  updateGroupMeta: (meta: Partial<LobeGroupSession['meta']>) => Promise<void>;
 }
 
 export interface Action extends PublicAction {

@@ -34,12 +34,14 @@ export const chatGroups = pgTable(
     description: text('description'),
 
     /**
-     * Group configuration settings
+     * Group configuration
      */
     config: jsonb('config').$type<{
-      autoResponse?: boolean;
-      maxAgents?: number;
-      responseOrder?: 'sequential' | 'random' | 'smart';
+      maxMessagesInRow?: number;
+      modelId?: string;
+      modelProvider?: string;
+      responseOrder?: 'sequential' | 'natural';
+      responseSpeed?: number; // 1: slow, 2: medium, 3: fast
     }>(),
 
     clientId: text('client_id'),

@@ -1,10 +1,16 @@
+import { DEFAULT_CHAT_GROUP_CHAT_CONFIG, DEFAULT_CHAT_GROUP_CONFIG, DEFAULT_CHAT_GROUP_META_CONFIG } from '@/const/settings';
+import { merge } from '@/utils/merge';
+
 import { State } from './initialState';
 
+const chatGroupConfig = (s: State) => merge(DEFAULT_CHAT_GROUP_CONFIG, s.config);
+
+const currentChatConfig = (s: State) => merge(DEFAULT_CHAT_GROUP_CHAT_CONFIG, s.config);
+
+const currentMetaConfig = (s: State) => merge(DEFAULT_CHAT_GROUP_META_CONFIG, s.meta);
+
 export const selectors = {
-  config: (s: State) => s.config,
-  meta: (s: State) => s.meta,
-  loading: (s: State) => s.loading,
-  loadingState: (s: State) => s.loadingState,
-  isConfigLoading: (s: State) => s.loadingState?.config || false,
-  isMetaLoading: (s: State) => s.loadingState?.meta || false,
+  chatGroupConfig,
+  currentChatConfig,
+  currentMetaConfig,
 };

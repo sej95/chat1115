@@ -21,7 +21,7 @@ export const useGroupCategory = ({ mobile }: UseGroupCategoryOptions = {}) => {
         {
           icon: <Icon icon={Settings} size={iconSize} />,
           key: GroupSettingsTabs.Settings,
-          label: t('groupTab.settings'),
+          label: t('groupTab.meta'),
         },
         {
           icon: <Icon icon={Users} size={iconSize} />,
