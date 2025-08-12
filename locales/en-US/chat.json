@@ -101,6 +101,12 @@
     "viewMore": "View More"
   },
   "members": "Members",
+  "memberSelection": {
+    "addMember": "Add Member",
+    "setInitialMembers": "Set Initial Members",
+    "noAvailableAgents": "No available agents",
+    "noSelectedAgents": "No selected agents"
+  },
   "messageAction": {
     "delAndRegenerate": "Delete and Regenerate",
     "deleteDisabledByThreads": "There are subtopics, deletion is not allowed",

@@ -12,6 +12,7 @@ import { Flexbox } from 'react-layout-kit';
 import { useActionSWR } from '@/libs/swr';
 import { useSessionStore } from '@/store/session';
 import { LobeAgentSession, LobeSessionType } from 'packages/types/src/session';
+import { DEFAULT_AVATAR } from '@/const/meta';
 
 const { Text } = Typography;
 
@@ -27,9 +28,9 @@ const AvailableAgentItem = memo<{
   const isHovering = useHover(ref);
 
   const _agentId = agent.config?.id;
-  const title = agent.meta?.title || t('untitledAgent', { ns: 'chat' });
+  const title = agent.meta?.title || t('defaultSession', { ns: 'common' });
   const description = agent.meta?.description || '';
-  const avatar = agent.meta?.avatar;
+  const avatar = agent.meta?.avatar || DEFAULT_AVATAR;
   const avatarBackground = agent.meta?.backgroundColor;
 
   if (!_agentId) return null;
@@ -67,8 +68,6 @@ const AvailableAgentItem = memo<{
     </AntdList.Item>
   );
 });
-
-AvailableAgentItem.displayName = 'AvailableAgentItem';
 
 const useStyles = createStyles(({ css, token }) => ({
   container: css`
@@ -191,8 +190,8 @@ const MemberSelectionModal = memo<MemberSelectionModalProps>(({
       return agentSessions;
     } else {
       // When adding to existing group, filter out the current session and existing members
-      return agentSessions.filter((agent) => 
-        agent.id !== currentSessionId && 
+      return agentSessions.filter((agent) =>
+        agent.id !== currentSessionId &&
         !existingMembers.includes(agent.config?.id || '')
       );
     }
@@ -218,8 +217,8 @@ const MemberSelectionModal = memo<MemberSelectionModalProps>(({
         const agent = agentSessions.find(session => session.config.id === agentId);
         if (!agent) return null;
 
-        const title = agent.meta?.title || t('untitledAgent', { ns: 'chat' });
-        const avatar = agent.meta?.avatar;
+        const title = agent.meta?.title || t('defaultSession', { ns: 'common' });
+        const avatar = agent.meta?.avatar || DEFAULT_AVATAR;
         const avatarBackground = agent.meta?.backgroundColor;
         const description = agent.meta?.description || '';
 
@@ -273,8 +272,8 @@ const MemberSelectionModal = memo<MemberSelectionModalProps>(({
 
   // Dynamic content based on mode
   const modalTitle = mode === 'create'
-    ? 'Select Initial Members'
-    : 'Add Members';
+    ? t('memberSelection.setInitialMembers', { ns: 'chat' })
+    : t('memberSelection.addMember', { ns: 'chat' });
 
   const confirmButtonText = mode === 'create'
     ? 'Create Group'
@@ -312,7 +311,7 @@ const MemberSelectionModal = memo<MemberSelectionModalProps>(({
           <SearchBar
             allowClear
             onChange={handleSearchChange}
-            placeholder={t('searchAgents', { ns: 'chat' })}
+            placeholder={t('memberSelection.searchAgents')}
             value={searchTerm}
             variant="filled"
           />
@@ -356,8 +355,8 @@ const MemberSelectionModal = memo<MemberSelectionModalProps>(({
             <Flexbox align="center" flex={1} justify="center">
               <Empty
                 description={mode === 'create'
-                  ? 'No members selected'
-                  : t('noSelectedAgents', { ns: 'chat' })
+                  ? t('memberSelection.noSelectedAgents')
+                  : t('memberSelection.noSelectedAgents')
                 }
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
               />
@@ -370,7 +369,5 @@ const MemberSelectionModal = memo<MemberSelectionModalProps>(({
     </Modal>
   );
 });
-
-MemberSelectionModal.displayName = 'MemberSelectionModal';
 
 export default MemberSelectionModal;
