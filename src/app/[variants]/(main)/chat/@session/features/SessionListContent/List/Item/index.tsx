@@ -17,6 +17,7 @@ import { LobeGroupSession } from '@/types/session';
 import ListItem from '../../ListItem';
 import CreateGroupModal from '../../Modals/CreateGroupModal';
 import Actions from './Actions';
+import { DEFAULT_AVATAR } from '@/const/meta';
 
 interface SessionItemProps {
   id: string;
@@ -96,7 +97,7 @@ const SessionItem = memo<SessionItemProps>(({ id }) => {
             avatar: currentUser.avatar,
           },
           ...(members?.map((member) => ({
-            avatar: member.avatar,
+            avatar: member.avatar || DEFAULT_AVATAR,
             background: member.backgroundColor,
           })) || []),
         ]

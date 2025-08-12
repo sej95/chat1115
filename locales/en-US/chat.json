@@ -105,7 +105,8 @@
     "addMember": "Add Member",
     "setInitialMembers": "Set Initial Members",
     "noAvailableAgents": "No available agents",
-    "noSelectedAgents": "No selected agents"
+    "noSelectedAgents": "No selected agents",
+    "searchAgents": "Search agents..."
   },
   "messageAction": {
     "delAndRegenerate": "Delete and Regenerate",

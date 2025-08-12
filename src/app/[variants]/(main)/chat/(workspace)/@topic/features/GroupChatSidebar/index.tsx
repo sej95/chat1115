@@ -19,12 +19,15 @@ import { MemberSelectionModal } from '@/components/MemberSelectionModal';
 import TopicListContent from '../TopicListContent';
 import { LobeGroupSession } from 'packages/types/src/session';
 import Header from '../Header';
+import { DEFAULT_AVATAR } from '@/const/meta';
+import { useTranslation } from 'react-i18next';
 
 const MemberItem = memo<{
   activeGroupId: string;
   member: any; // Runtime is AgentItem but TypeScript thinks it's ChatGroupAgentItem
   styles: any;
 }>(({ activeGroupId, member, styles }) => {
+  const { t } = useTranslation('chat');
   const removeAgentFromGroup = useChatGroupStore((s) => s.removeAgentFromGroup);
 
   const { mutate: removeMember, isValidating: isRemoving } = useActionSWR(
@@ -37,7 +40,7 @@ const MemberItem = memo<{
   return (
     <div className={styles.memberItem}>
       <Flexbox align={'center'} gap={12} horizontal>
-        <Avatar avatar={member.avatar} background={member.backgroundColor!} size={32} />
+        <Avatar avatar={member.avatar || DEFAULT_AVATAR} background={member.backgroundColor!} size={32} />
         <Flexbox flex={1} gap={2}>
           <div
             style={{
@@ -45,7 +48,7 @@ const MemberItem = memo<{
               fontWeight: 500,
             }}
           >
-            {member.title}
+            {member.title || t('defaultSession', { ns: 'common' })}
           </div>
           <div
             style={{

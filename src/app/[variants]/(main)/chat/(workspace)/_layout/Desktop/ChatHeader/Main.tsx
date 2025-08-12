@@ -19,6 +19,7 @@ import TogglePanelButton from '../../../../features/TogglePanelButton';
 import Tags from './Tags';
 import { useUserStore } from '@/store/user';
 import { userProfileSelectors } from '@/store/user/selectors';
+import { DEFAULT_AVATAR } from '@/const/meta';
 
 const useStyles = createStyles(({ css }) => ({
   container: css`
@@ -67,7 +68,6 @@ const Main = memo<{ className?: string }>(({ className }) => {
     name: userProfileSelectors.displayUserName(s) || userProfileSelectors.nickName(s) || 'You',
   }));
 
-
   const isGroup = sessionType === 'group';
 
   const openChatSettings = useOpenChatSettings();
@@ -98,7 +98,7 @@ const Main = memo<{ className?: string }>(({ className }) => {
               avatar: currentUser.avatar,
             },
             ...(members?.map((member) => ({
-              avatar: member.avatar,
+              avatar: member.avatar || DEFAULT_AVATAR,
               background: member.backgroundColor,
             })) || []),
           ]}
