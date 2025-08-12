@@ -146,6 +146,7 @@
   },
   "defaultAgent": "Default Assistant",
   "defaultSession": "Default Assistant",
+  "defaultGroup": "Group Chat",
   "delete": "Delete",
   "document": "User Manual",
   "download": "Download",

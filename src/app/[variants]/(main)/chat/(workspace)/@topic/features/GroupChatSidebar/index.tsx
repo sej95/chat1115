@@ -2,7 +2,7 @@
 
 import { ActionIcon, Avatar } from '@lobehub/ui';
 import { createStyles } from 'antd-style';
-import { Edit, UserMinus, UserPlus } from 'lucide-react';
+import { Edit, GripVertical, UserMinus, UserPlus } from 'lucide-react';
 import { memo, useState } from 'react';
 import { Flexbox } from 'react-layout-kit';
 
@@ -40,6 +40,12 @@ const MemberItem = memo<{
   return (
     <div className={styles.memberItem}>
       <Flexbox align={'center'} gap={12} horizontal>
+        <ActionIcon
+          icon={GripVertical}
+          size={'small'}
+          style={{ color: '#999', cursor: 'grab', marginRight: '-6px' }}
+          title="Drag to reorder"
+        />
         <Avatar avatar={member.avatar || DEFAULT_AVATAR} background={member.backgroundColor!} size={32} />
         <Flexbox flex={1} gap={2}>
           <div
@@ -59,14 +65,14 @@ const MemberItem = memo<{
             {member.systemRole}
           </div>
         </Flexbox>
-        <ActionIcon
+        {/* <ActionIcon
           icon={Edit}
           onClick={() => {
             // TODO: Implement edit member logic
           }}
           size={'small'}
           title="Edit Member"
-        />
+        /> */}
         <ActionIcon
           danger
           icon={UserMinus}
@@ -99,8 +105,9 @@ const useStyles = createStyles(({ css, token }) => ({
     border: 1px solid ${token.colorBorderSecondary};
     border-radius: ${token.borderRadius}px;
     margin-bottom: ${token.marginXS}px;
-    padding: ${token.paddingSM}px;
+    padding: ${token.paddingSM}px ${token.paddingXS}px;
     transition: all 0.2s ease;
+    cursor: pointer;
 
     &:hover {
       background: ${token.colorFillTertiary};

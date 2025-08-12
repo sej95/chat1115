@@ -24,6 +24,17 @@ const currentAgentMeta = (s: SessionStore): MetaData => {
   return merge(defaultMeta, session?.meta);
 };
 
+const currentGroupMeta = (s: SessionStore): MetaData => {
+  const defaultMeta = {
+    description: t('defaultGroup', { ns: 'common' }),
+    title: t('defaultGroup', { ns: 'common' }),
+  };
+
+  const session = sessionSelectors.currentSession(s);
+
+  return merge(defaultMeta, session?.meta);
+};
+
 const currentAgentTitle = (s: SessionStore) => currentAgentMeta(s).title;
 const currentAgentDescription = (s: SessionStore) => currentAgentMeta(s).description;
 const currentAgentAvatar = (s: SessionStore) => currentAgentMeta(s).avatar;
@@ -34,11 +45,11 @@ const getAgentMetaByAgentId = (agentId: string) => (s: SessionStore): MetaData =
   const agentSession = s.sessions?.find(
     session => session.type === LobeSessionType.Agent && session.config?.id === agentId
   );
-  
+
   if (agentSession?.meta) {
     return agentSession.meta;
   }
-  
+
   // Return empty meta if no session found
   return {};
 };
@@ -54,6 +65,7 @@ export const sessionMetaSelectors = {
   currentAgentDescription,
   currentAgentMeta,
   currentAgentTitle,
+  currentGroupMeta,
   getAgentMetaByAgentId,
   getAvatar,
   getDescription,

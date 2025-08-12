@@ -44,13 +44,14 @@ const Actions = memo<ActionProps>(({ group, id, openCreateGroupModal, parentType
   const { t } = useTranslation('chat');
 
   const sessionCustomGroups = useSessionStore(sessionGroupSelectors.sessionGroupItems, isEqual);
-  const [pin, removeSession, pinSession, duplicateSession, updateSessionGroup] = useSessionStore(
+  const [pin, removeSession, pinSession, sessionType, duplicateSession, updateSessionGroup] = useSessionStore(
     (s) => {
       const session = sessionSelectors.getSessionById(id)(s);
       return [
         sessionHelpers.getSessionPinned(session),
         s.removeSession,
         s.pinSession,
+        session.type,
         s.duplicateSession,
         s.updateSessionGroupId,
       ];
@@ -134,26 +135,26 @@ const Actions = memo<ActionProps>(({ group, id, openCreateGroupModal, parentType
           isServerMode
             ? undefined
             : {
-                children: [
-                  {
-                    key: 'agent',
-                    label: t('exportType.agent', { ns: 'common' }),
-                    onClick: () => {
-                      configService.exportSingleAgent(id);
-                    },
+              children: [
+                {
+                  key: 'agent',
+                  label: t('exportType.agent', { ns: 'common' }),
+                  onClick: () => {
+                    configService.exportSingleAgent(id);
                   },
-                  {
-                    key: 'agentWithMessage',
-                    label: t('exportType.agentWithMessage', { ns: 'common' }),
-                    onClick: () => {
-                      configService.exportSingleSession(id);
-                    },
+                },
+                {
+                  key: 'agentWithMessage',
+                  label: t('exportType.agentWithMessage', { ns: 'common' }),
+                  onClick: () => {
+                    configService.exportSingleSession(id);
                   },
-                ],
-                icon: <Icon icon={HardDriveDownload} />,
-                key: 'export',
-                label: t('export', { ns: 'common' }),
-              },
+                },
+              ],
+              icon: <Icon icon={HardDriveDownload} />,
+              key: 'export',
+              label: t('export', { ns: 'common' }),
+            },
           {
             danger: true,
             icon: <Icon icon={Trash} />,
@@ -174,7 +175,7 @@ const Actions = memo<ActionProps>(({ group, id, openCreateGroupModal, parentType
                   message.success(t('confirmRemoveSessionSuccess'));
                 },
                 rootClassName: styles.modalRoot,
-                title: t('confirmRemoveSessionItemAlert'),
+                title: sessionType === 'group' ? t('confirmRemoveGroupItemAlert') : t('confirmRemoveSessionItemAlert'),
               });
             },
           },

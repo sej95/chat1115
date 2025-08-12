@@ -7,6 +7,17 @@ import { getSessionStoreState } from '@/store/session';
 
 import { ChatGroupState, initialChatGroupState } from './initialState';
 import { ChatGroupReducer, chatGroupReducers } from './reducers';
+import isEqual from 'fast-deep-equal';
+import { mutate } from 'swr';
+import { useClientDataSWR } from '@/libs/swr';
+import { setNamespace } from '@/utils/storeDebug';
+import { chatGroupSelectors } from './selectors';
+import { LobeChatGroupConfig } from '@/types/chatGroup';
+
+const n = setNamespace('chatGroup');
+
+const FETCH_GROUPS_KEY = 'fetchGroups';
+const FETCH_GROUP_DETAIL_KEY = 'fetchGroupDetail';
 
 export interface ChatGroupAction {
   addAgentsToGroup: (groupId: string, agentIds: string[]) => Promise<void>;
@@ -26,9 +37,17 @@ export interface ChatGroupAction {
 
   loadGroups: () => Promise<void>;
   pinGroup: (id: string, pinned: boolean) => Promise<void>;
+  refreshGroupDetail: (groupId: string) => Promise<void>;
+  refreshGroups: () => Promise<void>;
+
   removeAgentFromGroup: (groupId: string, agentId: string) => Promise<void>;
   toggleGroupSetting: (open: boolean) => void;
+
   updateGroup: (id: string, value: Partial<ChatGroupItem>) => Promise<void>;
+  updateGroupConfig: (config: Partial<LobeChatGroupConfig>) => Promise<void>;
+  updateGroupMeta: (meta: Partial<ChatGroupItem>) => Promise<void>;
+  useFetchGroupDetail: (enabled: boolean, groupId: string) => any;
+  useFetchGroups: (enabled: boolean, isLogin: boolean) => any;
 }
 
 // Create combined store type for StateCreator
@@ -130,6 +149,89 @@ export const chatGroupAction: StateCreator<
       await chatGroupService.updateGroup(id, value);
       dispatch({ payload: { id, value }, type: 'updateGroup' });
       await get().internal_refreshGroups();
+    },
+
+    updateGroupConfig: async (config) => {
+      const group = chatGroupSelectors.currentGroup(get());
+      if (!group) return;
+
+      await chatGroupService.updateGroup(group.id, { config });
+      dispatch({ payload: { config, id: group.id }, type: 'updateGroup' });
+      await get().internal_refreshGroups();
+    },
+
+    updateGroupMeta: async (meta) => {
+      const group = chatGroupSelectors.currentGroup(get());
+      if (!group) return;
+
+      const id = group.id;
+
+      await chatGroupService.updateGroup(id, meta);
+      dispatch({ payload: { id, meta }, type: 'updateGroup' });
+      await get().internal_refreshGroups();
+    },
+
+    useFetchGroupDetail: (enabled, groupId) =>
+      useClientDataSWR<ChatGroupItem>(
+        enabled && groupId ? [FETCH_GROUP_DETAIL_KEY, groupId] : null,
+        async ([, id]) => {
+          const group = await chatGroupService.getGroup(id);
+          if (!group) throw new Error(`Group ${id} not found`);
+          return group;
+        },
+        {
+          onSuccess: (group) => {
+            // Update groupMap with detailed group info
+            const currentGroup = get().groupMap[group.id];
+            if (isEqual(currentGroup, group)) return;
+
+            set({
+              groupMap: {
+                ...get().groupMap,
+                [group.id]: group,
+              },
+            }, false, n('useFetchGroupDetail/onSuccess', { groupId: group.id }));
+          },
+        },
+      ),
+
+    // SWR Hooks for data fetching
+    // This is not used for now, as we are combining group in the session lambda's response
+    useFetchGroups: (enabled, isLogin) =>
+      useClientDataSWR<ChatGroupItem[]>(
+        enabled ? [FETCH_GROUPS_KEY, isLogin] : null,
+        async () => chatGroupService.getGroups(),
+        {
+          fallbackData: [],
+          onSuccess: (groups) => {
+            if (
+              get().groupsInit &&
+              isEqual(get().groups, groups)
+            )
+              return;
+
+            // Update both groups list and groupMap
+            const groupMap = groups.reduce((map, group) => {
+              map[group.id] = group;
+              return map;
+            }, {} as Record<string, ChatGroupItem>);
+
+            set({
+              groupMap: { ...get().groupMap, ...groupMap },
+              groupsInit: true,
+              isGroupsLoading: false,
+            }, false, n('useFetchGroups/onSuccess'));
+          },
+          suspense: true,
+        },
+      ),
+
+    refreshGroups: async () => {
+      await mutate([FETCH_GROUPS_KEY, true]);
+    },
+
+    refreshGroupDetail: async (groupId: string) => {
+      await mutate([FETCH_GROUP_DETAIL_KEY, groupId]);
     },
   };
 };

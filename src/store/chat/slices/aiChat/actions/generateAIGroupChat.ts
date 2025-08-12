@@ -14,16 +14,36 @@ import { useSessionStore } from '@/store/session';
 import { sessionSelectors } from '@/store/session/selectors';
 import { ChatMessage, CreateMessageParams, SendGroupMessageParams } from '@/types/message';
 import { setNamespace } from '@/utils/storeDebug';
+import { chatGroupSelectors } from '@/store/chatGroup/selectors';
 
 import { GroupChatSupervisor, SupervisorContext, SupervisorDecision } from '../../message/supervisor';
 
 import { toggleBooleanList } from '../../../utils';
 import type { ChatStoreState } from '../../../initialState';
+import { useChatGroupStore } from '@/store/chatGroup/store';
 
 const n = setNamespace('aiGroupChat');
 
 // Group chat supervisor instance
 const supervisor = new GroupChatSupervisor();
+
+// Helper function to convert responseSpeed to debouncer threshold in milliseconds
+const getDebounceThreshold = (responseSpeed?: 'slow' | 'medium' | 'fast'): number => {
+  switch (responseSpeed) {
+    case 'fast': {
+      return 1000; // 1 second for fast response
+    }
+    case 'medium': {
+      return 2000; // 2 seconds for medium response
+    }
+    case 'slow': {
+      return 5000; // 5 seconds for slow response
+    }
+    default: {
+      return 3000; // Default fallback
+    }
+  }
+};
 
 export interface AIGroupChatAction {
   /**
@@ -41,7 +61,8 @@ export interface AIGroupChatAction {
   internal_triggerSupervisorDecision: (groupId: string) => Promise<void>;
 
   /**
-   * Triggers supervisor decision with debounce logic (3 seconds threshold)
+   * Triggers supervisor decision with debounce logic (dynamic threshold based on group responseSpeed setting)
+   * Fast: 1s, Medium: 2s, Slow: 5s, Default: 3s
    * Cancels previous pending decisions and schedules a new one
    */
   internal_triggerSupervisorDecisionDebounced: (groupId: string) => void;
@@ -371,10 +392,15 @@ Please respond as this agent would, considering the full conversation history pr
 
     console.log("Supervisor decision debounced triggered for group", groupId);
 
-    // Cancel any existing timer for this group
     internal_cancelSupervisorDecision(groupId);
 
-    // Set a new timer with 3-second debounce
+    const group = sessionSelectors.currentSession(useSessionStore.getState());
+    const responseSpeed = group?.config?.responseSpeed;
+    const debounceThreshold = getDebounceThreshold(responseSpeed);
+
+    console.log(`Using debounce threshold: ${debounceThreshold}ms for responseSpeed: ${responseSpeed}`);
+
+    // Set a new timer with dynamic debounce based on group settings
     const timerId = setTimeout(async () => {
       console.log(`Debounced supervisor decision triggered for group ${groupId}`);
 
@@ -387,13 +413,12 @@ Please respond as this agent would, considering the full conversation history pr
         n(`cleanupSupervisorTimer/${groupId}`),
       );
 
-      // Execute the supervisor decision
       try {
         await internal_triggerSupervisorDecision(groupId);
       } catch (error) {
         console.error(`Failed to execute supervisor decision for group ${groupId}:`, error);
       }
-    }, 3000); // 3 seconds debounce
+    }, debounceThreshold);
 
     // Store the timer in state
     set(

@@ -4,11 +4,10 @@ import { useAgentStore } from '@/store/agent';
 import { agentChatConfigSelectors } from '@/store/agent/selectors';
 import { messageMapKey } from '@/store/chat/utils/messageMapKey';
 import { useSessionStore } from '@/store/session';
-import { sessionMetaSelectors, sessionSelectors } from '@/store/session/selectors';
+import { sessionMetaSelectors } from '@/store/session/selectors';
 import { useUserStore } from '@/store/user';
 import { userProfileSelectors } from '@/store/user/selectors';
 import { ChatFileItem, ChatMessage } from '@/types/message';
-import { ChatGroupAgentItem, ChatGroupItem } from '@/database/schemas/chatGroup';
 
 import { chatHelpers } from '../../helpers';
 import type { ChatStoreState } from '../../initialState';
@@ -216,120 +215,6 @@ const isSendButtonDisabledByMessage = (s: ChatStoreState) =>
   // 4. when the message is in RAG flow
   isInRAGFlow(s);
 
-// ******* Group Chat Selectors ******* //
-
-// Helper to get current session info from session store
-const getCurrentSessionInfo = () => {
-  const sessionStore = useSessionStore.getState();
-  const session = sessionSelectors.currentSession(sessionStore);
-  return {
-    isGroupSession: session?.type === 'group',
-    sessionId: sessionStore.activeId,
-    sessionType: session?.type as 'agent' | 'group' | undefined,
-  };
-};
-
-// Get the active session type (prefer cached value, fallback to session store)
-const activeSessionType = (s: ChatStoreState): 'agent' | 'group' | undefined => {
-  if (s.activeSessionType) return s.activeSessionType;
-  const { sessionType } = getCurrentSessionInfo();
-  return sessionType;
-};
-
-// Get the active group ID (same as activeId when session type is 'group')
-const activeGroupId = (s: ChatStoreState): string | undefined => {
-  const sessionType = activeSessionType(s);
-  const { sessionId } = getCurrentSessionInfo();
-  return sessionType === 'group' ? sessionId : undefined;
-};
-
-const currentGroup = (s: ChatStoreState): ChatGroupItem | undefined => {
-  const groupId = activeGroupId(s);
-  return groupId ? s.groupMaps[groupId] : undefined;
-};
-
-const getGroupById = (groupId: string) => (s: ChatStoreState): ChatGroupItem | undefined =>
-  s.groupMaps[groupId];
-
-const allGroups = (s: ChatStoreState): ChatGroupItem[] =>
-  Object.values(s.groupMaps);
-
-const groupsInitialized = (s: ChatStoreState): boolean => s.groupsInit;
-
-const getGroupAgents = (groupId: string) => (s: ChatStoreState): ChatGroupAgentItem[] =>
-  s.groupAgentMaps[groupId] || [];
-
-const currentGroupAgents = (s: ChatStoreState): ChatGroupAgentItem[] => {
-  const groupId = activeGroupId(s);
-  return groupId ? getGroupAgents(groupId)(s) : [];
-};
-
-const getEnabledGroupAgents = (groupId: string) => (s: ChatStoreState): ChatGroupAgentItem[] =>
-  getGroupAgents(groupId)(s).filter(agent => agent.enabled);
-
-const currentEnabledGroupAgents = (s: ChatStoreState): ChatGroupAgentItem[] => {
-  const groupId = activeGroupId(s);
-  return groupId ? getEnabledGroupAgents(groupId)(s) : [];
-};
-
-const getGroupMessages = (groupId: string) => (s: ChatStoreState): ChatMessage[] =>
-  s.messagesMap[groupId] || [];
-
-const currentGroupMessages = (s: ChatStoreState): ChatMessage[] => {
-  const groupId = activeGroupId(s);
-  return groupId ? getGroupMessages(groupId)(s) : [];
-};
-
-const isSupervisorDecisionLoading = (groupId: string) => (s: ChatStoreState): boolean =>
-  s.supervisorDecisionLoading.includes(groupId);
-
-const isCurrentSupervisorLoading = (s: ChatStoreState): boolean => {
-  const groupId = activeGroupId(s);
-  return groupId ? isSupervisorDecisionLoading(groupId)(s) : false;
-};
-
-const isAgentSpeaking = (groupId: string, agentId: string) => (s: ChatStoreState): boolean =>
-  s.agentSpeakingStatus[groupId]?.[agentId] ?? false;
-
-const getGroupSpeakingAgents = (groupId: string) => (s: ChatStoreState): string[] => {
-  const speakingStatus = s.agentSpeakingStatus[groupId] || {};
-  return Object.entries(speakingStatus)
-    .filter(([, speaking]) => speaking)
-    .map(([agentId]) => agentId);
-};
-
-const currentGroupSpeakingAgents = (s: ChatStoreState): string[] => {
-  const groupId = activeGroupId(s);
-  return groupId ? getGroupSpeakingAgents(groupId)(s) : [];
-};
-
-const isCurrentGroupBusy = (s: ChatStoreState): boolean => {
-  const groupId = activeGroupId(s);
-  if (!groupId) return false;
-
-  return isSupervisorDecisionLoading(groupId)(s) ||
-    getGroupSpeakingAgents(groupId)(s).length > 0 ||
-    isCreatingMessage(s);
-};
-
-const getGroupStats = (groupId: string) => (s: ChatStoreState) => {
-  const agents = getGroupAgents(groupId)(s);
-  const messages = getGroupMessages(groupId)(s);
-  const enabledAgents = agents.filter(a => a.enabled);
-
-  return {
-    enabledAgents: enabledAgents.length,
-    isActive: groupId === activeGroupId(s),
-    totalAgents: agents.length,
-    totalMessages: messages.length,
-  };
-};
-
-const currentGroupStats = (s: ChatStoreState) => {
-  const groupId = activeGroupId(s);
-  return groupId ? getGroupStats(groupId)(s) : null;
-};
-
 const inboxActiveTopicMessages = (state: ChatStoreState) => {
   const activeTopicId = state.activeTopicId;
   return state.messagesMap[messageMapKey(INBOX_SESSION_ID, activeTopicId)] || [];
@@ -368,25 +253,5 @@ export const chatSelectors = {
   mainAILatestMessageReasoningContent,
   mainDisplayChatIDs,
   mainDisplayChats,
-
-  activeSessionType,
-  allGroups,
-  currentEnabledGroupAgents,
-  currentGroup,
-  currentGroupAgents,
-  currentGroupMessages,
-  currentGroupSpeakingAgents,
-  currentGroupStats,
-  getEnabledGroupAgents,
-  getGroupAgents,
-  getGroupById,
-  getGroupMessages,
-  getGroupSpeakingAgents,
-  getGroupStats,
-  groupsInitialized,
-  isAgentSpeaking,
-  isCurrentGroupBusy,
-  isCurrentSupervisorLoading,
-  isSupervisorDecisionLoading,
   showInboxWelcome,
 };

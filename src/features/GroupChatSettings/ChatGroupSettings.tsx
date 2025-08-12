@@ -20,6 +20,8 @@ const ChatGroupSettings = memo(() => {
   const updateConfig = useStore((s) => s.updateGroupConfig);
   const config = useStore(selectors.currentChatConfig, isEqual)
 
+  console.log("CONFIG", config);
+
   const responseSpeedOptions = [
     { label: 'Slow', value: 'slow' },
     { label: 'Medium', value: 'medium' },
@@ -36,7 +38,7 @@ const ChatGroupSettings = memo(() => {
       },
       {
         children: (
-          <Select 
+          <Select
             options={responseSpeedOptions}
             placeholder="Select response speed"
           />
@@ -47,7 +49,7 @@ const ChatGroupSettings = memo(() => {
       },
       {
         children: (
-          <Select 
+          <Select
             options={[
               { label: 'Sequential', value: 'sequential' },
               { label: 'Natural', value: 'natural' },
@@ -60,8 +62,8 @@ const ChatGroupSettings = memo(() => {
         name: 'responseOrder',
       },
       {
-        children: <SliderWithInput max={8} min={0} unlimitedInput={true} />,
-        desc: "Choose how many messages members can respond in a row. This will reset after an user message.",
+        children: <SliderWithInput max={16} min={0} step={1} unlimitedInput={true} />,
+        desc: "Choose how many messages members can respond in a row. Set to 0 to disable.",
         divider: false,
         label: "Max Messages in a row",
         name: 'maxResponseInRow',

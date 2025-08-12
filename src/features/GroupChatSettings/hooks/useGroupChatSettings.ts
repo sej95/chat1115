@@ -19,10 +19,10 @@ export const useGroupChatSettings = (): GroupChatSettingsInstance => {
 
   return useMemo(
     () => ({
-      updateGroupConfig,
-      updateGroupMeta,
       resetGroupConfig,
       resetGroupMeta,
+      updateGroupConfig,
+      updateGroupMeta,
     }),
     [],
   );

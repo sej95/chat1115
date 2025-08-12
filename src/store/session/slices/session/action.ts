@@ -27,6 +27,7 @@ import {
 } from '@/types/session';
 import { merge } from '@/utils/merge';
 import { setNamespace } from '@/utils/storeDebug';
+import { useChatStore } from '@/store/chat';
 
 import { SessionDispatch, sessionsReducer } from './reducers';
 import { sessionSelectors } from './selectors';
@@ -245,6 +246,36 @@ export const createSessionSlice: StateCreator<
             data.sessionGroups,
             n('useFetchSessions/updateData') as any,
           );
+
+          // Sync chat groups from group sessions to chat store
+          const groupSessions = data.sessions.filter(session => session.type === 'group');
+          if (groupSessions.length > 0) {
+            // For group sessions, we need to transform them to ChatGroupItem format
+            // The session ID is the chat group ID, and we can extract basic group info
+            const chatStore = useChatStore.getState();
+            const chatGroups = groupSessions.map(session => ({
+              id: session.id, // Session ID is the chat group ID
+              slug: null,
+              title: session.meta?.title || 'Untitled Group',
+              description: session.meta?.description || '',
+              config: {
+                maxResponseInRow: 3,
+                orchestratorModel: 'gpt-4',
+                orchestratorProvider: 'openai',
+                responseOrder: 'sequential' as const,
+                responseSpeed: 'medium' as const,
+              },
+              clientId: null,
+              userId: '', // Will be set by the backend
+              pinned: session.pinned || false,
+              createdAt: session.createdAt,
+              updatedAt: session.updatedAt,
+              accessedAt: session.updatedAt, // Use updatedAt as accessedAt fallback
+            }));
+
+            chatStore.internal_updateGroupMaps(chatGroups);
+          }
+
           set({ isSessionsFirstFetchFinished: true }, false, n('useFetchSessions/onSuccess', data));
         },
         suspense: true,

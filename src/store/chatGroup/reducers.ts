@@ -14,12 +14,14 @@ export const chatGroupReducers = {
   addGroup: (state, { payload }: { payload: ChatGroupItem }) =>
     produce(state, (draft) => {
       draft.groups.push(payload);
+      draft.groupMap[payload.id] = payload;
     }),
 
   // Delete a group from the list
   deleteGroup: (state, { payload: id }: { payload: string }) =>
     produce(state, (draft) => {
       draft.groups = draft.groups.filter((group) => group.id !== id);
+      delete draft.groupMap[id];
     }),
 
   // Load groups into the state
@@ -34,15 +36,14 @@ export const chatGroupReducers = {
     return { ...state, isGroupsLoading: payload };
   },
 
-  // Update a group in the list
+  // Update a group in the map
   updateGroup: (
     state,
     { payload }: { payload: { id: string; value: Partial<ChatGroupItem> } },
   ) =>
     produce(state, (draft) => {
-      const group = draft.groups.find((g) => g.id === payload.id);
-      if (group) {
-        Object.assign(group, payload.value);
+      if (draft.groupMap[payload.id]) {
+        Object.assign(draft.groupMap[payload.id], payload.value);
       }
     }),
 };
