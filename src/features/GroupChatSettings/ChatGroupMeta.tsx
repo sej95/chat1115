@@ -13,28 +13,16 @@ import { selectors, useStore } from './store';
 
 const { TextArea } = Input;
 
-/**
- * General Settings for Group Chat
- */
-const GroupMeta = memo(() => {
+const ChatGroupMeta = memo(() => {
   const { t } = useTranslation(['setting', 'common']);
   const [form] = Form.useForm();
 
   const updateMeta = useStore((s) => s.updateGroupMeta);
-  const meta = useStore(selectors.meta, isEqual) || {};
-
-  const groupData = {
-    description: meta.description || '',
-    title: meta.title || '',
-  };
+  const meta = useStore(selectors.currentMetaConfig, isEqual) || {};
 
   useUpdateEffect(() => {
-    form.setFieldsValue(groupData);
-  }, [groupData]);
-
-  const handleFinish = async (values: { description: string; title: string }) => {
-    await updateMeta(values);
-  };
+    form.setFieldsValue(meta);
+  }, [meta]);
 
   const groupSettings: FormGroupItemType = {
     children: [
@@ -71,14 +59,14 @@ const GroupMeta = memo(() => {
         />
       }
       form={form}
-      initialValues={groupData}
+      initialValues={meta}
       items={[groupSettings]}
       itemsType={'group'}
-      onFinish={handleFinish}
+      onFinish={updateMeta}
       variant={'borderless'}
       {...FORM_STYLE}
     />
   );
 });
 
-export default GroupMeta;
+export default ChatGroupMeta;

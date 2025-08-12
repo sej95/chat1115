@@ -1,7 +1,6 @@
 'use client';
 
 import { Form, type FormGroupItemType, SliderWithInput } from '@lobehub/ui';
-import { useUpdateEffect } from 'ahooks';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -10,69 +9,16 @@ import { FORM_STYLE } from '@/const/layoutTokens';
 import { selectors, useStore } from './store';
 import { Switch } from 'antd';
 import ModelSelect from '../ModelSelect';
+import { isEqual } from 'lodash';
 
-// Convert response order to numerical value for slider
-const getResponseSpeedValue = (responseOrder?: 'sequential' | 'random' | 'smart') => {
-  switch (responseOrder) {
-    case 'sequential': {
-      return 1;
-    }
-    case 'smart': {
-      return 2;
-    }
-    case 'random': {
-      return 3;
-    }
-    default: {
-      return 2; // default to smart
-    }
-  }
-};
-
-// Convert numerical value back to response order
-const getResponseOrder = (value: number): 'sequential' | 'random' | 'smart' => {
-  switch (value) {
-    case 1: {
-      return 'sequential';
-    }
-    case 2: {
-      return 'smart';
-    }
-    case 3: {
-      return 'random';
-    }
-    default: {
-      return 'smart';
-    }
-  }
-};
-
-const GroupChatSettings = memo(() => {
+/**
+ * Chat Settings for Group Chat
+ */
+const ChatGroupSettings = memo(() => {
   const { t } = useTranslation(['setting', 'common']);
   const [form] = Form.useForm();
-
   const updateConfig = useStore((s) => s.updateGroupConfig);
-  const config = useStore(selectors.config) || {};
-
-  const responseSpeedValue = getResponseSpeedValue(config.responseOrder);
-
-  const chatData = {
-    responseSpeed: responseSpeedValue,
-  };
-
-  useUpdateEffect(() => {
-    form.setFieldsValue(chatData);
-  }, [chatData]);
-
-  const handleFinish = async (values: { responseSpeed: number }) => {
-    const responseOrder = getResponseOrder(values.responseSpeed);
-    const newConfig = {
-      ...config,
-      responseOrder,
-    };
-
-    await updateConfig(newConfig);
-  };
+  const config = useStore(selectors.currentChatConfig, isEqual)
 
   const responseSpeedMarks = {
     1: 'Slow',
@@ -98,9 +44,7 @@ const GroupChatSettings = memo(() => {
       {
         children: (
           <ModelSelect
-            onChange={async (props) => {
-
-            }}
+            onChange={async (props) => { }}
             showAbility={false}
           // value={value}
           />
@@ -112,15 +56,15 @@ const GroupChatSettings = memo(() => {
       {
         children: <Switch />,
         desc: "Agents will respond in the order they are set in the group",
-        label: "Ordered Response",
-        name: 'orderedResponse',
+        label: "Response Order",
+        name: 'responseOrder',
       },
       {
         children: <SliderWithInput max={8} min={0} unlimitedInput={true} />,
         desc: "Choose how many messages members can respond in a row. This will reset after an user message.",
         divider: false,
         label: "Max Messages in a row",
-        name: 'autoCreateTopicThreshold',
+        name: 'maxResponseInRow',
       },
     ],
     title: 'Chat Settings',
@@ -139,16 +83,14 @@ const GroupChatSettings = memo(() => {
         />
       }
       form={form}
-      initialValues={chatData}
+      initialValues={config}
       items={[chatSettings]}
       itemsType={'group'}
-      onFinish={handleFinish}
+      onFinish={updateConfig}
       variant={'borderless'}
       {...FORM_STYLE}
     />
   );
 });
 
-GroupChatSettings.displayName = 'GroupChatSettings';
-
-export default GroupChatSettings;
+export default ChatGroupSettings;

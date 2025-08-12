@@ -11,6 +11,11 @@
     "prompt": "Role Configuration",
     "tts": "Voice Service"
   },
+  "groupTab": {
+    "meta": "Group Information",
+    "members": "Group Members",
+    "chat": "Group Chat"
+  },
   "analytics": {
     "telemetry": {
       "desc": "By opting to send telemetry data, you can help us improve the overall user experience of {{appName}}.",

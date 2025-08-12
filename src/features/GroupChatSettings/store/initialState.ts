@@ -1,21 +1,23 @@
-import { LobeGroupSession } from '@/types/session';
+import { DEFAULT_CHAT_GROUP_CONFIG, DEFAULT_CHAT_GROUP_META_CONFIG } from '@/const/settings';
+import { LobeChatGroupConfig, LobeChatGroupMetaConfig } from '@/types/chatGroup';
 
 export type LoadingState = Record<string, boolean>;
 
 export interface State {
-  config?: LobeGroupSession['config'];
+  config?: LobeChatGroupConfig;
   id?: string;
   loading?: boolean;
   loadingState?: LoadingState;
-  meta?: LobeGroupSession['meta'];
-  onConfigChange?: (config: LobeGroupSession['config']) => void;
-  onMetaChange?: (meta: LobeGroupSession['meta']) => void;
+  meta?: LobeChatGroupMetaConfig;
+  onConfigChange?: (config: LobeChatGroupConfig) => void;
+  onMetaChange?: (meta: LobeChatGroupMetaConfig) => void;
 }
 
 export const initialState: State = {
+  config: DEFAULT_CHAT_GROUP_CONFIG,
   loading: true,
   loadingState: {
     meta: false,
-    config: false,
   },
+  meta: DEFAULT_CHAT_GROUP_META_CONFIG,
 };
