@@ -47,6 +47,9 @@
     "reasoningEffort": {
       "title": "Reasoning Intensity"
     },
+    "textVerbosity": {
+      "title": "Output Text Detail Level"
+    },
     "thinking": {
       "title": "Deep Thinking Switch"
     },
