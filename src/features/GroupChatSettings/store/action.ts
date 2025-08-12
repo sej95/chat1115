@@ -1,11 +1,10 @@
 import type { PartialDeep } from 'type-fest';
 import { StateCreator } from 'zustand/vanilla';
 
-import { LobeGroupSession } from '@/types/session';
 import { setNamespace } from '@/utils/storeDebug';
 
-import { LoadingState } from './initialState';
-import { State, initialState } from './initialState';
+import { LoadingState, State, initialState } from './initialState';
+import { LobeChatGroupConfig, LobeChatGroupMetaConfig } from '@/types/chatGroup';
 
 export interface PublicAction {
   /**
@@ -19,17 +18,17 @@ export interface PublicAction {
   /**
    * Update group configuration
    */
-  updateGroupConfig: (config: Partial<LobeGroupSession['config']>) => Promise<void>;
+  updateGroupConfig: (config: Partial<LobeChatGroupConfig>) => Promise<void>;
   /**
    * Update group metadata
    */
-  updateGroupMeta: (meta: Partial<LobeGroupSession['meta']>) => Promise<void>;
+  updateGroupMeta: (meta: Partial<LobeChatGroupMetaConfig>) => Promise<void>;
 }
 
 export interface Action extends PublicAction {
-  setGroupConfig: (config: PartialDeep<LobeGroupSession['config']>) => Promise<void>;
-  setGroupMeta: (meta: Partial<LobeGroupSession['meta']>) => Promise<void>;
-  
+  setGroupConfig: (config: PartialDeep<LobeChatGroupConfig>) => Promise<void>;
+  setGroupMeta: (meta: Partial<LobeChatGroupMetaConfig>) => Promise<void>;
+
   /**
    * Update loading state
    * @param key - LoadingState key
@@ -47,18 +46,18 @@ export const store: StateCreator<Store, [['zustand/devtools', never]]> = (set, g
 
   resetGroupConfig: async () => {
     const { onConfigChange } = get();
-    
+
     const defaultConfig = {};
-    
+
     await onConfigChange?.(defaultConfig);
     set({ config: defaultConfig }, false, t('resetGroupConfig'));
   },
 
   resetGroupMeta: async () => {
     const { onMetaChange } = get();
-    
+
     const defaultMeta = {};
-    
+
     await onMetaChange?.(defaultMeta);
     set({ meta: defaultMeta }, false, t('resetGroupMeta'));
   },
@@ -67,7 +66,9 @@ export const store: StateCreator<Store, [['zustand/devtools', never]]> = (set, g
     const { onConfigChange } = get();
     const currentConfig = get().config || {};
     const newConfig = { ...currentConfig, ...config };
-    
+
+    console.log('newConfig', newConfig);
+
     await onConfigChange?.(newConfig);
     set({ config: newConfig }, false, t('setGroupConfig'));
   },
@@ -76,12 +77,14 @@ export const store: StateCreator<Store, [['zustand/devtools', never]]> = (set, g
     const { onMetaChange } = get();
     const currentMeta = get().meta || {};
     const newMeta = { ...currentMeta, ...meta };
-    
+
     await onMetaChange?.(newMeta);
     set({ meta: newMeta }, false, t('setGroupMeta'));
   },
 
   updateGroupConfig: async (config) => {
+    console.log('updateGroupConfig', config);
+
     await get().setGroupConfig(config);
   },
 

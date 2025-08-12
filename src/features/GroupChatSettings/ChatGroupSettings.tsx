@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { FORM_STYLE } from '@/const/layoutTokens';
 
 import { selectors, useStore } from './store';
-import { Switch } from 'antd';
+import { Select } from 'antd';
 import ModelSelect from '../ModelSelect';
 import { isEqual } from 'lodash';
 
@@ -20,21 +20,25 @@ const ChatGroupSettings = memo(() => {
   const updateConfig = useStore((s) => s.updateGroupConfig);
   const config = useStore(selectors.currentChatConfig, isEqual)
 
-  const responseSpeedMarks = {
-    1: 'Slow',
-    2: 'Medium',
-    3: 'Fast',
-  };
+  const responseSpeedOptions = [
+    { label: 'Slow', value: 'slow' },
+    { label: 'Medium', value: 'medium' },
+    { label: 'Fast', value: 'fast' },
+  ];
 
   const chatSettings: FormGroupItemType = {
     children: [
       {
+        children: <ModelSelect />,
+        desc: "Choose the model to use for group conversations",
+        label: "Orchestrator Model",
+        name: '_modelConfig',
+      },
+      {
         children: (
-          <SliderWithInput
-            marks={responseSpeedMarks}
-            max={3}
-            min={1}
-            step={1}
+          <Select 
+            options={responseSpeedOptions}
+            placeholder="Select response speed"
           />
         ),
         desc: "Choose how agents respond in group conversations",
@@ -43,18 +47,14 @@ const ChatGroupSettings = memo(() => {
       },
       {
         children: (
-          <ModelSelect
-            onChange={async (props) => { }}
-            showAbility={false}
-          // value={value}
+          <Select 
+            options={[
+              { label: 'Sequential', value: 'sequential' },
+              { label: 'Natural', value: 'natural' },
+            ]}
+            placeholder="Select response order"
           />
         ),
-        desc: "Choose the model to use for group conversations",
-        label: "Orchestrator Model",
-        name: 'model',
-      },
-      {
-        children: <Switch />,
         desc: "Agents will respond in the order they are set in the group",
         label: "Response Order",
         name: 'responseOrder',
@@ -83,10 +83,22 @@ const ChatGroupSettings = memo(() => {
         />
       }
       form={form}
-      initialValues={config}
+      initialValues={{
+        ...config,
+        _modelConfig: {
+          model: config?.orchestratorModel,
+          provider: config?.orchestratorProvider,
+        },
+      }}
       items={[chatSettings]}
       itemsType={'group'}
-      onFinish={updateConfig}
+      onFinish={({ _modelConfig, ...rest }) => {
+        updateConfig({
+          orchestratorModel: _modelConfig?.model,
+          orchestratorProvider: _modelConfig?.provider,
+          ...rest,
+        });
+      }}
       variant={'borderless'}
       {...FORM_STYLE}
     />

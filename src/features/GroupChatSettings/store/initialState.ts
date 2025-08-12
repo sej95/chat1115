@@ -1,4 +1,4 @@
-import { DEFAULT_CHAT_GROUP_CONFIG, DEFAULT_CHAT_GROUP_META_CONFIG } from '@/const/settings';
+import { DEFAULT_CHAT_GROUP_CHAT_CONFIG, DEFAULT_CHAT_GROUP_META_CONFIG } from '@/const/settings';
 import { LobeChatGroupConfig, LobeChatGroupMetaConfig } from '@/types/chatGroup';
 
 export type LoadingState = Record<string, boolean>;
@@ -14,7 +14,7 @@ export interface State {
 }
 
 export const initialState: State = {
-  config: DEFAULT_CHAT_GROUP_CONFIG,
+  config: DEFAULT_CHAT_GROUP_CHAT_CONFIG,
   loading: true,
   loadingState: {
     meta: false,

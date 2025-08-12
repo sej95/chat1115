@@ -8,10 +8,14 @@ export interface LobeChatGroupChatConfig {
     orchestratorModel: string;
     orchestratorProvider: string;
     responseOrder: 'sequential' | 'natural';
-    responseSpeed: 'fast' | 'medium' | 'slow';
+    responseSpeed: 'slow' | 'medium' | 'fast';
 }
 
-export interface LobeChatGroupConfig {
+// Database config type (flat structure)
+export type LobeChatGroupConfig = LobeChatGroupChatConfig;
+
+// Full group type with nested structure for UI components
+export interface LobeChatGroupFullConfig {
     chat: LobeChatGroupChatConfig;
     meta: LobeChatGroupMetaConfig;
 }

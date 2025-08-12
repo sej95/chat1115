@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { ChatGroupModel } from '@/database/models/chatGroup';
-import { chatGroups, chatGroupsAgents, insertChatGroupSchema } from '@/database/schemas/chatGroup';
+import { insertChatGroupSchema } from '@/database/schemas/chatGroup';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
 
@@ -39,20 +39,15 @@ export const groupRouter = router({
       return ctx.chatGroupModel.delete(input.id);
     }),
 
-  updateGroup: groupProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        value: insertChatGroupSchema.partial(),
-      }),
-    )
-    .mutation(async ({ input, ctx }) => {
-      return ctx.chatGroupModel.update(input.id, input.value);
-    }),
-
   getGroup: groupProcedure.input(z.object({ id: z.string() })).query(async ({ input, ctx }) => {
     return ctx.chatGroupModel.findById(input.id);
   }),
+
+  getGroupAgents: groupProcedure
+    .input(z.object({ groupId: z.string() }))
+    .query(async ({ input, ctx }) => {
+      return ctx.chatGroupModel.getGroupAgents(input.groupId);
+    }),
 
   getGroups: groupProcedure.query(async ({ ctx }) => {
     return ctx.chatGroupModel.queryWithMemberDetails();
@@ -87,10 +82,15 @@ export const groupRouter = router({
       return ctx.chatGroupModel.updateAgentInGroup(input.groupId, input.agentId, input.updates);
     }),
 
-  getGroupAgents: groupProcedure
-    .input(z.object({ groupId: z.string() }))
-    .query(async ({ input, ctx }) => {
-      return ctx.chatGroupModel.getGroupAgents(input.groupId);
+  updateGroup: groupProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        value: insertChatGroupSchema.partial(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      return ctx.chatGroupModel.update(input.id, input.value);
     }),
 });
 

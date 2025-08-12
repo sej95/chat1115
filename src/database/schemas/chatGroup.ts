@@ -37,11 +37,11 @@ export const chatGroups = pgTable(
      * Group configuration
      */
     config: jsonb('config').$type<{
-      maxMessagesInRow?: number;
-      modelId?: string;
-      modelProvider?: string;
+      maxResponseInRow?: number;
+      orchestratorModel?: string;
+      orchestratorProvider?: string;
       responseOrder?: 'sequential' | 'natural';
-      responseSpeed?: number; // 1: slow, 2: medium, 3: fast
+      responseSpeed?: 'slow' | 'medium' | 'fast';
     }>(),
 
     clientId: text('client_id'),

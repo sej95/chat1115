@@ -1,4 +1,4 @@
-import { DefaultChatGroupConfig, LobeChatGroupChatConfig, LobeChatGroupMetaConfig } from '@/types/chatGroup';
+import { LobeChatGroupFullConfig, LobeChatGroupChatConfig, LobeChatGroupMetaConfig } from '@/types/chatGroup';
 import { DEFAULT_MODEL, DEFAULT_PROVIDER } from '@/const/settings/llm';
 
 export const DEFAULT_CHAT_GROUP_CHAT_CONFIG: LobeChatGroupChatConfig = {
@@ -14,7 +14,7 @@ export const DEFAULT_CHAT_GROUP_META_CONFIG: LobeChatGroupMetaConfig = {
     title: '',
 };
 
-export const DEFAULT_CHAT_GROUP_CONFIG: DefaultChatGroupConfig = {
+export const DEFAULT_CHAT_GROUP_CONFIG: LobeChatGroupFullConfig = {
     chat: DEFAULT_CHAT_GROUP_CHAT_CONFIG,
     meta: DEFAULT_CHAT_GROUP_META_CONFIG,
 };

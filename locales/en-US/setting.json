@@ -12,9 +12,9 @@
     "tts": "Voice Service"
   },
   "groupTab": {
-    "meta": "Group Information",
-    "members": "Group Members",
-    "chat": "Group Chat"
+    "meta": "General",
+    "members": "Members",
+    "chat": "Chat"
   },
   "analytics": {
     "telemetry": {
