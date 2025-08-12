@@ -1,1 +1,0 @@
-ALTER TABLE "chat_groups" DROP COLUMN "pinned";

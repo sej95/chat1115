@@ -1,11 +1,6 @@
 {
-<<<<<<< HEAD
-  "id": "0706e91c-ca94-42a7-8a2f-6ff7e680ce31",
-  "prevId": "d9b76655-2ffb-40e0-a82f-23da0addf76e",
-=======
-  "id": "9cf49b2f-62fa-4d75-b711-11558ab04c4a",
+  "id": "63914b12-428f-4523-be8c-10aae2f39791",
   "prevId": "8d45019c-2f55-4c12-b87e-a7ce441df121",
->>>>>>> 2b8deaaa7a13f1cdddafc980fb8801e5efd194a8
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -710,8 +705,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-<<<<<<< HEAD
-=======
     "public.api_keys": {
       "name": "api_keys",
       "schema": "",
@@ -822,7 +815,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
->>>>>>> 2b8deaaa7a13f1cdddafc980fb8801e5efd194a8
     "public.async_tasks": {
       "name": "async_tasks",
       "schema": "",
@@ -936,21 +928,6 @@
           "primaryKey": false,
           "notNull": false
         },
-<<<<<<< HEAD
-        "avatar": {
-          "name": "avatar",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "background_color": {
-          "name": "background_color",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-=======
->>>>>>> 2b8deaaa7a13f1cdddafc980fb8801e5efd194a8
         "config": {
           "name": "config",
           "type": "jsonb",
@@ -969,8 +946,6 @@
           "primaryKey": false,
           "notNull": true
         },
-<<<<<<< HEAD
-=======
         "pinned": {
           "name": "pinned",
           "type": "boolean",
@@ -978,7 +953,6 @@
           "notNull": false,
           "default": false
         },
->>>>>>> 2b8deaaa7a13f1cdddafc980fb8801e5efd194a8
         "accessed_at": {
           "name": "accessed_at",
           "type": "timestamp with time zone",
@@ -3049,15 +3023,12 @@
           "primaryKey": false,
           "notNull": false
         },
-<<<<<<< HEAD
-=======
         "group_id": {
           "name": "group_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
->>>>>>> 2b8deaaa7a13f1cdddafc980fb8801e5efd194a8
         "accessed_at": {
           "name": "accessed_at",
           "type": "timestamp with time zone",
@@ -3254,8 +3225,6 @@
           ],
           "onDelete": "set null",
           "onUpdate": "no action"
-<<<<<<< HEAD
-=======
         },
         "messages_group_id_chat_groups_id_fk": {
           "name": "messages_group_id_chat_groups_id_fk",
@@ -3269,7 +3238,6 @@
           ],
           "onDelete": "set null",
           "onUpdate": "no action"
->>>>>>> 2b8deaaa7a13f1cdddafc980fb8801e5efd194a8
         }
       },
       "compositePrimaryKeys": {},
@@ -5650,8 +5618,6 @@
           "notNull": true,
           "default": true
         },
-<<<<<<< HEAD
-=======
         "metadata": {
           "name": "metadata",
           "type": "jsonb",
@@ -5659,7 +5625,6 @@
           "notNull": false,
           "default": "'{}'::jsonb"
         },
->>>>>>> 2b8deaaa7a13f1cdddafc980fb8801e5efd194a8
         "accessed_at": {
           "name": "accessed_at",
           "type": "timestamp with time zone",
@@ -6218,15 +6183,6 @@
           "notNull": false,
           "default": false
         },
-<<<<<<< HEAD
-        "chat_group_id": {
-          "name": "chat_group_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-=======
->>>>>>> 2b8deaaa7a13f1cdddafc980fb8801e5efd194a8
         "accessed_at": {
           "name": "accessed_at",
           "type": "timestamp with time zone",
@@ -6319,22 +6275,6 @@
           ],
           "onDelete": "set null",
           "onUpdate": "no action"
-<<<<<<< HEAD
-        },
-        "sessions_chat_group_id_chat_groups_id_fk": {
-          "name": "sessions_chat_group_id_chat_groups_id_fk",
-          "tableFrom": "sessions",
-          "tableTo": "chat_groups",
-          "columnsFrom": [
-            "chat_group_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-=======
->>>>>>> 2b8deaaa7a13f1cdddafc980fb8801e5efd194a8
         }
       },
       "compositePrimaryKeys": {},
@@ -6616,15 +6556,12 @@
           "primaryKey": false,
           "notNull": false
         },
-<<<<<<< HEAD
-=======
         "group_id": {
           "name": "group_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
->>>>>>> 2b8deaaa7a13f1cdddafc980fb8801e5efd194a8
         "user_id": {
           "name": "user_id",
           "type": "text",
@@ -6708,8 +6645,6 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-<<<<<<< HEAD
-=======
         "topics_group_id_chat_groups_id_fk": {
           "name": "topics_group_id_chat_groups_id_fk",
           "tableFrom": "topics",
@@ -6723,7 +6658,6 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
->>>>>>> 2b8deaaa7a13f1cdddafc980fb8801e5efd194a8
         "topics_user_id_users_id_fk": {
           "name": "topics_user_id_users_id_fk",
           "tableFrom": "topics",
