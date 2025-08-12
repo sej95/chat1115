@@ -1,1 +1,0 @@
-ALTER TABLE "chat_groups" ADD COLUMN "pinned" boolean DEFAULT false;

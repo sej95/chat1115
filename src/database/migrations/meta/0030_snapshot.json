@@ -1,6 +1,6 @@
 {
-  "id": "0706e91c-ca94-42a7-8a2f-6ff7e680ce31",
-  "prevId": "d9b76655-2ffb-40e0-a82f-23da0addf76e",
+  "id": "9cf49b2f-62fa-4d75-b711-11558ab04c4a",
+  "prevId": "8d45019c-2f55-4c12-b87e-a7ce441df121",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -705,6 +705,116 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.api_keys": {
+      "name": "api_keys",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "api_keys_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "key": {
+          "name": "key",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_used_at": {
+          "name": "last_used_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "accessed_at": {
+          "name": "accessed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "api_keys_user_id_users_id_fk": {
+          "name": "api_keys_user_id_users_id_fk",
+          "tableFrom": "api_keys",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "api_keys_key_unique": {
+          "name": "api_keys_key_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "key"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.async_tasks": {
       "name": "async_tasks",
       "schema": "",
@@ -818,18 +928,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "avatar": {
-          "name": "avatar",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "background_color": {
-          "name": "background_color",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "config": {
           "name": "config",
           "type": "jsonb",
@@ -847,6 +945,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "pinned": {
+          "name": "pinned",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
         },
         "accessed_at": {
           "name": "accessed_at",
@@ -2918,6 +3023,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "group_id": {
+          "name": "group_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "accessed_at": {
           "name": "accessed_at",
           "type": "timestamp with time zone",
@@ -3108,6 +3219,19 @@
           "tableTo": "agents",
           "columnsFrom": [
             "agent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "messages_group_id_chat_groups_id_fk": {
+          "name": "messages_group_id_chat_groups_id_fk",
+          "tableFrom": "messages",
+          "tableTo": "chat_groups",
+          "columnsFrom": [
+            "group_id"
           ],
           "columnsTo": [
             "id"
@@ -5494,6 +5618,13 @@
           "notNull": true,
           "default": true
         },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{}'::jsonb"
+        },
         "accessed_at": {
           "name": "accessed_at",
           "type": "timestamp with time zone",
@@ -6052,12 +6183,6 @@
           "notNull": false,
           "default": false
         },
-        "chat_group_id": {
-          "name": "chat_group_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "accessed_at": {
           "name": "accessed_at",
           "type": "timestamp with time zone",
@@ -6144,19 +6269,6 @@
           "tableTo": "session_groups",
           "columnsFrom": [
             "group_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "sessions_chat_group_id_chat_groups_id_fk": {
-          "name": "sessions_chat_group_id_chat_groups_id_fk",
-          "tableFrom": "sessions",
-          "tableTo": "chat_groups",
-          "columnsFrom": [
-            "chat_group_id"
           ],
           "columnsTo": [
             "id"
@@ -6444,6 +6556,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "group_id": {
+          "name": "group_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "user_id": {
           "name": "user_id",
           "type": "text",
@@ -6520,6 +6638,19 @@
           "tableTo": "sessions",
           "columnsFrom": [
             "session_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "topics_group_id_chat_groups_id_fk": {
+          "name": "topics_group_id_chat_groups_id_fk",
+          "tableFrom": "topics",
+          "tableTo": "chat_groups",
+          "columnsFrom": [
+            "group_id"
           ],
           "columnsTo": [
             "id"
