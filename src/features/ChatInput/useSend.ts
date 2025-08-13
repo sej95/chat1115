@@ -99,27 +99,37 @@ export const useSendGroupMessage = () => {
   const send = useCallback((params: UseSendMessageParams = {}) => {
     const store = useChatStore.getState();
     if (!store.activeId) return;
+    const fileList = fileChatSelectors.chatUploadFileList(useFileStore.getState());
+
+    // if there is no message and no image, do nothing
+    if (!store.inputMessage && fileList.length === 0) return;
 
     sendGroupMessage({
+      files: fileList,
       groupId: store.activeId,
       message: store.inputMessage,
       ...params,
     });
 
     updateInputMessage('');
+    useFileStore.getState().clearChatUploadFileList();
 
     // 获取分析数据
     const userStore = getUserStoreState();
     const agentStore = getAgentStoreState();
+    const hasImages = fileList.some((file) => file.file?.type?.startsWith('image'));
+    const messageType = fileList.length === 0 ? 'text' : hasImages ? 'image' : 'file';
 
     analytics?.track({
       name: 'send_message',
       properties: {
         chat_id: store.activeId || 'unknown',
         current_topic: topicSelectors.currentActiveTopic(store)?.title || null,
+        has_attachments: fileList.length > 0,
         history_message_count: chatSelectors.activeBaseChats(store).length,
         message: store.inputMessage,
         message_length: store.inputMessage.length,
+        message_type: messageType,
         selected_model: agentSelectors.currentAgentModel(agentStore),
         session_id: store.activeId || 'inbox', // 当前活跃的会话ID
         user_id: userStore.user?.id || 'anonymous',

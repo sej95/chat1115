@@ -45,9 +45,12 @@ export class ClientService extends BaseClientService implements IMessageService 
   };
 
   getGroupMessages: IMessageService['getGroupMessages'] = async (groupId, topicId) => {
-    const data = await this.messageModel.queryBySessionId(
-      groupId,
-      topicId,
+    // Use full query to hydrate fileList/imageList like single chat
+    const data = await this.messageModel.query(
+      {
+        groupId,
+        topicId,
+      },
       {
         postProcessUrl: async (url, file) => {
           const hash = (url as string).replace('client-s3://', '');

@@ -2,8 +2,6 @@ import { ChatMessage } from '@/types/message';
 import { ChatGroupAgentItem } from '@/database/schemas/chatGroup';
 import { groupSupervisorPrompts } from '@/prompts/chatMessages';
 import { chatService } from '@/services/chat';
-import { systemAgentSelectors } from '@/store/user/selectors';
-import { useUserStore } from '@/store/user';
 
 export interface SupervisorDecision {
   nextSpeakers: string[]; // agentIds who should respond (empty array = stop)
@@ -24,13 +22,12 @@ export class GroupChatSupervisor {
   private readonly systemPrompt = `You are a conversation supervisor for a group chat with multiple AI agents. Your role is to decide which agents should respond next based on the conversation context.
 
 Rules:
-1. Analyze the conversation history and determine which agents are most relevant to respond
-2. You can select 0-4 members to respond (empty = conversation ends naturally)
-3. Consider agent specialties and the current topic
-4. Avoid having the same agent respond consecutively unless necessary
-5. Ensure balanced participation when possible
+- Always return nextSpeaker as an array of member ids from the GroupMembers list
+- If a member's expertise is needed based on the conversation topic, include that member
+- If the conversation seems complete, return empty array.
+- Your goal is to make the conversation as natural as possible
 
-Response format: Return ONLY a JSON array of agent IDs, nothing else.
+Response format: Return ONLY an array of agent IDs, nothing else.
 Examples: ["agt_01", "agt_02"] or [] or ["agt_03"]`;
 
   /**
@@ -41,7 +38,7 @@ Examples: ["agt_01", "agt_02"] or [] or ["agt_03"]`;
 
     // If no agents available, stop conversation
     if (availableAgents.length === 0) {
-      // return { nextSpeakers: [] };k
+      return { nextSpeakers: [] };
     }
 
     try {
@@ -52,14 +49,17 @@ Examples: ["agt_01", "agt_02"] or [] or ["agt_03"]`;
       const conversationHistory = groupSupervisorPrompts(messages);
 
       const supervisorPrompt = `${this.systemPrompt}
+<group_description>
+No group description.
+</group_description>
 
-<GroupMembers>
+<group_members>
 ${agentDescriptions}
-</GroupMembers>
+</group_members>
 
-<ConversationHistory>
+<conversation_history>
 ${conversationHistory}
-</ConversationHistory>
+</conversation_history>
 `;
 
       const response = await this.callLLMForDecision(supervisorPrompt, context);
@@ -125,13 +125,15 @@ ${conversationHistory}
     availableAgents: ChatGroupAgentItem[],
   ): SupervisorDecision {
     try {
-      // Extract JSON from response (handle cases where LLM adds extra text)
-      const jsonMatch = response.match(/\[.*?]/);
-      if (!jsonMatch) {
+      // Extract JSON array from response by locating the first '[' and the last ']'
+      const startIndex = response.indexOf('[');
+      const endIndex = response.lastIndexOf(']');
+      if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
         throw new Error('No JSON array found in response');
       }
+      const jsonText = response.slice(startIndex, endIndex + 1);
 
-      const agentIds = JSON.parse(jsonMatch[0]) as string[];
+      const agentIds = JSON.parse(jsonText) as string[];
 
       // Validate agent IDs exist in available agents
       const validAgentIds = agentIds.filter((id) =>
@@ -152,7 +154,7 @@ ${conversationHistory}
     availableAgents: ChatGroupAgentItem[],
     messages: ChatMessage[],
   ): SupervisorDecision {
-    const enabledAgents = availableAgents.filter((agent) => agent.enabled);
+    const enabledAgents = availableAgents.filter((agent) => agent.enabled !== false);
 
     if (enabledAgents.length === 0) {
       return { nextSpeakers: [] };
@@ -183,7 +185,7 @@ ${conversationHistory}
 
     // Check all speakers are available and enabled
     return nextSpeakers.every((speakerId) =>
-      availableAgents.some((agent) => agent.agentId === speakerId && agent.enabled),
+      availableAgents.some((agent) => agent.agentId === speakerId && agent.enabled !== false),
     );
   }
 } 

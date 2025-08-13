@@ -41,6 +41,7 @@ export interface ChatGroupAction {
   refreshGroups: () => Promise<void>;
 
   removeAgentFromGroup: (groupId: string, agentId: string) => Promise<void>;
+  reorderGroupMembers: (groupId: string, orderedAgentIds: string[]) => Promise<void>;
   toggleGroupSetting: (open: boolean) => void;
 
   updateGroup: (id: string, value: Partial<ChatGroupItem>) => Promise<void>;
@@ -110,7 +111,6 @@ export const chatGroupAction: StateCreator<
 
       return group.id;
     },
-
     deleteGroup: async (id) => {
       await chatGroupService.deleteGroup(id);
       dispatch({ payload: id, type: 'deleteGroup' });
@@ -170,6 +170,15 @@ export const chatGroupAction: StateCreator<
 
     removeAgentFromGroup: async (groupId, agentId) => {
       await chatGroupService.removeAgentsFromGroup(groupId, [agentId]);
+      await get().internal_refreshGroups();
+    },
+
+    reorderGroupMembers: async (groupId, orderedAgentIds) => {
+      await Promise.all(
+        orderedAgentIds.map((agentId, index) =>
+          chatGroupService.updateAgentInGroup(groupId, agentId, { order: index.toString() }),
+        ),
+      );
       await get().internal_refreshGroups();
     },
 

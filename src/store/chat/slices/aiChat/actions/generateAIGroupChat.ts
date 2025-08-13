@@ -5,7 +5,6 @@ import { StateCreator } from 'zustand/vanilla';
 
 import { LOADING_FLAT } from '@/const/message';
 import { ChatErrorType } from '@/types/fetch';
-import { consolidateGroupChatHistory } from '@/prompts/chatMessages';
 import { agentSelectors } from '@/store/agent/selectors';
 import { getAgentStoreState } from '@/store/agent/store';
 import { ChatStore } from '@/store/chat/store';
@@ -17,6 +16,7 @@ import { setNamespace } from '@/utils/storeDebug';
 import { chatGroupSelectors } from '@/store/chatGroup/selectors';
 
 import { GroupChatSupervisor, SupervisorContext, SupervisorDecision } from '../../message/supervisor';
+import { buildGroupChatSystemPrompt, GroupMemberInfo } from '@/prompts/groupChat';
 
 import { toggleBooleanList } from '../../../utils';
 import type { ChatStoreState } from '../../../initialState';
@@ -24,23 +24,21 @@ import { useChatGroupStore } from '@/store/chatGroup/store';
 
 const n = setNamespace('aiGroupChat');
 
-// Group chat supervisor instance
 const supervisor = new GroupChatSupervisor();
 
-// Helper function to convert responseSpeed to debouncer threshold in milliseconds
 const getDebounceThreshold = (responseSpeed?: 'slow' | 'medium' | 'fast'): number => {
   switch (responseSpeed) {
     case 'fast': {
-      return 1000; // 1 second for fast response
+      return 1000;
     }
     case 'medium': {
-      return 2000; // 2 seconds for medium response
+      return 2000;
     }
     case 'slow': {
-      return 5000; // 5 seconds for slow response
+      return 5000;
     }
     default: {
-      return 3000; // Default fallback
+      return 3000;
     }
   }
 };
@@ -52,8 +50,6 @@ export interface AIGroupChatAction {
   sendGroupMessage: (params: SendGroupMessageParams) => Promise<void>;
 
   // =========  ↓ Internal Group Chat Methods ↓  ========== //
-  // ========================================== //
-  // ========================================== //
 
   /**
    * Triggers supervisor decision for group chat
@@ -222,64 +218,32 @@ export const generateAIGroupChat: StateCreator<
 
       const agentStoreState = getAgentStoreState();
       const agentConfig = agentSelectors.getAgentConfigById(agentId)(agentStoreState);
-      const { provider, model } = agentConfig;
+      const { provider: providerFromConfig } = agentConfig;
 
       console.log("AGENT CONFIG", agentConfig);
 
-      if (!provider) {
+      if (!providerFromConfig) {
         console.error(`No provider configured for agent ${agentId}`);
         return;
       }
 
-      console.log("MESSAGE HISTORY", messages);
-
       // TODO: [Group Chat] Replace with real user name
       const agents = sessionSelectors.currentGroupAgents(useSessionStore.getState());
-      const agentTitleMap = [
-        {
-          id: "user",
-          title: "Rene Wang"
-        },
-        ...(agents?.map(agent => ({
-          id: agent.id,
-          title: agent.title
-        })) || [])
+      const agentTitleMap: GroupMemberInfo[] = [
+        { id: 'user', title: 'Rene Wang' },
+        ...((agents || []).map((agent) => ({ id: agent.id, title: agent.title })))
       ];
 
-      // Consolidate message history into a single formatted string
-      const consolidatedHistory = consolidateGroupChatHistory(messages, agentTitleMap);
+      console.log("AGENT TITLE MAP", agentTitleMap);
 
-      console.log("CONSOLIDATED HISTORY:", consolidatedHistory);
-
-      // Build group members info similar to supervisor
-      const groupMembersInfo = JSON.stringify(
-        agentTitleMap,
-        null,
-        2
-      );
-
-      // Build group chat system prompt with consolidated history
       const baseSystemRole = agentConfig.systemRole || '';
-      const groupChatSystemPrompt = `${baseSystemRole}
-You are participating in a group chat in real world. Please follow these guidelines:
-
-Guidelines:
-- Stay in character as ${agentId}
-- Be concise and natural, behave like a real person
-- Engage naturally in the conversation flow
-- Be collaborative and build upon others' responses when appropriate
-- Keep your responses concise and relevant to the ongoing discussion
-- Each message should no more than 100 words
-
-<GroupMembers>
-${groupMembersInfo}
-</GroupMembers>
-
-<ConversationHistory>
-${consolidatedHistory}
-</ConversationHistory>
-
-Please respond as this agent would, considering the full conversation history provided above. Directly return the message content, no other text. You do not need add author name or anything else.`;
+      const members: GroupMemberInfo[] = agentTitleMap as GroupMemberInfo[];
+      const groupChatSystemPrompt = buildGroupChatSystemPrompt({
+        agentId,
+        baseSystemRole,
+        groupMembers: members,
+        messages,
+      });
 
       // TODO: [Group Chat] Use real agent config
       const assistantMessage: CreateMessageParams = {
@@ -303,16 +267,7 @@ Please respond as this agent would, considering the full conversation history pr
         meta: {},
       };
 
-      const userMessage: ChatMessage = {
-        id: 'group-user',
-        role: 'user',
-        content: 'Please respond based on the conversation history provided.',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        meta: {},
-      };
-
-      const messagesForAPI = [systemMessage, userMessage];
+      const messagesForAPI = [systemMessage, ...messages];
 
       if (assistantId) {
         await internal_fetchAIChatMessage({
@@ -400,8 +355,8 @@ Please respond as this agent would, considering the full conversation history pr
 
     internal_cancelSupervisorDecision(groupId);
 
-    const group = sessionSelectors.currentSession(useSessionStore.getState());
-    const responseSpeed = group?.config?.responseSpeed;
+    const groupConfig = chatGroupSelectors.currentGroupConfig(useChatGroupStore.getState());
+    const responseSpeed = groupConfig?.responseSpeed;
     const debounceThreshold = getDebounceThreshold(responseSpeed);
 
     console.log(`Using debounce threshold: ${debounceThreshold}ms for responseSpeed: ${responseSpeed}`);
