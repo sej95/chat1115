@@ -20,31 +20,29 @@ const ChatGroupSettings = memo(() => {
   const updateConfig = useStore((s) => s.updateGroupConfig);
   const config = useStore(selectors.currentChatConfig, isEqual)
 
-  console.log("CONFIG", config);
-
   const responseSpeedOptions = [
-    { label: 'Slow', value: 'slow' },
-    { label: 'Medium', value: 'medium' },
-    { label: 'Fast', value: 'fast' },
+    { label: t('settingGroupChat.responseSpeed.options.slow'), value: 'slow' },
+    { label: t('settingGroupChat.responseSpeed.options.medium'), value: 'medium' },
+    { label: t('settingGroupChat.responseSpeed.options.fast'), value: 'fast' },
   ];
 
   const chatSettings: FormGroupItemType = {
     children: [
       {
         children: <ModelSelect />,
-        desc: "Choose the model to use for group conversations",
-        label: "Orchestrator Model",
+        desc: t('settingGroupChat.model.desc'),
+        label: t('settingGroupChat.model.title'),
         name: '_modelConfig',
       },
       {
         children: (
           <Select
             options={responseSpeedOptions}
-            placeholder="Select response speed"
+            placeholder={t('settingGroupChat.responseSpeed.placeholder')}
           />
         ),
-        desc: "Choose how agents respond in group conversations",
-        label: "Response Speed",
+        desc: t('settingGroupChat.responseSpeed.desc'),
+        label: t('settingGroupChat.responseSpeed.title'),
         name: 'responseSpeed',
       },
       {
@@ -57,19 +55,19 @@ const ChatGroupSettings = memo(() => {
             placeholder="Select response order"
           />
         ),
-        desc: "Agents will respond in the order they are set in the group",
-        label: "Response Order",
+        desc: t('settingGroupChat.responseOrder.desc'),
+        label: t('settingGroupChat.responseOrder.title'),
         name: 'responseOrder',
       },
       {
         children: <SliderWithInput max={16} min={0} step={1} unlimitedInput={true} />,
-        desc: "Choose how many messages members can respond in a row. Set to 0 to disable.",
+        desc: t('settingGroupChat.maxResponseInRow.desc'),
         divider: false,
-        label: "Max Messages in a row",
+        label: t('settingGroupChat.maxResponseInRow.title'),
         name: 'maxResponseInRow',
       },
     ],
-    title: 'Chat Settings',
+    title: t('settingGroupChat.title'),
   };
 
   return (

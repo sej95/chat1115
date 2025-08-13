@@ -13,6 +13,8 @@ export interface SupervisorContext {
   availableAgents: ChatGroupAgentItem[];
   groupId: string;
   messages: ChatMessage[];
+  model: string;
+  provider: string;
 }
 
 /**
@@ -60,7 +62,7 @@ ${conversationHistory}
 </ConversationHistory>
 `;
 
-      const response = await this.callLLMForDecision(supervisorPrompt);
+      const response = await this.callLLMForDecision(supervisorPrompt, context);
 
       const decision = this.parseDecision(response, availableAgents);
 
@@ -87,13 +89,10 @@ ${conversationHistory}
   /**
    * Call LLM service to get supervisor decision
    */
-  private async callLLMForDecision(prompt: string): Promise<string> {
-    const { model, provider } = systemAgentSelectors.groupChatSupervisor(useUserStore.getState());
-
+  private async callLLMForDecision(prompt: string, context: SupervisorContext): Promise<string> {
     const supervisorConfig = {
-      // max_tokens: 100,
-      model: 'gemini-2.5-flash',
-      provider: 'google',
+      model: context.model,
+      provider: context.provider,
       temperature: 0.3,
     };
 

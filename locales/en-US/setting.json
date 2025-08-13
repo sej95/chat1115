@@ -46,7 +46,9 @@
     "session": "Session Settings",
     "sessionDesc": "Role settings and session preferences.",
     "sessionWithName": "Session Settings · {{name}}",
-    "title": "Settings"
+    "title": "Settings",
+    "group": "Group Settings",
+    "groupDesc": "Manage your group settings"
   },
   "hotkey": {
     "conflicts": "Conflicts with existing hotkeys",
@@ -304,7 +306,8 @@
     "name": {
       "placeholder": "Enter group name",
       "title": "Group Name"
-    }
+    },
+    "submit": "Update Group"
   },
   "settingModel": {
     "enableMaxTokens": {
@@ -581,5 +584,43 @@
       "store": "Plugin Store"
     },
     "title": "Extension Tools"
+  },
+  "settingGroupChat": {
+    "title": "Chat Settings",
+    "model": {
+      "desc": "Choose the model to use for group conversations",
+      "title": "Orchestrator Model"
+    },
+    "responseSpeed": {
+      "desc": "Choose how agents respond in group conversations",
+      "placeholder": "Select response speed",
+      "title": "Response Speed",
+      "options": {
+        "slow": "Slow",
+        "medium": "Medium",
+        "fast": "Fast"
+      }
+    },
+    "responseOrder": {
+      "desc": "Agents will respond in the order they are set in the group",
+      "placeholder": "Select response order",
+      "title": "Response Order",
+      "options": {
+        "sequential": "Sequential",
+        "natural": "Natural"
+      }
+    },
+    "maxResponseInRow": {
+      "desc": "Choose how many messages members can respond in a row. Set to 0 to disable.",
+      "title": "Max Messages in a Row"
+    },
+    "submit": "Update Settings"
+  },
+  "settingGroupMembers": {
+    "you": "You",
+    "owner": "You (Owner)",
+    "edit": "Edit Member",
+    "remove": "Remove Member",
+    "empty": "No agents in this group yet. Click the + button to add members."
   }
 }

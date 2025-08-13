@@ -94,7 +94,9 @@ export const chatGroupAction: StateCreator<
 
         // Wait a brief moment to ensure database transactions are committed
         // This prevents race condition where loadGroups() executes before member addition is fully persisted
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 100);
+        });
       }
 
       dispatch({ payload: group, type: 'addGroup' });
@@ -120,7 +122,29 @@ export const chatGroupAction: StateCreator<
     internal_dispatchChatGroup: dispatch,
 
     internal_refreshGroups: async () => {
+      // Reload groups list first
       await get().loadGroups();
+
+      // Also rebuild and update groupMap to keep it in sync
+      const groups = await chatGroupService.getGroups();
+      const nextGroupMap = groups.reduce((map, group) => {
+        map[group.id] = group;
+        return map;
+      }, {} as Record<string, ChatGroupItem>);
+
+      if (!isEqual(get().groupMap, nextGroupMap)) {
+        set(
+          {
+            groupMap: nextGroupMap,
+            groupsInit: true,
+            isGroupsLoading: false,
+          },
+          false,
+          n('internal_refreshGroups/updateGroupMap'),
+        );
+      }
+
+      // Refresh sessions so session-related group info stays up to date
       await getSessionStoreState().refreshSessions();
     },
 
@@ -134,6 +158,14 @@ export const chatGroupAction: StateCreator<
       await chatGroupService.updateGroup(id, { pinned });
       dispatch({ payload: { id, pinned }, type: 'updateGroup' });
       await get().internal_refreshGroups();
+    },
+
+    refreshGroupDetail: async (groupId: string) => {
+      await mutate([FETCH_GROUP_DETAIL_KEY, groupId]);
+    },
+
+    refreshGroups: async () => {
+      await mutate([FETCH_GROUPS_KEY, true]);
     },
 
     removeAgentFromGroup: async (groupId, agentId) => {
@@ -175,7 +207,7 @@ export const chatGroupAction: StateCreator<
       useClientDataSWR<ChatGroupItem>(
         enabled && groupId ? [FETCH_GROUP_DETAIL_KEY, groupId] : null,
         async ([, id]) => {
-          const group = await chatGroupService.getGroup(id);
+          const group = await chatGroupService.getGroup(id as string);
           if (!group) throw new Error(`Group ${id} not found`);
           return group;
         },
@@ -204,17 +236,15 @@ export const chatGroupAction: StateCreator<
         {
           fallbackData: [],
           onSuccess: (groups) => {
-            if (
-              get().groupsInit &&
-              isEqual(get().groups, groups)
-            )
-              return;
-
             // Update both groups list and groupMap
             const groupMap = groups.reduce((map, group) => {
               map[group.id] = group;
               return map;
             }, {} as Record<string, ChatGroupItem>);
+
+            if (get().groupsInit && isEqual(get().groupMap, { ...get().groupMap, ...groupMap })) {
+              return;
+            }
 
             set({
               groupMap: { ...get().groupMap, ...groupMap },
@@ -225,13 +255,5 @@ export const chatGroupAction: StateCreator<
           suspense: true,
         },
       ),
-
-    refreshGroups: async () => {
-      await mutate([FETCH_GROUPS_KEY, true]);
-    },
-
-    refreshGroupDetail: async (groupId: string) => {
-      await mutate([FETCH_GROUP_DETAIL_KEY, groupId]);
-    },
   };
 };

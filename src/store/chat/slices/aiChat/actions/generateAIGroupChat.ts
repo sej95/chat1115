@@ -162,11 +162,15 @@ export const generateAIGroupChat: StateCreator<
 
     internal_toggleSupervisorLoading(true, groupId);
 
+    const groupConfig = chatGroupSelectors.currentGroupConfig(useChatGroupStore.getState());
+
     try {
       const context: SupervisorContext = {
         availableAgents: agents!,
         groupId,
         messages,
+        model: groupConfig.orchestratorModel || 'gemini-2.5-flash',
+        provider: groupConfig.orchestratorProvider || 'google',
       };
 
       const decision: SupervisorDecision = await supervisor.makeDecision(context);
@@ -218,7 +222,9 @@ export const generateAIGroupChat: StateCreator<
 
       const agentStoreState = getAgentStoreState();
       const agentConfig = agentSelectors.getAgentConfigById(agentId)(agentStoreState);
-      const { provider } = agentConfig;
+      const { provider, model } = agentConfig;
+
+      console.log("AGENT CONFIG", agentConfig);
 
       if (!provider) {
         console.error(`No provider configured for agent ${agentId}`);

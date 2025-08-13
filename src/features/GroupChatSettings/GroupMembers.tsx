@@ -1,15 +1,13 @@
 'use client';
 
-import { ActionIcon, Avatar, Form, type FormGroupItemType } from '@lobehub/ui';
-import { Switch } from 'antd';
+import { ActionIcon, Avatar, Form } from '@lobehub/ui';
 import { createStyles } from 'antd-style';
 import { useUpdateEffect } from 'ahooks';
-import { Edit, UserMinus, UserPlus } from 'lucide-react';
+import { Edit, UserMinus } from 'lucide-react';
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Flexbox } from 'react-layout-kit';
 
-import { FORM_STYLE } from '@/const/layoutTokens';
 import { useChatGroupStore } from '@/store/chatGroup';
 import { chatGroupSelectors } from '@/store/chatGroup/selectors';
 import { useSessionStore } from '@/store/session';
@@ -82,29 +80,6 @@ const GroupMembers = memo(() => {
     }
     await addAgentsToGroup(activeGroupId, selectedAgents);
     setInviteModalOpen(false);
-  };
-
-  const handleFinish = async (values: { allowNewMembers: boolean }) => {
-    if (!activeGroupId) return;
-    
-    const newConfig = {
-      ...currentGroup?.config,
-      autoResponse: values.allowNewMembers,
-    };
-    
-    await updateGroup(activeGroupId, { config: newConfig });
-  };
-
-    const memberSettings: FormGroupItemType = {
-    children: [
-      {
-        children: <Switch />,
-        desc: "Allow new members to join this group automatically",
-        label: "Allow New Member Join",
-        name: 'allowNewMembers',
-      },
-    ],
-    title: 'Member Settings',
   };
 
   const membersContent = (
@@ -194,30 +169,8 @@ const GroupMembers = memo(() => {
 
   return (
     <Flexbox gap={24}>
-      {/* Member Settings Form */}
-      <Form
-        footer={
-          <Form.SubmitFooter
-            texts={{
-              reset: t('submitFooter.reset'),
-              submit: 'Update Settings',
-              unSaved: t('submitFooter.unSaved'),
-              unSavedWarning: t('submitFooter.unSavedWarning'),
-            }}
-          />
-        }
-        form={form}
-        initialValues={memberData}
-        items={[memberSettings]}
-        itemsType={'group'}
-        onFinish={handleFinish}
-        variant={'borderless'}
-        {...FORM_STYLE}
-      />
-      
-      {/* Members List */}
       {membersContent}
-      
+
       <MemberSelectionModal
         mode="invite"
         onCancel={() => setInviteModalOpen(false)}
