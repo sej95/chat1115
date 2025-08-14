@@ -7,6 +7,9 @@ import { useChatStore } from '@/store/chat';
 import { chatSelectors, topicSelectors } from '@/store/chat/selectors';
 import { fileChatSelectors, useFileStore } from '@/store/file';
 import { getUserStoreState } from '@/store/user';
+import { mentionSelectors, useMentionStore } from '@/store/mention';
+import { useSessionStore } from '@/store/session';
+import { sessionMetaSelectors } from '@/store/session/selectors';
 import { SendMessageParams } from '@/types/message';
 
 export type UseSendMessageParams = Pick<
@@ -104,15 +107,30 @@ export const useSendGroupMessage = () => {
     // if there is no message and no image, do nothing
     if (!store.inputMessage && fileList.length === 0) return;
 
+    // append mentioned users as plain text like "@userName"
+    const mentionState = useMentionStore.getState();
+    const mentioned = mentionSelectors.mentionedUsers(mentionState);
+    const sessionState = useSessionStore.getState();
+    const mentionText =
+      mentioned.length > 0
+        ? ` ${mentioned
+          .map((id) => sessionMetaSelectors.getAgentMetaByAgentId(id)(sessionState).title || id)
+          .map((name) => `@${name}`)
+          .join(' ')}`
+        : '';
+    const messageWithMentions = `${store.inputMessage}${mentionText}`.trim();
+
     sendGroupMessage({
       files: fileList,
       groupId: store.activeId,
-      message: store.inputMessage,
+      message: messageWithMentions,
       ...params,
     });
 
     updateInputMessage('');
     useFileStore.getState().clearChatUploadFileList();
+    // clear mentioned users after sending
+    mentionState.clearMentionedUsers();
 
     // 获取分析数据
     const userStore = getUserStoreState();

@@ -21,9 +21,9 @@ const MentionedUserItem = memo<MentionedUserItemProps>(({ agent }) => {
       gap={8}
       horizontal
       style={{
-        padding: '8px 12px',
         background: 'rgba(0, 0, 0, 0.04)',
         borderRadius: 16,
+        padding: '8px 12px',
         position: 'relative',
       }}
     >
@@ -33,21 +33,21 @@ const MentionedUserItem = memo<MentionedUserItemProps>(({ agent }) => {
         shape="circle"
         size={24}
       />
-      <Text style={{ fontSize: 12, maxWidth: 80 }} ellipsis={{ tooltip: true }}>
+      <Text ellipsis={{ tooltip: true }} style={{ fontSize: 12, maxWidth: 80 }}>
         {agent.title || agent.agentId}
       </Text>
       <div
         onClick={handleRemove}
         style={{
-          cursor: 'pointer',
-          padding: 2,
-          borderRadius: '50%',
-          display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          width: 16,
-          height: 16,
           background: 'rgba(0, 0, 0, 0.1)',
+          borderRadius: '50%',
+          cursor: 'pointer',
+          display: 'flex',
+          height: 16,
+          justifyContent: 'center',
+          padding: 2,
+          width: 16,
         }}
       >
         <Text style={{ fontSize: 10, lineHeight: 1 }}>×</Text>
