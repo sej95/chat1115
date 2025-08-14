@@ -98,10 +98,27 @@ const GroupChatSidebar = memo(() => {
   // optimistic local state for member ordering
   const initialMembers = useMemo(() => currentSession?.members ?? [], [currentSession?.members]);
   const [members, setMembers] = useState<any[]>(initialMembers);
+  
+  // state for tracking which members are being removed
+  const [removingMemberIds, setRemovingMemberIds] = useState<string[]>([]);
 
   useEffect(() => {
     setMembers(initialMembers);
   }, [initialMembers]);
+
+  const handleRemoveMember = async (memberId: string) => {
+    if (!activeGroupId) return;
+    
+    // Start loading state
+    setRemovingMemberIds(prev => [...prev, memberId]);
+    
+    try {
+      await removeAgentFromGroup(activeGroupId, memberId);
+    } finally {
+      // Clear loading state
+      setRemovingMemberIds(prev => prev.filter(id => id !== memberId));
+    }
+  };
 
   return (
     <Flexbox height={'100%'}>
@@ -180,9 +197,8 @@ const GroupChatSidebar = memo(() => {
                   <ActionIcon
                     danger
                     icon={UserMinus}
-                    onClick={async () => {
-                      await removeAgentFromGroup(activeGroupId!, item.id);
-                    }}
+                    loading={removingMemberIds.includes(item.id)}
+                    onClick={() => handleRemoveMember(item.id)}
                     size={'small'}
                     title="Remove Member"
                   />
