@@ -2,7 +2,7 @@
 
 import { ActionIcon, Avatar } from '@lobehub/ui';
 import { createStyles } from 'antd-style';
-import { Edit, GripVertical, UserMinus, UserPlus } from 'lucide-react';
+import { GripVertical, UserMinus, UserPlus } from 'lucide-react';
 import { memo, useState } from 'react';
 import { Flexbox } from 'react-layout-kit';
 

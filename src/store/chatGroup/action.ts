@@ -174,11 +174,14 @@ export const chatGroupAction: StateCreator<
     },
 
     reorderGroupMembers: async (groupId, orderedAgentIds) => {
+      console.log("REORDER GROUP MEMBERS", groupId, orderedAgentIds);
+
       await Promise.all(
         orderedAgentIds.map((agentId, index) =>
           chatGroupService.updateAgentInGroup(groupId, agentId, { order: index.toString() }),
         ),
       );
+
       await get().internal_refreshGroups();
     },
 
