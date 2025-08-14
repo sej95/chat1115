@@ -1,13 +1,12 @@
 'use client';
 
-import { ActionIcon, Avatar } from '@lobehub/ui';
+import { ActionIcon, Avatar, SortableList } from '@lobehub/ui';
 import { createStyles } from 'antd-style';
-import { GripVertical, UserMinus, UserPlus } from 'lucide-react';
-import { memo, useState } from 'react';
+import { UserMinus, UserPlus } from 'lucide-react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { Flexbox } from 'react-layout-kit';
 
 import SidebarHeader from '@/components/SidebarHeader';
-import { useActionSWR } from '@/libs/swr';
 import { useChatGroupStore } from '@/store/chatGroup';
 import { useSessionStore } from '@/store/session';
 import { sessionSelectors } from '@/store/session/selectors';
@@ -21,70 +20,6 @@ import { LobeGroupSession } from 'packages/types/src/session';
 import Header from '../Header';
 import { DEFAULT_AVATAR } from '@/const/meta';
 import { useTranslation } from 'react-i18next';
-
-const MemberItem = memo<{
-  activeGroupId: string;
-  member: any; // Runtime is AgentItem but TypeScript thinks it's ChatGroupAgentItem
-  styles: any;
-}>(({ activeGroupId, member, styles }) => {
-  const { t } = useTranslation('chat');
-  const removeAgentFromGroup = useChatGroupStore((s) => s.removeAgentFromGroup);
-
-  const { mutate: removeMember, isValidating: isRemoving } = useActionSWR(
-    ['groupChatSidebar.removeMember', activeGroupId, member.id],
-    async () => {
-      await removeAgentFromGroup(activeGroupId, member.id);
-    }
-  );
-
-  return (
-    <div className={styles.memberItem}>
-      <Flexbox align={'center'} gap={12} horizontal>
-        <ActionIcon
-          icon={GripVertical}
-          size={'small'}
-          style={{ color: '#999', cursor: 'grab', marginRight: '-6px' }}
-          title="Drag to reorder"
-        />
-        <Avatar avatar={member.avatar || DEFAULT_AVATAR} background={member.backgroundColor!} size={32} />
-        <Flexbox flex={1} gap={2}>
-          <div
-            style={{
-              fontSize: '14px',
-              fontWeight: 500,
-            }}
-          >
-            {member.title || t('defaultSession', { ns: 'common' })}
-          </div>
-          <div
-            style={{
-              color: '#666',
-              fontSize: '12px',
-            }}
-          >
-            {member.systemRole}
-          </div>
-        </Flexbox>
-        {/* <ActionIcon
-          icon={Edit}
-          onClick={() => {
-            // TODO: Implement edit member logic
-          }}
-          size={'small'}
-          title="Edit Member"
-        /> */}
-        <ActionIcon
-          danger
-          icon={UserMinus}
-          loading={isRemoving}
-          onClick={() => removeMember()}
-          size={'small'}
-          title="Remove Member"
-        />
-      </Flexbox>
-    </div>
-  );
-});
 
 const useStyles = createStyles(({ css, token }) => ({
   content: css`
@@ -104,7 +39,7 @@ const useStyles = createStyles(({ css, token }) => ({
     background: ${token.colorFillQuaternary};
     border: 1px solid ${token.colorBorderSecondary};
     border-radius: ${token.borderRadius}px;
-    margin-bottom: ${token.marginXS}px;
+    margin-bottom: 2px;
     padding: ${token.paddingSM}px ${token.paddingXS}px;
     transition: all 0.2s ease;
     cursor: pointer;
@@ -137,11 +72,14 @@ const useStyles = createStyles(({ css, token }) => ({
 const GroupChatSidebar = memo(() => {
   const { styles } = useStyles();
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const { t } = useTranslation('chat');
 
   const activeGroupId = useSessionStore((s) => s.activeId);
   const currentSession = useSessionStore(sessionSelectors.currentSession) as LobeGroupSession;
 
   const addAgentsToGroup = useChatGroupStore((s) => s.addAgentsToGroup);
+  const removeAgentFromGroup = useChatGroupStore((s) => s.removeAgentFromGroup);
+  const persistReorder = useChatGroupStore((s) => s.reorderGroupMembers);
 
   const currentUser = useUserStore((s) => ({
     avatar: userProfileSelectors.userAvatar(s),
@@ -156,6 +94,14 @@ const GroupChatSidebar = memo(() => {
     await addAgentsToGroup(activeGroupId, selectedAgents);
     setAddModalOpen(false);
   };
+
+  // optimistic local state for member ordering
+  const initialMembers = useMemo(() => currentSession?.members ?? [], [currentSession?.members]);
+  const [members, setMembers] = useState<any[]>(initialMembers);
+
+  useEffect(() => {
+    setMembers(initialMembers);
+  }, [initialMembers]);
 
   return (
     <Flexbox height={'100%'}>
@@ -179,7 +125,7 @@ const GroupChatSidebar = memo(() => {
 
       <Flexbox className={styles.content} flex={0.6} gap={2}>
         {/* Current User - Always shown first */}
-        <div className={styles.memberItem}>
+        <div className={styles.memberItem} style={{ marginBottom: 8 }}>
           <Flexbox align={'center'} gap={12} horizontal>
             <Avatar avatar={currentUser.avatar} size={32} />
             <Flexbox flex={1} gap={2}>
@@ -195,16 +141,56 @@ const GroupChatSidebar = memo(() => {
           </Flexbox>
         </div>
 
-        <div>
-          {currentSession?.members?.map((member: any) => (
-            <MemberItem
-              activeGroupId={activeGroupId!}
-              key={member.id}
-              member={member}
-              styles={styles}
-            />
-          ))}
-        </div>
+        {members && members.length > 0 ? (
+          <SortableList
+            items={members}
+            onChange={async (items: any[]) => {
+              setMembers(items);
+              if (!activeGroupId) return;
+              // persist new order
+              const orderedIds = items.map((m) => m.id);
+              // fire and forget; store action will refresh groups and sessions
+              persistReorder(activeGroupId, orderedIds).catch(() => {});
+            }}
+            renderItem={(item: any) => (
+              <SortableList.Item className={styles.memberItem} id={item.id}>
+                <Flexbox align={'center'} gap={8} horizontal justify={'space-between'}>
+                  <Flexbox align={'center'} gap={8} horizontal>
+                    <SortableList.DragHandle />
+                    <Avatar avatar={item.avatar || DEFAULT_AVATAR} background={item.backgroundColor!} size={32} />
+                    <Flexbox flex={1} gap={2}>
+                      <div
+                        style={{
+                          fontSize: '14px',
+                          fontWeight: 500,
+                        }}
+                      >
+                        {item.title || t('defaultSession', { ns: 'common' })}
+                      </div>
+                      <div
+                        style={{
+                          color: '#666',
+                          fontSize: '12px',
+                        }}
+                      >
+                        {item.systemRole}
+                      </div>
+                    </Flexbox>
+                  </Flexbox>
+                  <ActionIcon
+                    danger
+                    icon={UserMinus}
+                    onClick={async () => {
+                      await removeAgentFromGroup(activeGroupId!, item.id);
+                    }}
+                    size={'small'}
+                    title="Remove Member"
+                  />
+                </Flexbox>
+              </SortableList.Item>
+            )}
+          />
+        ) : null}
       </Flexbox>
 
       <Flexbox className={styles.topicList} flex={1}>

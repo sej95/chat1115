@@ -104,10 +104,9 @@ export const useSendGroupMessage = () => {
     if (!store.activeId) return;
     const fileList = fileChatSelectors.chatUploadFileList(useFileStore.getState());
 
-    // if there is no message and no image, do nothing
     if (!store.inputMessage && fileList.length === 0) return;
 
-    // append mentioned users as plain text like "@userName"
+    // Append mentioned users as plain text like "@userName"
     const mentionState = useMentionStore.getState();
     const mentioned = mentionSelectors.mentionedUsers(mentionState);
     const sessionState = useSessionStore.getState();
