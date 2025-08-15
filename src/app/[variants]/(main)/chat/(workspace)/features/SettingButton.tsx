@@ -19,7 +19,7 @@ const AgentSettings = dynamic(() => import('./AgentSettings'), {
   ssr: false,
 });
 
-const GroupSettings = dynamic(() => import('./GroupChatSettings'), {
+const ChatGroupSettings = dynamic(() => import('./GroupChatSettings'), {
   ssr: false,
 });
 
@@ -47,7 +47,7 @@ const SettingButton = memo<{ mobile?: boolean }>(({ mobile }) => {
         }}
       />
 
-      {isGroupSession ? <GroupSettings key={id} /> : <AgentSettings key={id} />}
+      {isGroupSession ? <ChatGroupSettings key={id} /> : <AgentSettings key={id} />}
     </>
   );
 });

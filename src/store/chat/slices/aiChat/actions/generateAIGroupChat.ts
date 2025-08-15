@@ -14,6 +14,8 @@ import { sessionSelectors } from '@/store/session/selectors';
 import { ChatMessage, CreateMessageParams, SendGroupMessageParams } from '@/types/message';
 import { setNamespace } from '@/utils/storeDebug';
 import { chatGroupSelectors } from '@/store/chatGroup/selectors';
+import { getUserStoreState } from '@/store/user/store';
+import { userProfileSelectors } from '@/store/user/selectors';
 
 import { GroupChatSupervisor, SupervisorContext, SupervisorDecision } from '../../message/supervisor';
 import { buildGroupChatSystemPrompt, GroupMemberInfo } from '@/prompts/groupChat';
@@ -82,11 +84,6 @@ export interface AIGroupChatAction {
    * Processes a single agent message in group chat
    */
   internal_processAgentMessage: (groupId: string, agentId: string) => Promise<void>;
-
-  /**
-   * Updates agent speaking status in group chat
-   */
-  internal_updateAgentSpeakingStatus: (groupId: string, agentId: string, speaking: boolean) => void;
 
   /**
    * Sets the active group
@@ -201,7 +198,6 @@ export const generateAIGroupChat: StateCreator<
   internal_processAgentMessage: async (groupId: string, agentId: string) => {
     const {
       messagesMap,
-      internal_updateAgentSpeakingStatus,
       internal_createMessage,
       internal_fetchAIChatMessage,
       refreshMessages,
@@ -209,8 +205,6 @@ export const generateAIGroupChat: StateCreator<
       internal_dispatchMessage,
       internal_toggleChatLoading,
     } = get();
-
-    internal_updateAgentSpeakingStatus(groupId, agentId, true);
 
     try {
       const messages = messagesMap[messageMapKey(groupId, activeTopicId)] || [];
@@ -227,10 +221,13 @@ export const generateAIGroupChat: StateCreator<
         return;
       }
 
-      // TODO: [Group Chat] Replace with real user name
+      // Get real user name from user store
       const agents = sessionSelectors.currentGroupAgents(useSessionStore.getState());
+      const userStoreState = getUserStoreState();
+      const realUserName = userProfileSelectors.nickName(userStoreState) || 'User';
+
       const agentTitleMap: GroupMemberInfo[] = [
-        { id: 'user', title: 'Rene Wang' },
+        { id: 'user', title: realUserName },
         ...((agents || []).map((agent) => ({ id: agent.id, title: agent.title })))
       ];
 
@@ -314,19 +311,6 @@ export const generateAIGroupChat: StateCreator<
       internal_toggleChatLoading(false, undefined, n('processAgentMessage(end)'));
       internal_updateAgentSpeakingStatus(groupId, agentId, false);
     }
-  },
-
-  internal_updateAgentSpeakingStatus: (groupId: string, agentId: string, speaking: boolean) => {
-    set(
-      produce((state: ChatStoreState) => {
-        if (!state.agentSpeakingStatus[groupId]) {
-          state.agentSpeakingStatus[groupId] = {};
-        }
-        state.agentSpeakingStatus[groupId][agentId] = speaking;
-      }),
-      false,
-      n(`updateAgentSpeakingStatus/${groupId}/${agentId}`),
-    );
   },
 
   internal_setActiveGroup: () => {

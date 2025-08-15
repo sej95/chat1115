@@ -31,7 +31,7 @@ export interface LobeAgentSession {
 export interface LobeGroupSession {
   createdAt: Date;
   group?: SessionGroupId;
-  id: string; // Chat group ID
+  id: string; // Start with 'cg_'
   members?: ChatGroupAgentItem[];
   meta: MetaData;
   pinned?: boolean;
