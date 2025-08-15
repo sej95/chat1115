@@ -10,6 +10,7 @@ import { MessageMetadata, MessageRoleType, ModelReasoning } from './base';
 import { ChatImageItem } from './image';
 import { ChatPluginPayload, ChatToolPayload } from './tools';
 import { Translate } from './translate';
+import { UploadFileItem } from '../files';
 
 /**
  * 聊天消息错误对象
