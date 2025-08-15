@@ -5,7 +5,7 @@ import { memo } from 'react';
 import Menu from '@/components/Menu';
 import { GroupSettingsTabs } from '@/store/global/initialState';
 
-import { useGroupCategory } from './useGroupCategory';
+import { useChatGroupSettingsCategory } from './useGroupCategory';
 
 interface GroupCategoryProps {
   setTab: (tab: GroupSettingsTabs) => void;
@@ -13,7 +13,7 @@ interface GroupCategoryProps {
 }
 
 const GroupCategory = memo<GroupCategoryProps>(({ setTab, tab }) => {
-  const cateItems = useGroupCategory();
+  const cateItems = useChatGroupSettingsCategory();
   return (
     <Menu
       compact

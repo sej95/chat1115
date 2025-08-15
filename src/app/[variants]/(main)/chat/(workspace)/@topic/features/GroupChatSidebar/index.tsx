@@ -180,7 +180,9 @@ const GroupChatSidebar = memo(() => {
               // persist new order
               const orderedIds = items.map((m) => m.id);
               // fire and forget; store action will refresh groups and sessions
-              persistReorder(activeGroupId, orderedIds).catch(() => { });
+              persistReorder(activeGroupId, orderedIds).catch(() => {
+                console.error('Failed to persist reorder');
+              });
             }}
             renderItem={(item: any) => (
               <SortableList.Item className={styles.memberItem} id={item.id}>

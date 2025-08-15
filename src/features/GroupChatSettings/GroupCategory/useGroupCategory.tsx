@@ -1,5 +1,4 @@
 import { Icon } from '@lobehub/ui';
-import { MenuItemType } from 'antd/es/menu/interface';
 import { MessagesSquare, Settings, Users } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,11 +6,11 @@ import { useTranslation } from 'react-i18next';
 import type { MenuProps } from '@/components/Menu';
 import { GroupSettingsTabs } from '@/store/global/initialState';
 
-interface UseGroupCategoryOptions {
+interface UseChatGroupSettingsCategoryOptions {
   mobile?: boolean;
 }
 
-export const useGroupCategory = ({ mobile }: UseGroupCategoryOptions = {}) => {
+export const useChatGroupSettingsCategory = ({ mobile }: UseChatGroupSettingsCategoryOptions = {}) => {
   const { t } = useTranslation('setting');
   const iconSize = mobile ? 20 : undefined;
 

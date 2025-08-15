@@ -14,9 +14,9 @@ export const useInitGroupConfig = () => {
   const shouldFetch = Boolean(isLogin && sessionId && sessionId !== 'inbox');
   const data = useFetchGroupDetail(shouldFetch, sessionId || '');
 
-  return { 
-    ...data, 
-    isLoading: (data.isLoading && isLogin) || !shouldFetch,
-    error: data.error || (!shouldFetch ? undefined : data.error)
+  return {
+    ...data,
+    error: data.error || (!shouldFetch ? undefined : data.error),
+    isLoading: (data.isLoading && isLogin) || !shouldFetch
   };
 };
