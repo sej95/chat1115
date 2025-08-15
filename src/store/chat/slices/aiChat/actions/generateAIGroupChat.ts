@@ -5,8 +5,7 @@ import { StateCreator } from 'zustand/vanilla';
 
 import { LOADING_FLAT } from '@/const/message';
 import { ChatErrorType } from '@/types/fetch';
-import { agentSelectors } from '@/store/agent/selectors';
-import { getAgentStoreState } from '@/store/agent/store';
+
 import { ChatStore } from '@/store/chat/store';
 import { messageMapKey } from '@/store/chat/utils/messageMapKey';
 import { useSessionStore } from '@/store/session';
@@ -208,32 +207,37 @@ export const generateAIGroupChat: StateCreator<
 
     try {
       const messages = messagesMap[messageMapKey(groupId, activeTopicId)] || [];
-      // if (messages.length === 0) return;
+      if (messages.length === 0) return;
 
-      const agentStoreState = getAgentStoreState();
-      const agentConfig = agentSelectors.getAgentConfigById(agentId)(agentStoreState);
-      const { provider: providerFromConfig } = agentConfig;
+      // Get group agents and find the specific agent
+      const agents = sessionSelectors.currentGroupAgents(useSessionStore.getState());
+      const agentData = agents?.find(agent => agent.id === agentId);
 
-      console.log("AGENT CONFIG", agentConfig);
+      if (!agentData) {
+        console.error(`Agent ${agentId} not found in group members`);
+        return;
+      }
 
-      if (!providerFromConfig) {
-        console.error(`No provider configured for agent ${agentId}`);
+      const agentProvider = agentData.provider || undefined;
+      const agentModel = agentData.model || undefined;
+
+      if (!agentProvider || !agentModel) {
+        console.error(`No provider or model configured for agent ${agentId}`);
         return;
       }
 
       // Get real user name from user store
-      const agents = sessionSelectors.currentGroupAgents(useSessionStore.getState());
       const userStoreState = getUserStoreState();
       const realUserName = userProfileSelectors.nickName(userStoreState) || 'User';
 
       const agentTitleMap: GroupMemberInfo[] = [
         { id: 'user', title: realUserName },
-        ...((agents || []).map((agent) => ({ id: agent.id, title: agent.title })))
+        ...((agents || []).map((agent) => ({ id: agent.id || '', title: agent.title || '' })))
       ];
 
       console.log("AGENT TITLE MAP", agentTitleMap);
 
-      const baseSystemRole = agentConfig.systemRole || '';
+      const baseSystemRole = agentData.systemRole || '';
       const members: GroupMemberInfo[] = agentTitleMap as GroupMemberInfo[];
       const groupChatSystemPrompt = buildGroupChatSystemPrompt({
         agentId,
@@ -242,18 +246,18 @@ export const generateAIGroupChat: StateCreator<
         messages,
       });
 
-      // TODO: [Group Chat] Use real agent config
-      const assistantMessage: CreateMessageParams = {
+      // Create agent message using real agent config
+      const agentMessage: CreateMessageParams = {
         role: 'assistant',
         content: LOADING_FLAT,
-        fromModel: "gemini-2.5-flash",
-        fromProvider: "google",
+        fromModel: agentModel,
+        fromProvider: agentProvider,
         groupId,
         agentId,
         topicId: activeTopicId,
       };
 
-      const assistantId = await internal_createMessage(assistantMessage);
+      const assistantId = await internal_createMessage(agentMessage);
 
       const systemMessage: ChatMessage = {
         id: 'group-system',
@@ -270,8 +274,8 @@ export const generateAIGroupChat: StateCreator<
         await internal_fetchAIChatMessage({
           messages: messagesForAPI,
           messageId: assistantId,
-          model: "gemini-2.5-flash",
-          provider: "google",
+          model: agentModel,
+          provider: agentProvider,
           params: {
             traceId: `group-${groupId}-agent-${agentId}`,
           },
@@ -367,7 +371,7 @@ export const generateAIGroupChat: StateCreator<
     // Store the timer in state
     set(
       produce((state: ChatStoreState) => {
-        state.supervisorDebounceTimers[groupId] = timerId;
+        state.supervisorDebounceTimers[groupId] = timerId as any;
       }),
       false,
       n(`setSupervisorTimer/${groupId}`),

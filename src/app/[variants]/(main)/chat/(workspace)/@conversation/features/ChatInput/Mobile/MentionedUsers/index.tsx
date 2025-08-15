@@ -13,11 +13,10 @@ const MentionedUsers = memo(() => {
   const mentionedUsers = useMentionStore(mentionSelectors.mentionedUsers);
   const hasMentionedUsers = useMentionStore(mentionSelectors.hasMentionedUsers);
 
-  // Get group members directly from session like GroupChatSidebar does
   const groupMembers = useSessionStore(sessionSelectors.currentGroupAgents);
 
   const mentionedAgents = (groupMembers || []).filter(member =>
-    mentionedUsers.includes(member.id)
+    mentionedUsers.includes(member.id || '')
   );
 
   if (currentSession?.type !== 'group' || !hasMentionedUsers || mentionedAgents.length === 0) return null;
