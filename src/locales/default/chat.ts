@@ -2,6 +2,7 @@ export default {
   ModelSwitch: {
     title: '模型',
   },
+  active: '活跃',
   agentDefaultMessage:
     '你好，我是 **{{name}}**，你可以立即与我开始对话，也可以前往 [助手设置]({{url}}) 完善我的信息。',
   agentDefaultMessageWithSystemRole: '你好，我是 **{{name}}**，{{systemRole}}，让我们开始对话吧！',
@@ -14,6 +15,7 @@ export default {
     thought: '思考过程',
     unknownTitle: '未命名作品',
   },
+  availableAgents: '可用助手',
   backToBottom: '跳转至当前',
   chatList: {
     longMessageDetail: '查看详情',
@@ -55,15 +57,22 @@ export default {
     },
     title: '模型扩展功能',
   },
+  groupDescription: '群组描述',
   history: {
     title: '助手将只记住最后{{count}}条消息',
   },
   historyRange: '历史范围',
   historySummary: '历史消息总结',
+
+  inactive: '不活跃',
+
+
   inbox: {
     desc: '开启大脑集群，激发思维火花。你的智能助理，在这里与你交流一切',
     title: '随便聊聊',
   },
+
+
   input: {
     addAi: '添加一条 AI 消息',
     addUser: '添加一条用户消息',
@@ -74,9 +83,15 @@ export default {
     stop: '停止',
     warp: '换行',
   },
+
+
   intentUnderstanding: {
     title: '正在理解并分析您的意图...',
   },
+
+  // Group chat related translations
+  inviteMembers: '邀请成员',
+
   knowledgeBase: {
     all: '所有内容',
     allFiles: '所有文件',
@@ -96,11 +111,13 @@ export default {
     uploadGuide: '上传过的文件可以在「知识库」中查看哦',
     viewMore: '查看更多',
   },
+
   messageAction: {
     delAndRegenerate: '删除并重新生成',
     deleteDisabledByThreads: '存在子话题，不能删除',
     regenerate: '重新生成',
   },
+
   messages: {
     modelCard: {
       credit: '积分',
@@ -146,9 +163,25 @@ export default {
       total: '总计消耗',
     },
   },
+
   newAgent: '新建助手',
+
+  noAgentsYet: '此群组还没有助手。点击 + 按钮邀请助手。',
+
+  noAvailableAgents: '没有可邀请的助手',
+
+  noMatchingAgents: '没有匹配的助手',
+
+  noMembersYet: '此群组还没有成员。点击 + 按钮邀请助手。',
+
+  noSelectedAgents: '还未选择助手',
+
+  owner: '群主',
+
   pin: '置顶',
+
   pinOff: '取消置顶',
+
   rag: {
     referenceChunks: '引用源',
     userQuery: {
@@ -158,7 +191,9 @@ export default {
       },
     },
   },
+
   regenerate: '重新生成',
+
   roleAndArchive: '角色与记录',
   search: {
     grounding: {
@@ -187,6 +222,8 @@ export default {
     title: '联网搜索',
   },
   searchAgentPlaceholder: '搜索助手...',
+  searchAgents: '搜索助手...',
+  selectedAgents: '已选助手',
   sendPlaceholder: '输入聊天内容...',
   sessionGroup: {
     config: '分组管理',
@@ -252,22 +289,6 @@ export default {
     openNewTopic: '开启新话题',
     saveCurrentMessages: '将当前会话保存为话题',
   },
-  // Group chat related translations
-  inviteMembers: '邀请成员',
-  availableAgents: '可用助手',
-  selectedAgents: '已选助手',
-  searchAgents: '搜索助手...',
-  noAvailableAgents: '没有可邀请的助手',
-  noMatchingAgents: '没有匹配的助手',
-  noSelectedAgents: '还未选择助手',
-  untitledAgent: '未命名助手',
-  groupDescription: '群组描述',
-  noMembersYet: '此群组还没有成员。点击 + 按钮邀请助手。',
-  noAgentsYet: '此群组还没有助手。点击 + 按钮邀请助手。',
-  you: '你',
-  owner: '群主',
-  active: '活跃',
-  inactive: '不活跃',
   translate: {
     action: '翻译',
     clear: '删除翻译',
@@ -276,6 +297,7 @@ export default {
     action: '语音朗读',
     clear: '删除语音',
   },
+  untitledAgent: '未命名助手',
   updateAgent: '更新助理信息',
   upload: {
     action: {
@@ -298,5 +320,6 @@ export default {
       },
     },
   },
+  you: '你',
   zenMode: '专注模式',
 };

@@ -1,11 +1,9 @@
 'use client';
 
-import { ActionIcon, Avatar, Form } from '@lobehub/ui';
+import { ActionIcon, Avatar } from '@lobehub/ui';
 import { createStyles } from 'antd-style';
-import { useUpdateEffect } from 'ahooks';
 import { Edit, UserMinus } from 'lucide-react';
 import { memo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Flexbox } from 'react-layout-kit';
 
 import { useChatGroupStore } from '@/store/chatGroup';
@@ -43,9 +41,7 @@ const useStyles = createStyles(({ css, token }) => ({
 }));
 
 const GroupMembers = memo(() => {
-  const { t } = useTranslation(['chat', 'common', 'setting']);
   const { styles } = useStyles();
-  const [form] = Form.useForm();
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
   const activeGroupId = useSessionStore((s) => s.activeId);
@@ -63,15 +59,6 @@ const GroupMembers = memo(() => {
   }));
 
   const removeAgentFromGroup = useChatGroupStore((s) => s.removeAgentFromGroup);
-  const updateGroup = useChatGroupStore((s) => s.updateGroup);
-
-  const memberData = {
-    allowNewMembers: currentGroup?.config?.autoResponse !== false, // Default to true if not set
-  };
-
-  useUpdateEffect(() => {
-    form.setFieldsValue(memberData);
-  }, [memberData]);
 
   const handleInviteMembers = async (selectedAgents: string[]) => {
     if (!activeGroupId) {
@@ -148,7 +135,7 @@ const GroupMembers = memo(() => {
                 danger
                 icon={UserMinus}
                 onClick={() => {
-                  removeAgentFromGroup(currentGroup?.id, agent.agentId);
+                  removeAgentFromGroup(currentGroup?.id, agent.id);
                 }}
                 size={'small'}
                 title="Remove Member"

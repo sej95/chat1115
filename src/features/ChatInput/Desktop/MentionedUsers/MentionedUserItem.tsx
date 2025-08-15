@@ -2,7 +2,6 @@ import { Avatar, Text } from '@lobehub/ui';
 import { createStyles } from 'antd-style';
 import { X } from 'lucide-react';
 import { memo } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Center, Flexbox } from 'react-layout-kit';
 
 import { useMentionStore } from '@/store/mention';
@@ -48,7 +47,6 @@ interface MentionedUserItemProps {
 }
 
 const MentionedUserItem = memo<MentionedUserItemProps>(({ agent }) => {
-  const { t } = useTranslation('common');
   const { styles } = useStyles();
   const removeMentionedUser = useMentionStore((s) => s.removeMentionedUser);
 
@@ -70,7 +68,7 @@ const MentionedUserItem = memo<MentionedUserItemProps>(({ agent }) => {
         <Text ellipsis={{ tooltip: true }} style={{ fontSize: 12, maxWidth: 100 }}>
           {agent.title || agent.id}
         </Text>
-        <Text type="secondary" style={{ fontSize: 10 }}>
+        <Text style={{ fontSize: 10 }} type="secondary">
           @{agent.id}
         </Text>
       </Flexbox>

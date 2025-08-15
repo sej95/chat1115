@@ -41,7 +41,7 @@ export interface ChatMessageState {
   /**
    * Supervisor decision debounce timers by group ID
    */
-  supervisorDebounceTimers: Record<string, NodeJS.Timeout>;
+  supervisorDebounceTimers: Record<string, number>;
   /**
    * Supervisor decision loading states
    */

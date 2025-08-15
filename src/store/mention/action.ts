@@ -4,8 +4,8 @@ import { MentionState, initialMentionState } from './initialState';
 
 export interface MentionAction {
   addMentionedUser: (userId: string) => void;
-  removeMentionedUser: (userId: string) => void;
   clearMentionedUsers: () => void;
+  removeMentionedUser: (userId: string) => void;
   setMentionedUsers: (users: string[]) => void;
 }
 
@@ -25,14 +25,14 @@ export const createMentionSlice: StateCreator<
     }), false, 'addMentionedUser');
   },
 
+  clearMentionedUsers: () => {
+    set({ mentionedUsers: [] }, false, 'clearMentionedUsers');
+  },
+
   removeMentionedUser: (userId: string) => {
     set((state) => ({
       mentionedUsers: state.mentionedUsers.filter((id) => id !== userId),
     }), false, 'removeMentionedUser');
-  },
-
-  clearMentionedUsers: () => {
-    set({ mentionedUsers: [] }, false, 'clearMentionedUsers');
   },
 
   setMentionedUsers: (users: string[]) => {

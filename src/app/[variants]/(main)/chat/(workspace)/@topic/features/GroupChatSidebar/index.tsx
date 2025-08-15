@@ -14,6 +14,7 @@ import { useUserStore } from '@/store/user';
 import { userProfileSelectors } from '@/store/user/selectors';
 
 import { MemberSelectionModal } from '@/components/MemberSelectionModal';
+import AgentSettings from '../../../features/AgentSettings';
 
 import TopicListContent from '../TopicListContent';
 import { LobeGroupSession } from 'packages/types/src/session';
@@ -72,6 +73,8 @@ const useStyles = createStyles(({ css, token }) => ({
 const GroupChatSidebar = memo(() => {
   const { styles } = useStyles();
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [agentSettingsOpen, setAgentSettingsOpen] = useState(false);
+  const [selectedAgentId, setSelectedAgentId] = useState<string | undefined>();
   const { t } = useTranslation('chat');
 
   const activeGroupId = useSessionStore((s) => s.activeId);
@@ -118,6 +121,16 @@ const GroupChatSidebar = memo(() => {
       // Clear loading state
       setRemovingMemberIds(prev => prev.filter(id => id !== memberId));
     }
+  };
+
+  const handleMemberClick = (agentId: string) => {
+    setSelectedAgentId(agentId);
+    setAgentSettingsOpen(true);
+  };
+
+  const handleAgentSettingsClose = () => {
+    setAgentSettingsOpen(false);
+    setSelectedAgentId(undefined);
   };
 
   return (
@@ -167,12 +180,19 @@ const GroupChatSidebar = memo(() => {
               // persist new order
               const orderedIds = items.map((m) => m.id);
               // fire and forget; store action will refresh groups and sessions
-              persistReorder(activeGroupId, orderedIds).catch(() => {});
+              persistReorder(activeGroupId, orderedIds).catch(() => { });
             }}
             renderItem={(item: any) => (
               <SortableList.Item className={styles.memberItem} id={item.id}>
                 <Flexbox align={'center'} gap={8} horizontal justify={'space-between'}>
-                  <Flexbox align={'center'} gap={8} horizontal>
+                  <Flexbox
+                    align={'center'}
+                    flex={1}
+                    gap={8}
+                    horizontal
+                    onClick={() => handleMemberClick(item.id)}
+                    style={{ cursor: 'pointer' }}
+                  >
                     <SortableList.DragHandle />
                     <Avatar avatar={item.avatar || DEFAULT_AVATAR} background={item.backgroundColor!} size={32} />
                     <Flexbox flex={1} gap={2}>
@@ -198,7 +218,10 @@ const GroupChatSidebar = memo(() => {
                     danger
                     icon={UserMinus}
                     loading={removingMemberIds.includes(item.id)}
-                    onClick={() => handleRemoveMember(item.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveMember(item.id);
+                    }}
                     size={'small'}
                     title="Remove Member"
                   />
@@ -221,6 +244,12 @@ const GroupChatSidebar = memo(() => {
         onCancel={() => setAddModalOpen(false)}
         onConfirm={handleAddMembers}
         open={addModalOpen}
+      />
+
+      <AgentSettings
+        agentId={selectedAgentId}
+        onClose={handleAgentSettingsClose}
+        open={agentSettingsOpen}
       />
 
     </Flexbox>
