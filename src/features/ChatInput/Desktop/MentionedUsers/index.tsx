@@ -45,7 +45,7 @@ const MentionedUsers = memo(() => {
             padding={hasMentionedUsers ? '16px 16px 12px' : 0}
         >
             {mentionedAgents?.map((agent) => (
-                <MentionedUserItem key={agent.id} agent={agent} />
+                <MentionedUserItem agent={agent} key={agent.id} />
             ))}
         </Flexbox>
     );

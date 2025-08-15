@@ -7,7 +7,6 @@ export interface ChatMessageState {
    * @description 当前正在编辑或查看的会话
    */
   activeId: string;
-
   /**
    * Type of the currently active session ('agent' | 'group')
    * Derived from session.type, used for caching to avoid repeated lookups
@@ -40,17 +39,13 @@ export interface ChatMessageState {
   messagesInit: boolean;
   messagesMap: Record<string, ChatMessage[]>;
   /**
-   * Supervisor decision loading states
-   */
-  supervisorDecisionLoading: string[];
-  /**
    * Supervisor decision debounce timers by group ID
    */
   supervisorDebounceTimers: Record<string, NodeJS.Timeout>;
   /**
-   * Agent speaking status by group ID and agent ID
+   * Supervisor decision loading states
    */
-  agentSpeakingStatus: Record<string, Record<string, boolean>>;
+  supervisorDecisionLoading: string[];
 }
 
 export const initialMessageState: ChatMessageState = {
@@ -64,7 +59,6 @@ export const initialMessageState: ChatMessageState = {
   messageLoadingIds: [],
   messagesInit: false,
   messagesMap: {},
-  supervisorDecisionLoading: [],
   supervisorDebounceTimers: {},
-  agentSpeakingStatus: {},
+  supervisorDecisionLoading: [],
 };

@@ -15,8 +15,6 @@ const Mention = memo(() => {
   const addMentionedUser = useMentionStore((s: any) => s.addMentionedUser);
 
   const handleMemberSelect = (agentId: string) => {
-    console.log("ADD SELECTED MEMBER", agentId);
-
     addMentionedUser(agentId);
   };
 
@@ -26,7 +24,7 @@ const Mention = memo(() => {
     const items: ItemType[] = useMemo(() => {
       const memberItems: ItemType[] = [];
 
-      currentSession.members?.forEach((agent: ChatGroupAgentItem) => {
+      currentSession.members?.forEach((agent) => {
         memberItems.push({
           icon: (
             <Avatar

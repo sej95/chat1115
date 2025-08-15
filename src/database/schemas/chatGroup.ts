@@ -103,6 +103,8 @@ export const chatGroupsAgents = pgTable(
 
 export type NewChatGroupAgent = typeof chatGroupsAgents.$inferInsert;
 export type ChatGroupAgentItem = {
+  avatar: string;
+  backgroundColor: string;
   id: string;
   title: string;
 }

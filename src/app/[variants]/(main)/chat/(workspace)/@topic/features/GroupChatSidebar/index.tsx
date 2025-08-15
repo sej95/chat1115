@@ -98,7 +98,7 @@ const GroupChatSidebar = memo(() => {
   // optimistic local state for member ordering
   const initialMembers = useMemo(() => currentSession?.members ?? [], [currentSession?.members]);
   const [members, setMembers] = useState<any[]>(initialMembers);
-  
+
   // state for tracking which members are being removed
   const [removingMemberIds, setRemovingMemberIds] = useState<string[]>([]);
 
@@ -108,10 +108,10 @@ const GroupChatSidebar = memo(() => {
 
   const handleRemoveMember = async (memberId: string) => {
     if (!activeGroupId) return;
-    
+
     // Start loading state
     setRemovingMemberIds(prev => [...prev, memberId]);
-    
+
     try {
       await removeAgentFromGroup(activeGroupId, memberId);
     } finally {

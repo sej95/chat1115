@@ -12,7 +12,7 @@ const MentionedUserItem = memo<MentionedUserItemProps>(({ agent }) => {
   const removeMentionedUser = useMentionStore((s: any) => s.removeMentionedUser);
 
   const handleRemove = () => {
-    removeMentionedUser(agent.agentId);
+    removeMentionedUser(agent.id);
   };
 
   return (
@@ -34,7 +34,7 @@ const MentionedUserItem = memo<MentionedUserItemProps>(({ agent }) => {
         size={24}
       />
       <Text ellipsis={{ tooltip: true }} style={{ fontSize: 12, maxWidth: 80 }}>
-        {agent.title || agent.agentId}
+        {agent.title || agent.id}
       </Text>
       <div
         onClick={handleRemove}

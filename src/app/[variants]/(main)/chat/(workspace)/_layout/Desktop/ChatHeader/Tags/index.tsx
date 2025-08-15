@@ -1,10 +1,7 @@
 import { ModelTag } from '@lobehub/icons';
-import { Tag } from '@lobehub/ui';
 import { Skeleton } from 'antd';
 import isEqual from 'fast-deep-equal';
-import { Users } from 'lucide-react';
 import { memo } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Flexbox } from 'react-layout-kit';
 
 import ModelSwitchPanel from '@/features/ModelSwitchPanel';
@@ -24,7 +21,6 @@ import MemberCountTag from './MemberCountTag';
 import SearchTags from './SearchTags';
 
 const TitleTags = memo(() => {
-  const { t } = useTranslation('chat');
   const [model, provider, hasKnowledge, isLoading] = useAgentStore((s) => [
     agentSelectors.currentAgentModel(s),
     agentSelectors.currentAgentModelProvider(s),

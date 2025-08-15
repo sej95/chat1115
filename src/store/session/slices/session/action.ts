@@ -254,10 +254,8 @@ export const createSessionSlice: StateCreator<
             // The session ID is the chat group ID, and we can extract basic group info
             const chatStore = useChatStore.getState();
             const chatGroups = groupSessions.map(session => ({
-              id: session.id, // Session ID is the chat group ID
-              slug: null,
-              title: session.meta?.title || 'Untitled Group',
-              description: session.meta?.description || '',
+              accessedAt: session.updatedAt,
+              clientId: null,
               config: {
                 maxResponseInRow: 3,
                 orchestratorModel: 'gpt-4',
@@ -265,12 +263,20 @@ export const createSessionSlice: StateCreator<
                 responseOrder: 'sequential' as const,
                 responseSpeed: 'medium' as const,
               },
-              clientId: null,
-              userId: '', // Will be set by the backend
-              pinned: session.pinned || false,
               createdAt: session.createdAt,
+              description: session.meta?.description || '',
+
+              id: session.id,
+
+              // Will be set by the backend
+              pinned: session.pinned || false,
+
+              // Session ID is the chat group ID
+              slug: null,
+
+              title: session.meta?.title || 'Untitled Group',
               updatedAt: session.updatedAt,
-              accessedAt: session.updatedAt, // Use updatedAt as accessedAt fallback
+              userId: '', // Use updatedAt as accessedAt fallback
             }));
 
             chatStore.internal_updateGroupMaps(chatGroups);
