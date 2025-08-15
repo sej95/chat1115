@@ -309,7 +309,6 @@ export const generateAIGroupChat: StateCreator<
       }
     } finally {
       internal_toggleChatLoading(false, undefined, n('processAgentMessage(end)'));
-      internal_updateAgentSpeakingStatus(groupId, agentId, false);
     }
   },
 
