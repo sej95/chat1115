@@ -22,6 +22,7 @@ export default {
   },
   clearCurrentMessages: '清空当前会话消息',
   confirmClearCurrentMessages: '即将清空当前会话消息，清空后将无法找回，请确认你的操作',
+  confirmRemoveGroupItemAlert: '即将删除该分组，删除后该分组的助手将移动到默认列表，请确认你的操作',
   confirmRemoveSessionItemAlert: '即将删除该助手，删除后该将无法找回，请确认你的操作',
   confirmRemoveSessionSuccess: '助手删除成功',
   defaultAgent: '自定义助手',
@@ -57,15 +58,22 @@ export default {
     },
     title: '模型扩展功能',
   },
+  group: {
+    desc: '与多个 AI 助手在共享的对话空间中协作。',
+    memberTooltip: '群内有 {{count}} 个成员',
+    title: '群组',
+  },
   groupDescription: '群组描述',
   history: {
     title: '助手将只记住最后{{count}}条消息',
   },
+
   historyRange: '历史范围',
+
+
   historySummary: '历史消息总结',
 
   inactive: '不活跃',
-
 
   inbox: {
     desc: '开启大脑集群，激发思维火花。你的智能助理，在这里与你交流一切',
@@ -111,6 +119,15 @@ export default {
     uploadGuide: '上传过的文件可以在「知识库」中查看哦',
     viewMore: '查看更多',
   },
+  memberSelection: {
+    addMember: "Add Member",
+    noAvailableAgents: "No available agents",
+    noSelectedAgents: "No selected agents",
+    searchAgents: "Search agents...",
+    setInitialMembers: "Set Initial Members"
+  },
+
+  members: "Members",
 
   messageAction: {
     delAndRegenerate: '删除并重新生成',
@@ -193,7 +210,6 @@ export default {
   },
 
   regenerate: '重新生成',
-
   roleAndArchive: '角色与记录',
   search: {
     grounding: {

@@ -58,7 +58,7 @@ export interface ChatMessageAction {
   useFetchMessages: (
     enable: boolean,
     messageContextId: string,
-    activeTopicId: string,
+    activeTopicId?: string,
     type?: 'session' | 'group',
   ) => SWRResponse<ChatMessage[]>;
   copyMessage: (id: string, content: string) => Promise<void>;

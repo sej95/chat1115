@@ -26,8 +26,8 @@ const currentAgentMeta = (s: SessionStore): MetaData => {
 
 const currentGroupMeta = (s: SessionStore): MetaData => {
   const defaultMeta = {
-    description: t('defaultGroup', { ns: 'common' }),
-    title: t('defaultGroup', { ns: 'common' }),
+    description: t('group.desc', { ns: 'chat' }),
+    title: t('group.title', { ns: 'chat' }),
   };
 
   const session = sessionSelectors.currentSession(s);

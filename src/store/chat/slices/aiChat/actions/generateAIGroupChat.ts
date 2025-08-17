@@ -102,7 +102,7 @@ export const generateAIGroupChat: StateCreator<
   AIGroupChatAction
 > = (set, get) => ({
   sendGroupMessage: async ({ groupId, message, files, onlyAddUserMessage }) => {
-    const { internal_createMessage, internal_triggerSupervisorDecisionDebounced, internal_setActiveGroup } = get();
+    const { internal_createMessage, internal_triggerSupervisorDecisionDebounced, internal_setActiveGroup, activeTopicId } = get();
 
     if (!message.trim() && (!files || files.length === 0)) return;
 
@@ -118,6 +118,7 @@ export const generateAIGroupChat: StateCreator<
         files: files?.map((f) => f.id),
         role: 'user',
         groupId,
+        topicId: activeTopicId,
       };
 
       const messageId = await internal_createMessage(userMessage);

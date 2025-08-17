@@ -294,6 +294,56 @@ export default {
     },
     title: '通用设置',
   },
+  settingGroup: {
+    description: {
+      placeholder: "Enter group description",
+      title: "Group Description"
+    },
+    name: {
+      placeholder: "Enter group name",
+      title: "Group Name"
+    },
+    submit: "Update Group",
+    title: "Group Information"
+  },
+  settingGroupChat: {
+    maxResponseInRow: {
+      desc: "Choose how many messages members can respond in a row. Set to 0 to disable.",
+      title: "Max Messages in a Row"
+    },
+    model: {
+      desc: "Choose the model to use for group conversations",
+      title: "Orchestrator Model"
+    },
+    responseOrder: {
+      desc: "Agents will respond in the order they are set in the group",
+      options: {
+        natural: "Natural",
+        sequential: "Sequential"
+      },
+      placeholder: "Select response order",
+      title: "Response Order"
+    },
+    responseSpeed: {
+      desc: "Choose how agents respond in group conversations",
+      options: {
+        fast: "Fast",
+        medium: "Medium",
+        slow: "Slow"
+      },
+      placeholder: "Select response speed",
+      title: "Response Speed"
+    },
+    submit: "Update Settings",
+    title: "Chat Settings"
+  },
+  settingGroupMembers: {
+    edit: "Edit Member",
+    empty: "No agents in this group yet. Click the + button to add members.",
+    owner: "You (Owner)",
+    remove: "Remove Member",
+    you: "You"
+  },
   settingModel: {
     enableMaxTokens: {
       title: '开启单次回复限制',
@@ -574,5 +624,5 @@ export default {
       store: '插件商店',
     },
     title: '扩展插件',
-  },
+  }
 };

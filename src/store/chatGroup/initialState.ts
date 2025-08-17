@@ -1,6 +1,7 @@
 import { ChatGroupItem } from "@/database/schemas";
 
 export interface ChatGroupState {
+  groups: ChatGroupItem[];
   groupMap: Record<string, ChatGroupItem>;
   groupsInit: boolean;
   isGroupsLoading: boolean;
@@ -8,6 +9,7 @@ export interface ChatGroupState {
 }
 
 export const initialChatGroupState: ChatGroupState = {
+  groups: [],
   groupMap: {},
   groupsInit: false,
   isGroupsLoading: true,

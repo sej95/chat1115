@@ -12,15 +12,14 @@ const MemberCountTag = memo(() => {
   const { t } = useTranslation('chat');
   const currentSession = useSessionStore(sessionSelectors.currentSession);
 
-  const memberCount = (currentSession as LobeGroupSession).members?.length + 1;
+  const memberCount = (currentSession as LobeGroupSession).members?.length ?? 0 + 1;
 
   if (memberCount < 0) return null;
 
   return (
     <Tooltip
       title={
-        t('groupChat.memberTooltip', { count: memberCount }) ||
-        `${memberCount} members in this group chat`
+        t('group.memberTooltip', { count: memberCount })
       }
     >
       <Flexbox height={22}>
