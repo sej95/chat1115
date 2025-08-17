@@ -13,6 +13,7 @@ export interface SupervisorContext {
   messages: ChatMessage[];
   model: string;
   provider: string;
+  userName?: string; // Real user name for group member list
 }
 
 /**
@@ -34,7 +35,7 @@ Examples: ["agt_01", "agt_02"] or [] or ["agt_03"]`;
    * Make decision on who should speak next
    */
   async makeDecision(context: SupervisorContext): Promise<SupervisorDecision> {
-    const { messages, availableAgents } = context;
+    const { messages, availableAgents, userName } = context;
 
     // If no agents available, stop conversation
     if (availableAgents.length === 0) {
@@ -42,8 +43,8 @@ Examples: ["agt_01", "agt_02"] or [] or ["agt_03"]`;
     }
 
     try {
-      // Prepare agent descriptions for the supervisor
-      const agentDescriptions = this.buildAgentDescriptions(availableAgents);
+      // Prepare agent descriptions for the supervisor (including user)
+      const memberDescriptions = this.buildMemberDescriptions(availableAgents, userName);
 
       // Create supervisor prompt with conversation context
       const conversationHistory = groupSupervisorPrompts(messages);
@@ -53,9 +54,7 @@ Examples: ["agt_01", "agt_02"] or [] or ["agt_03"]`;
 No group description.
 </group_description>
 
-<group_members>
-${agentDescriptions}
-</group_members>
+${memberDescriptions}
 
 <conversation_history>
 ${conversationHistory}
@@ -76,14 +75,31 @@ ${conversationHistory}
   }
 
   /**
-   * Build agent description text for supervisor
+   * Build member description text for supervisor using XML format
    */
-  private buildAgentDescriptions(agents: ChatGroupAgentItem[]): string {
-    const simplifiedAgents = agents.map(agent => ({
-      id: agent.id,
-      title: agent.title
-    }));
-    return JSON.stringify(simplifiedAgents, null, 2);
+  private buildMemberDescriptions(agents: ChatGroupAgentItem[], userName?: string): string {
+    // Include user as first member
+    const members = [
+      {
+        id: 'user',
+        name: userName || 'User',
+        role: 'Human participant'
+      },
+      // Then include all agents
+      ...agents.map(agent => ({
+        id: agent.id,
+        name: agent.title || agent.id,
+        role: 'AI Agent'
+      }))
+    ];
+
+    const memberList = members
+      .map(member => `  <member id="${member.id}" name="${member.name}" />`)
+      .join('\n');
+
+    return `<group_members>
+${memberList}
+</group_members>`;
   }
 
   /**
@@ -154,7 +170,9 @@ ${conversationHistory}
     availableAgents: ChatGroupAgentItem[],
     messages: ChatMessage[],
   ): SupervisorDecision {
-    const enabledAgents = availableAgents.filter((agent) => agent.enabled !== false);
+    // For group chat agents, we assume they are enabled by default
+    // since they wouldn't be in the list if they weren't meant to participate
+    const enabledAgents = availableAgents.filter((agent) => true); // All agents are considered enabled
 
     if (enabledAgents.length === 0) {
       return { nextSpeakers: [] };
@@ -165,12 +183,12 @@ ${conversationHistory}
     const lastSpeakerId = lastMessage?.role === 'user' ? 'user' : lastMessage?.agentId;
 
     // Avoid consecutive responses from same agent
-    const eligibleAgents = enabledAgents.filter((agent) => agent.agentId !== lastSpeakerId);
+    const eligibleAgents = enabledAgents.filter((agent) => agent.id !== lastSpeakerId);
 
     const candidateAgents = eligibleAgents.length > 0 ? eligibleAgents : enabledAgents;
 
     // Select first agent as fallback (could be randomized)
-    return { nextSpeakers: [candidateAgents[0].agentId] };
+    return { nextSpeakers: [candidateAgents[0].id || 'unknown'] };
   }
 
   /**
@@ -183,9 +201,9 @@ ${conversationHistory}
     // Empty is always valid (means stop)
     if (nextSpeakers.length === 0) return true;
 
-    // Check all speakers are available and enabled
+    // Check all speakers are available (we assume all agents in the list are enabled)
     return nextSpeakers.every((speakerId) =>
-      availableAgents.some((agent) => agent.agentId === speakerId && agent.enabled !== false),
+      availableAgents.some((agent) => agent.id === speakerId),
     );
   }
 } 

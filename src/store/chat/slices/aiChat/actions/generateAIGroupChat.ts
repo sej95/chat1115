@@ -146,9 +146,10 @@ export const generateAIGroupChat: StateCreator<
       messagesMap,
       internal_toggleSupervisorLoading,
       internal_executeAgentResponses,
+      activeTopicId,
     } = get();
 
-    const messages = messagesMap[messageMapKey(groupId, null)] || [];
+    const messages = messagesMap[messageMapKey(groupId, activeTopicId)] || [];
     const agents = sessionSelectors.currentGroupAgents(useSessionStore.getState());
 
     if (messages.length === 0) return;
@@ -157,6 +158,10 @@ export const generateAIGroupChat: StateCreator<
 
     const groupConfig = chatGroupSelectors.currentGroupConfig(useChatGroupStore.getState());
 
+    // Get real user name from user store
+    const userStoreState = getUserStoreState();
+    const realUserName = userProfileSelectors.nickName(userStoreState) || 'User';
+
     try {
       const context: SupervisorContext = {
         availableAgents: agents!,
@@ -164,6 +169,7 @@ export const generateAIGroupChat: StateCreator<
         messages,
         model: groupConfig.orchestratorModel || 'gemini-2.5-flash',
         provider: groupConfig.orchestratorProvider || 'google',
+        userName: realUserName,
       };
 
       const decision: SupervisorDecision = await supervisor.makeDecision(context);
