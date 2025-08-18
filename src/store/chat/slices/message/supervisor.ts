@@ -4,8 +4,11 @@ import { groupSupervisorPrompts } from '@/prompts/chatMessages';
 import { chatService } from '@/services/chat';
 
 export interface SupervisorDecision {
-  nextSpeakers: string[]; // agentIds who should respond (empty array = stop)
+  id: string; // agent ID who should respond
+  target?: string; // target agent ID or "user" for DM, omit for group message
 }
+
+export type SupervisorDecisionList = SupervisorDecision[]; // Empty array = stop conversation
 
 export interface SupervisorContext {
   availableAgents: ChatGroupAgentItem[];
@@ -23,23 +26,28 @@ export class GroupChatSupervisor {
   private readonly systemPrompt = `You are a conversation supervisor for a group chat with multiple AI agents. Your role is to decide which agents should respond next based on the conversation context.
 
 Rules:
-- Always return nextSpeaker as an array of member ids from the GroupMembers list
-- If a member's expertise is needed based on the conversation topic, include that member
-- If the conversation seems complete, return empty array.
+- Return an array of objects where each object has an "id" field for the agent who should respond
+- If a response should be a direct message (DM) to a specific member, include a "target" field with the target member ID or "user"
+- If no "target" field is provided, the response will be a group message visible to everyone
+- If the conversation seems complete, return empty array []
 - Your goal is to make the conversation as natural as possible
 
-Response format: Return ONLY an array of agent IDs, nothing else.
-Examples: ["agt_01", "agt_02"] or [] or ["agt_03"]`;
+Response format: Return ONLY a JSON array of objects, nothing else.
+Examples: 
+- Group responses: [{"id": "agt_01"}, {"id": "agt_02"}]
+- DM responses: [{"id": "agt_01", "target": "agt_02"}, {"id": "agt_04", "target": "user"}]
+- Mixed responses: [{"id": "agt_01"}, {"id": "agt_02", "target": "user"}]
+- Stop conversation: []`;
 
   /**
    * Make decision on who should speak next
    */
-  async makeDecision(context: SupervisorContext): Promise<SupervisorDecision> {
+  async makeDecision(context: SupervisorContext): Promise<SupervisorDecisionList> {
     const { messages, availableAgents, userName } = context;
 
     // If no agents available, stop conversation
     if (availableAgents.length === 0) {
-      return { nextSpeakers: [] };
+      return [];
     }
 
     try {
@@ -70,7 +78,7 @@ ${conversationHistory}
       console.error('Supervisor decision failed:', error);
 
       // Fallback: return empty result to stop conversation when error occurs
-      return { nextSpeakers: [] };
+      return [];
     }
   }
 
@@ -139,7 +147,7 @@ ${memberList}
   private parseDecision(
     response: string,
     availableAgents: ChatGroupAgentItem[],
-  ): SupervisorDecision {
+  ): SupervisorDecisionList {
     try {
       // Extract JSON array from response by locating the first '[' and the last ']'
       const startIndex = response.indexOf('[');
@@ -149,14 +157,31 @@ ${memberList}
       }
       const jsonText = response.slice(startIndex, endIndex + 1);
 
-      const agentIds = JSON.parse(jsonText) as string[];
+      const parsedResponse = JSON.parse(jsonText);
 
-      // Validate agent IDs exist in available agents
-      const validAgentIds = agentIds.filter((id) =>
-        availableAgents.some((agent) => agent.id === id),
-      );
+      if (!Array.isArray(parsedResponse)) {
+        throw new Error('Response must be an array');
+      }
 
-      return { nextSpeakers: validAgentIds };
+      // Empty array = stop conversation
+      if (parsedResponse.length === 0) {
+        return [];
+      }
+
+      // Filter and validate the response objects
+      const decisions = parsedResponse
+        .filter((item: any) =>
+          typeof item === 'object' &&
+          item !== null &&
+          typeof item.id === 'string' &&
+          availableAgents.some((agent) => agent.id === item.id)
+        )
+        .map((item: any) => ({
+          id: item.id,
+          target: item.target || undefined,
+        }));
+
+      return decisions;
     } catch (error) {
       console.error('Failed to parse supervisor decision:', error);
       throw error;
@@ -169,13 +194,13 @@ ${memberList}
   private getFallbackDecision(
     availableAgents: ChatGroupAgentItem[],
     messages: ChatMessage[],
-  ): SupervisorDecision {
+  ): SupervisorDecisionList {
     // For group chat agents, we assume they are enabled by default
     // since they wouldn't be in the list if they weren't meant to participate
-    const enabledAgents = availableAgents.filter((agent) => true); // All agents are considered enabled
+    const enabledAgents = availableAgents; // All agents are considered enabled
 
     if (enabledAgents.length === 0) {
-      return { nextSpeakers: [] };
+      return [];
     }
 
     // Determine last speaker from messages to avoid consecutive responses
@@ -188,22 +213,30 @@ ${memberList}
     const candidateAgents = eligibleAgents.length > 0 ? eligibleAgents : enabledAgents;
 
     // Select first agent as fallback (could be randomized)
-    return { nextSpeakers: [candidateAgents[0].id || 'unknown'] };
+    return [{ id: candidateAgents[0].id || 'unknown' }];
   }
 
   /**
    * Quick validation of decision against group rules
    */
-  validateDecision(decision: SupervisorDecision, context: SupervisorContext): boolean {
-    const { nextSpeakers } = decision;
+  validateDecision(decisions: SupervisorDecisionList, context: SupervisorContext): boolean {
     const { availableAgents } = context;
 
-    // Empty is always valid (means stop)
-    if (nextSpeakers.length === 0) return true;
+    // Empty array is always valid (means stop)
+    if (decisions.length === 0) return true;
 
-    // Check all speakers are available (we assume all agents in the list are enabled)
-    return nextSpeakers.every((speakerId) =>
-      availableAgents.some((agent) => agent.id === speakerId),
-    );
+    // Check each decision
+    return decisions.every((decision) => {
+      // Validate speaker exists
+      const speakerExists = availableAgents.some((agent) => agent.id === decision.id);
+      if (!speakerExists) return false;
+
+      // Validate target exists if specified
+      if (decision.target) {
+        return decision.target === 'user' || availableAgents.some((agent) => agent.id === decision.target);
+      }
+
+      return true;
+    });
   }
 } 

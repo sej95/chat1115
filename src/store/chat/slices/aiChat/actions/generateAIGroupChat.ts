@@ -16,7 +16,7 @@ import { chatGroupSelectors } from '@/store/chatGroup/selectors';
 import { getUserStoreState } from '@/store/user/store';
 import { userProfileSelectors } from '@/store/user/selectors';
 
-import { GroupChatSupervisor, SupervisorContext, SupervisorDecision } from '../../message/supervisor';
+import { GroupChatSupervisor, SupervisorContext, SupervisorDecisionList } from '../../message/supervisor';
 import { buildGroupChatSystemPrompt, GroupMemberInfo } from '@/prompts/groupChat';
 
 import { toggleBooleanList } from '../../../utils';
@@ -75,14 +75,14 @@ export interface AIGroupChatAction {
   internal_cancelAllSupervisorDecisions: () => void;
 
   /**
-   * Executes agent responses for group chat
+   * Executes agent responses for group chat based on supervisor decisions
    */
-  internal_executeAgentResponses: (groupId: string, agentIds: string[]) => Promise<void>;
+  internal_executeAgentResponses: (groupId: string, decisions: SupervisorDecisionList) => Promise<void>;
 
   /**
    * Processes a single agent message in group chat
    */
-  internal_processAgentMessage: (groupId: string, agentId: string) => Promise<void>;
+  internal_processAgentMessage: (groupId: string, agentId: string, targetId?: string) => Promise<void>;
 
   /**
    * Sets the active group
@@ -144,7 +144,6 @@ export const generateAIGroupChat: StateCreator<
     const {
       messagesMap,
       internal_toggleSupervisorLoading,
-      internal_executeAgentResponses,
       activeTopicId,
     } = get();
 
@@ -171,12 +170,12 @@ export const generateAIGroupChat: StateCreator<
         userName: realUserName,
       };
 
-      const decision: SupervisorDecision = await supervisor.makeDecision(context);
+      const decisions: SupervisorDecisionList = await supervisor.makeDecision(context);
 
-      console.log('Supervisor decision:', decision);
+      console.log('Supervisor decisions:', decisions);
 
-      if (decision.nextSpeakers.length > 0) {
-        await internal_executeAgentResponses(groupId, decision.nextSpeakers);
+      if (decisions.length > 0) {
+        await get().internal_executeAgentResponses(groupId, decisions);
       }
     } catch (error) {
       console.error('Supervisor decision failed:', error);
@@ -185,11 +184,11 @@ export const generateAIGroupChat: StateCreator<
     }
   },
 
-  internal_executeAgentResponses: async (groupId: string, agentIds: string[]) => {
+  internal_executeAgentResponses: async (groupId: string, decisions: SupervisorDecisionList) => {
     const { internal_processAgentMessage } = get();
 
-    const responsePromises = agentIds.map((agentId) =>
-      internal_processAgentMessage(groupId, agentId),
+    const responsePromises = decisions.map((decision) =>
+      internal_processAgentMessage(groupId, decision.id, decision.target),
     );
 
     try {
@@ -200,7 +199,7 @@ export const generateAIGroupChat: StateCreator<
   },
 
   // For group member responsing
-  internal_processAgentMessage: async (groupId: string, agentId: string) => {
+  internal_processAgentMessage: async (groupId: string, agentId: string, targetId?: string) => {
     const {
       messagesMap,
       internal_createMessage,
@@ -261,6 +260,7 @@ export const generateAIGroupChat: StateCreator<
         groupId,
         agentId,
         topicId: activeTopicId,
+        targetId: targetId, // Use targetId when provided for DM messages
       };
 
       const assistantId = await internal_createMessage(agentMessage);
