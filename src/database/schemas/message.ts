@@ -66,6 +66,8 @@ export const messages = pgTable(
     // used for group chat
     agentId: text('agent_id').references(() => agents.id, { onDelete: 'set null' }),
     groupId: text('group_id').references(() => chatGroups.id, { onDelete: 'set null' }),
+    // targetId can be an agent ID, "user", or null - no FK constraint
+    targetId: text('target_id'),
     ...timestamps,
   },
   (table) => ({

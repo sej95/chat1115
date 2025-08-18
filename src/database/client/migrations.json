@@ -584,5 +584,13 @@
     "bps": true,
     "folderMillis": 1754984271690,
     "hash": "0c1695ab9199a0c55c03e0514b3d1735f36eb997fcd6de3f8d37b9934b9de004"
+  },
+  {
+    "sql": [
+      "ALTER TABLE \"messages\" ADD COLUMN \"target_id\" text;"
+    ],
+    "bps": true,
+    "folderMillis": 1755483930233,
+    "hash": "1d826bb39235418bf08369c34f4b7e94232ad7f863335d393a759c726ab0961e"
   }
 ]

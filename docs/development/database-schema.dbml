@@ -407,6 +407,7 @@ table messages {
   quota_id text
   agent_id text
   group_id text
+  target_id text
   accessed_at "timestamp with time zone" [not null, default: `now()`]
   created_at "timestamp with time zone" [not null, default: `now()`]
   updated_at "timestamp with time zone" [not null, default: `now()`]
