@@ -13,7 +13,8 @@ ${messages.map((m) => chatMessage(m)).join('\n')}
 export const groupSupervisorPrompts = (messages: ChatMessage[]) => {
   const formatMessage = (message: ChatMessage) => {
     const author = message.role === 'user' ? 'user' : (message.agentId || 'assistant');
-    return `<${message.role} author="${author}">${message.content}</${message.role}>`;
+    const targetAttr = message.targetId ? ` target="${message.targetId}"` : '';
+    return `<message author="${author}"${targetAttr}>${message.content}</message>`;
   };
 
   return messages.map((m) => formatMessage(m)).join('\n');
@@ -23,6 +24,51 @@ export const groupMemeberSpeakingPrompts = (messages: ChatMessage[]) => {
   return `<chat_group>
 ${messages.map((m) => chatMessage(m)).join('\n')}
 </chat_group>`;
+};
+
+/**
+ * Filters messages that an agent should see based on DM targeting rules
+ * - Agent sees all group messages (no targetId)
+ * - Agent sees DMs where they are the target
+ * - Agent sees DMs they sent
+ * - Agent sees all user messages (user can always communicate with any agent)
+ */
+export const filterMessagesForAgent = (messages: ChatMessage[], agentId: string): ChatMessage[] => {
+  return messages.filter(message => {
+    // Always include user messages (users can communicate with any agent)
+    if (message.role === 'user') {
+      return true;
+    }
+
+    // Always include system messages
+    if (message.role === 'system') {
+      return true;
+    }
+
+    // For assistant messages, check DM targeting rules
+    if (message.role === 'assistant') {
+      // If no target specified, it's a group message - include it
+      if (!message.targetId) {
+        return true;
+      }
+
+      // If the agent is the target of the DM, include it
+      if (message.targetId === agentId) {
+        return true;
+      }
+
+      // If the agent sent the message, include it
+      if (message.agentId === agentId) {
+        return true;
+      }
+
+      // Otherwise, it's a DM not involving this agent - exclude it
+      return false;
+    }
+
+    // Default: include the message
+    return true;
+  });
 };
 
 /**
@@ -37,7 +83,7 @@ export const consolidateGroupChatHistory = (messages: ChatMessage[], agents: { i
 
   const formatMessage = (message: ChatMessage) => {
     let authorName: string;
-    
+
     if (message.role === 'user') {
       authorName = 'User';
     } else if (message.role === 'assistant' && message.agentId) {

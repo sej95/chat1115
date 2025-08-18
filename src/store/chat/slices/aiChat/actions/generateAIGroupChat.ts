@@ -18,6 +18,7 @@ import { userProfileSelectors } from '@/store/user/selectors';
 
 import { GroupChatSupervisor, SupervisorContext, SupervisorDecisionList } from '../../message/supervisor';
 import { buildGroupChatSystemPrompt, GroupMemberInfo } from '@/prompts/groupChat';
+import { filterMessagesForAgent } from '@/prompts/chatMessages';
 
 import { toggleBooleanList } from '../../../utils';
 import type { ChatStoreState } from '../../../initialState';
@@ -211,8 +212,11 @@ export const generateAIGroupChat: StateCreator<
     } = get();
 
     try {
-      const messages = messagesMap[messageMapKey(groupId, activeTopicId)] || [];
-      if (messages.length === 0) return;
+      const allMessages = messagesMap[messageMapKey(groupId, activeTopicId)] || [];
+      if (allMessages.length === 0) return;
+
+      // Filter messages for this specific agent based on DM targeting rules
+      const messages = filterMessagesForAgent(allMessages, agentId);
 
       // Get group agents and find the specific agent
       const agents = sessionSelectors.currentGroupAgents(useSessionStore.getState());

@@ -1,10 +1,11 @@
-import { memo } from 'react';
+import { memo, useContext } from 'react';
 import { Flexbox } from 'react-layout-kit';
 
 import DMTag from '@/components/DMTag';
 import { useChatStore } from '@/store/chat';
 import { chatSelectors } from '@/store/chat/selectors';
 import { ChatMessage } from '@/types/message';
+import { InPortalThreadContext } from '../components/ChatItem/InPortalThreadContext';
 
 import { RenderMessageExtra } from '../types';
 import ExtraContainer from './ExtraContainer';
@@ -13,10 +14,11 @@ import Translate from './Translate';
 
 export const UserMessageExtra: RenderMessageExtra = memo<ChatMessage>(({ extra, id, content, targetId }) => {
   const loading = useChatStore(chatSelectors.isMessageGenerating(id));
+  const inPortalThread = useContext(InPortalThreadContext);
 
   const showTranslate = !!extra?.translate;
   const showTTS = !!extra?.tts;
-  const isDM = !!targetId;
+  const isDM = !!targetId && !inPortalThread; // Don't show DM tag in thread panel
 
   const showExtra = showTranslate || showTTS || isDM;
 

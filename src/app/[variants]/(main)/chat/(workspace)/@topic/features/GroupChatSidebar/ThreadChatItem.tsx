@@ -14,8 +14,8 @@ export interface ThreadChatItemProps {
 const ThreadChatItem = memo<ThreadChatItemProps>(({ id, index }) => {
     const [displayMode, enableHistoryDivider] = useAgentStore((s) => [
         agentChatConfigSelectors.displayMode(s),
-        // For thread view, we can enable history divider for all messages
-        true, // or you can implement specific logic: agentChatConfigSelectors.enableHistoryDivider(length, index)(s)
+        // For thread view, we don't need history divider
+        false,
     ]);
 
     const actionBar = useMemo(() => null, []);
@@ -27,6 +27,7 @@ const ThreadChatItem = memo<ThreadChatItemProps>(({ id, index }) => {
             id={id}
             inPortalThread={true} // Mark this as thread context
             index={index}
+            showAvatar={false}
         />
     );
 });

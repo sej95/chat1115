@@ -23,6 +23,7 @@ interface DesktopChatInputProps {
   renderFooter: FooterRender;
   renderTextArea: (onSend: () => void) => ReactNode;
   rightActions: ActionKeys[];
+  inThread?: boolean;
 }
 
 const DesktopChatInput = memo<DesktopChatInputProps>(
@@ -33,6 +34,7 @@ const DesktopChatInput = memo<DesktopChatInputProps>(
     inputHeight,
     onInputHeightChange,
     renderFooter,
+    inThread,
   }) => {
     const [expand, setExpand] = useState<boolean>(false);
     const onSend = useCallback(() => {
@@ -70,6 +72,7 @@ const DesktopChatInput = memo<DesktopChatInputProps>(
               leftActions={leftActions}
               rightActions={rightActions}
               setExpand={setExpand}
+              showExpandButton={!inThread}
             />
             {renderTextArea(onSend)}
             {renderFooter({ expand, onExpandChange: setExpand })}

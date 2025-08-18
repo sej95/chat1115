@@ -62,7 +62,7 @@ const DMTag = memo<DMTagProps>(({ senderId, targetId }) => {
             width="100%"
         >
 
-            <Flexbox align="center" gap={6} horizontal>
+            <Flexbox align="center" flex={1} gap={6} horizontal>
                 <Icon icon={<Lock size={12} />} style={{ color: theme.colorSuccess }} />
 
                 <span
@@ -87,9 +87,11 @@ const DMTag = memo<DMTagProps>(({ senderId, targetId }) => {
                 </span>
             </Flexbox>
 
-            <Button size="small" style={{ color: theme.colorSuccess }} type="primary">
-                {involvesUser ? 'Open in Thread' : 'Reveal'}
-            </Button>
+            <Flexbox align="center" gap={6} horizontal>
+                <Button size="small" style={{ color: theme.colorSuccess }} type="primary">
+                    {involvesUser ? 'Open in Thread' : 'Reveal'}
+                </Button>
+            </Flexbox>
         </Flexbox>
     );
 });

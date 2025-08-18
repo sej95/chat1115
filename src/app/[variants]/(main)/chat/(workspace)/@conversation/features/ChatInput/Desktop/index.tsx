@@ -37,7 +37,7 @@ interface DesktopProps {
 const Desktop = memo<DesktopProps>(({ targetMemberId }) => {
   const renderTextArea = (onSend: () => void) => <TextArea onSend={onSend} targetMemberId={targetMemberId} />;
   const renderFooter: FooterRender = ({ expand, onExpandChange }) => (
-    <Footer expand={expand} onExpandChange={onExpandChange} />
+    <Footer expand={expand} onExpandChange={onExpandChange} inThread={!!targetMemberId} />
   );
   const [inputHeight, updatePreference] = useGlobalStore((s) => [
     systemStatusSelectors.inputHeight(s),
@@ -55,7 +55,8 @@ const Desktop = memo<DesktopProps>(({ targetMemberId }) => {
       }}
       renderFooter={renderFooter}
       renderTextArea={renderTextArea}
-      rightActions={rightActions}
+      rightActions={targetMemberId ? [] : rightActions}
+      inThread={!!targetMemberId}
     />
   );
 });

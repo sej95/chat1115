@@ -1,6 +1,6 @@
 'use client';
 
-import { ActionIcon } from '@lobehub/ui';
+import { ActionIcon, Avatar } from '@lobehub/ui';
 import { createStyles } from 'antd-style';
 import { ArrowLeft } from 'lucide-react';
 import { memo } from 'react';
@@ -33,6 +33,8 @@ const GroupChatThread = memo(() => {
   const agents = useSessionStore(sessionSelectors.currentGroupAgents);
   const currentAgent = agents?.find(agent => agent.id === activeThreadAgentId);
   const agentTitle = currentAgent?.title || `Agent ${activeThreadAgentId}`;
+  const agentAvatar = currentAgent?.avatar;
+  const agentBackgroundColor = currentAgent?.backgroundColor;
 
   // Get current group ID - removed as not needed anymore
 
@@ -55,12 +57,17 @@ const GroupChatThread = memo(() => {
           size={'small'}
           title="Back to Sidebar"
         />
+        <Avatar
+          avatar={agentAvatar || undefined}
+          background={agentBackgroundColor}
+          size={24}
+        />
         <div className={styles.headerTitle}>
           Thread with {agentTitle}
         </div>
       </Flexbox>
 
-      <Flexbox flex={1} style={{ overflow: 'hidden' }}>
+      <Flexbox flex={1} style={{ overflow: 'hidden', position: 'relative' }}>
         <ThreadChatList />
       </Flexbox>
 

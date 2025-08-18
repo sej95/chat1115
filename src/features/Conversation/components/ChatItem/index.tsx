@@ -57,6 +57,7 @@ export interface ChatListItemProps {
   id: string;
   inPortalThread?: boolean;
   index: number;
+  showAvatar?: boolean;
 }
 
 const Item = memo<ChatListItemProps>(
@@ -69,6 +70,7 @@ const Item = memo<ChatListItemProps>(
     disableEditing,
     inPortalThread = false,
     index,
+    showAvatar = true,
   }) => {
     const { t } = useTranslation('common');
     const { styles, cx } = useStyles();
@@ -270,7 +272,8 @@ const Item = memo<ChatListItemProps>(
               placement={type === 'chat' ? (item.role === 'user' ? 'right' : 'left') : 'left'}
               primary={item.role === 'user'}
               renderMessage={renderMessage}
-              showTitle={isGroupSession && item.role !== 'user'}
+              showAvatar={showAvatar}
+              showTitle={isGroupSession && item.role !== 'user' && !inPortalThread}
               text={text}
               time={item.updatedAt || item.createdAt}
               variant={type === 'chat' ? 'bubble' : 'docs'}
