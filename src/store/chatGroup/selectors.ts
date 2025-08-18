@@ -51,6 +51,8 @@ const currentGroupConfig = (s: ChatGroupStore) => {
   return groupId ? getGroupConfig(groupId)(s) : DEFAULT_CHAT_GROUP_CHAT_CONFIG;
 };
 
+
+
 export const chatGroupSelectors = {
   activeGroupId,
   allGroups,

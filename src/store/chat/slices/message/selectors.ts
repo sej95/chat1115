@@ -220,6 +220,38 @@ const inboxActiveTopicMessages = (state: ChatStoreState) => {
   return state.messagesMap[messageMapKey(INBOX_SESSION_ID, activeTopicId)] || [];
 };
 
+/**
+ * Gets messages between the current user and a specific agent (thread messages)
+ * This is like a DM (Direct Message) view between user and agent
+ */
+const getThreadMessages = (agentId: string) => (s: ChatStoreState): ChatMessage[] => {
+  if (!agentId) return [];
+
+  const allMessages = activeBaseChats(s);
+
+  // Filter messages to only include:
+  // 1. User messages (role: 'user')
+  // 2. Assistant messages from the specific agent (role: 'assistant' && agentId matches)
+  return allMessages.filter((message) => {
+    if (message.role === 'user') {
+      return true; // Include all user messages
+    }
+
+    if (message.role === 'assistant' && message.agentId === agentId) {
+      return true; // Include messages from the specific agent
+    }
+
+    return false; // Exclude all other messages
+  });
+};
+
+/**
+ * Gets thread message IDs for a specific agent
+ */
+const getThreadMessageIDs = (agentId: string) => (s: ChatStoreState): string[] => {
+  return getThreadMessages(agentId)(s).map(message => message.id);
+};
+
 export const chatSelectors = {
   activeBaseChats,
   activeBaseChatsWithoutTool,
@@ -231,6 +263,8 @@ export const chatSelectors = {
   getBaseChatsByKey,
   getMessageById,
   getMessageByToolCallId,
+  getThreadMessages,
+  getThreadMessageIDs,
   getTraceIdByMessageId,
   inboxActiveTopicMessages,
   isAIGenerating,
