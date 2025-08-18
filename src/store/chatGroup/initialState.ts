@@ -1,16 +1,18 @@
 import { ChatGroupItem } from "@/database/schemas";
 
 export interface ChatGroupState {
-  groups: ChatGroupItem[];
+  activeThreadAgentId: string;
   groupMap: Record<string, ChatGroupItem>;
+  groups: ChatGroupItem[];
   groupsInit: boolean;
   isGroupsLoading: boolean;
   showGroupSetting: boolean;
 }
 
 export const initialChatGroupState: ChatGroupState = {
-  groups: [],
+  activeThreadAgentId: '',
   groupMap: {},
+  groups: [],
   groupsInit: false,
   isGroupsLoading: true,
   showGroupSetting: false,

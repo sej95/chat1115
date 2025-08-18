@@ -2,8 +2,9 @@
 
 import { ActionIcon, Avatar, SortableList } from '@lobehub/ui';
 import { createStyles } from 'antd-style';
-import { UserMinus, UserPlus } from 'lucide-react';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { MessageSquare, UserMinus, UserPlus } from 'lucide-react';
+import { lazy, memo, useEffect, useMemo, useState } from 'react';
 import { Flexbox } from 'react-layout-kit';
 
 import SidebarHeader from '@/components/SidebarHeader';
@@ -21,6 +22,8 @@ import { LobeGroupSession } from 'packages/types/src/session';
 import Header from '../Header';
 import { DEFAULT_AVATAR } from '@/const/meta';
 import { useTranslation } from 'react-i18next';
+
+const GroupChatThread = lazy(() => import('./thread'));
 
 const useStyles = createStyles(({ css, token }) => ({
   content: css`
@@ -83,6 +86,8 @@ const GroupChatSidebar = memo(() => {
   const addAgentsToGroup = useChatGroupStore((s) => s.addAgentsToGroup);
   const removeAgentFromGroup = useChatGroupStore((s) => s.removeAgentFromGroup);
   const persistReorder = useChatGroupStore((s) => s.reorderGroupMembers);
+  const activeThreadAgentId = useChatGroupStore((s) => s.activeThreadAgentId);
+  const toggleThread = useChatGroupStore((s) => s.toggleThread);
 
   const currentUser = useUserStore((s) => ({
     avatar: userProfileSelectors.userAvatar(s),
@@ -133,70 +138,55 @@ const GroupChatSidebar = memo(() => {
     setSelectedAgentId(undefined);
   };
 
+  const showThread = activeThreadAgentId && activeThreadAgentId.length > 0;
+
   return (
     <Flexbox height={'100%'}>
-      <SidebarHeader
-        actions={
-          <ActionIcon
-            icon={UserPlus}
-            key="addMember"
-            onClick={() => setAddModalOpen(true)}
-            size={'small'}
-            title="Add Member"
-          />
-        }
-        style={{ cursor: 'pointer' }}
-        title={
-          <Flexbox align={'center'} gap={8} horizontal>
-            Members {(currentSession?.members?.length || 0) + 1}
-          </Flexbox>
-        }
-      />
+      <AnimatePresence mode="wait">
+        {showThread ? (
+          <motion.div
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            initial={{ opacity: 0, x: 20 }}
+            key="thread"
+            style={{ height: '100%', width: '100%' }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
+          >
+            <GroupChatThread />
+          </motion.div>
+        ) : (
+          <motion.div
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            initial={{ opacity: 0, x: -20 }}
+            key="sidebar"
+            style={{ height: '100%', width: '100%' }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
+          >
+            <Flexbox height={'100%'}>
+              <SidebarHeader
+                actions={
+                  <ActionIcon
+                    icon={UserPlus}
+                    key="addMember"
+                    onClick={() => setAddModalOpen(true)}
+                    size={'small'}
+                    title="Add Member"
+                  />
+                }
+                style={{ cursor: 'pointer' }}
+                title={
+                  <Flexbox align={'center'} gap={8} horizontal>
+                    Members {(currentSession?.members?.length || 0) + 1}
+                  </Flexbox>
+                }
+              />
 
-      <Flexbox className={styles.content} flex={0.6} gap={2}>
-        {/* Current User - Always shown first */}
-        <div className={styles.memberItem} style={{ marginBottom: 8 }}>
-          <Flexbox align={'center'} gap={12} horizontal>
-            <Avatar avatar={currentUser.avatar} size={32} />
-            <Flexbox flex={1} gap={2}>
-              <div
-                style={{
-                  fontSize: '14px',
-                  fontWeight: 500,
-                }}
-              >
-                {currentUser.name}
-              </div>
-            </Flexbox>
-          </Flexbox>
-        </div>
-
-        {members && members.length > 0 ? (
-          <SortableList
-            items={members}
-            onChange={async (items: any[]) => {
-              setMembers(items);
-              if (!activeGroupId) return;
-              // persist new order
-              const orderedIds = items.map((m) => m.id);
-              // fire and forget; store action will refresh groups and sessions
-              persistReorder(activeGroupId, orderedIds).catch(() => {
-                console.error('Failed to persist reorder');
-              });
-            }}
-            renderItem={(item: any) => (
-              <SortableList.Item className={styles.memberItem} id={item.id}>
-                <Flexbox align={'center'} gap={8} horizontal justify={'space-between'}>
-                  <Flexbox
-                    align={'center'}
-                    flex={1}
-                    gap={8}
-                    horizontal
-                    onClick={() => handleMemberClick(item.id)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <SortableList.DragHandle />
-                    <Avatar avatar={item.avatar || DEFAULT_AVATAR} background={item.backgroundColor!} size={32} />
+              <Flexbox className={styles.content} flex={0.6} gap={2}>
+                {/* Current User - Always shown first */}
+                <div className={styles.memberItem} style={{ marginBottom: 8 }}>
+                  <Flexbox align={'center'} gap={12} horizontal>
+                    <Avatar avatar={currentUser.avatar} size={32} />
                     <Flexbox flex={1} gap={2}>
                       <div
                         style={{
@@ -204,40 +194,94 @@ const GroupChatSidebar = memo(() => {
                           fontWeight: 500,
                         }}
                       >
-                        {item.title || t('defaultSession', { ns: 'common' })}
-                      </div>
-                      <div
-                        style={{
-                          color: '#666',
-                          fontSize: '12px',
-                        }}
-                      >
-                        {item.systemRole}
+                        {currentUser.name}
                       </div>
                     </Flexbox>
                   </Flexbox>
-                  <ActionIcon
-                    danger
-                    icon={UserMinus}
-                    loading={removingMemberIds.includes(item.id)}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemoveMember(item.id);
-                    }}
-                    size={'small'}
-                    title="Remove Member"
-                  />
-                </Flexbox>
-              </SortableList.Item>
-            )}
-          />
-        ) : null}
-      </Flexbox>
+                </div>
 
-      <Flexbox className={styles.topicList} flex={1}>
-        <Header />
-        <TopicListContent />
-      </Flexbox>
+                {members && members.length > 0 ? (
+                  <SortableList
+                    items={members}
+                    onChange={async (items: any[]) => {
+                      setMembers(items);
+                      if (!activeGroupId) return;
+                      // persist new order
+                      const orderedIds = items.map((m) => m.id);
+                      // fire and forget; store action will refresh groups and sessions
+                      persistReorder(activeGroupId, orderedIds).catch(() => {
+                        console.error('Failed to persist reorder');
+                      });
+                    }}
+                    renderItem={(item: any) => (
+                      <SortableList.Item className={styles.memberItem} id={item.id}>
+                        <Flexbox align={'center'} gap={8} horizontal justify={'space-between'}>
+                          <Flexbox
+                            align={'center'}
+                            flex={1}
+                            gap={8}
+                            horizontal
+                            onClick={() => handleMemberClick(item.id)}
+                            style={{ cursor: 'pointer' }}
+                          >
+                            <SortableList.DragHandle />
+                            <Avatar avatar={item.avatar || DEFAULT_AVATAR} background={item.backgroundColor!} size={32} />
+                            <Flexbox flex={1} gap={2}>
+                              <div
+                                style={{
+                                  fontSize: '14px',
+                                  fontWeight: 500,
+                                }}
+                              >
+                                {item.title || t('defaultSession', { ns: 'common' })}
+                              </div>
+                              <div
+                                style={{
+                                  color: '#666',
+                                  fontSize: '12px',
+                                }}
+                              >
+                                {item.systemRole}
+                              </div>
+                            </Flexbox>
+                          </Flexbox>
+                          <Flexbox gap={4} horizontal>
+                            <ActionIcon
+                              icon={MessageSquare}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleThread(item.id);
+                              }}
+                              size={'small'}
+                              title="Open Thread"
+                            />
+                            <ActionIcon
+                              danger
+                              icon={UserMinus}
+                              loading={removingMemberIds.includes(item.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemoveMember(item.id);
+                              }}
+                              size={'small'}
+                              title="Remove Member"
+                            />
+                          </Flexbox>
+                        </Flexbox>
+                      </SortableList.Item>
+                    )}
+                  />
+                ) : null}
+              </Flexbox>
+
+              <Flexbox className={styles.topicList} flex={1}>
+                <Header />
+                <TopicListContent />
+              </Flexbox>
+            </Flexbox>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <MemberSelectionModal
         existingMembers={currentSession?.members?.map((member: any) => member.id) || []}
@@ -253,7 +297,6 @@ const GroupChatSidebar = memo(() => {
         onClose={handleAgentSettingsClose}
         open={agentSettingsOpen}
       />
-
     </Flexbox>
   );
 });

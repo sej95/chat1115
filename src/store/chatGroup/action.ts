@@ -43,6 +43,7 @@ export interface ChatGroupAction {
   removeAgentFromGroup: (groupId: string, agentId: string) => Promise<void>;
   reorderGroupMembers: (groupId: string, orderedAgentIds: string[]) => Promise<void>;
   toggleGroupSetting: (open: boolean) => void;
+  toggleThread: (agentId: string) => void;
 
   updateGroup: (id: string, value: Partial<ChatGroupItem>) => Promise<void>;
   updateGroupConfig: (config: Partial<LobeChatGroupConfig>) => Promise<void>;
@@ -187,6 +188,10 @@ export const chatGroupAction: StateCreator<
 
     toggleGroupSetting: (open) => {
       set({ showGroupSetting: open }, false, 'toggleGroupSetting');
+    },
+
+    toggleThread: (agentId) => {
+      set({ activeThreadAgentId: agentId }, false, 'toggleThread');
     },
 
     updateGroup: async (id, value) => {
