@@ -93,6 +93,7 @@ export class MessageModel {
         // Group chat fields
         groupId: messages.groupId,
         agentId: messages.agentId,
+        targetId: messages.targetId,
 
         tools: messages.tools,
         tool_call_id: messagePlugins.toolCallId,

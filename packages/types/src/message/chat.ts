@@ -111,6 +111,10 @@ export interface ChatMessage {
 
   search?: GroundingSearch | null;
   sessionId?: string;
+  /**
+   * target member ID for DM messages in group chat
+   */
+  targetId?: string | null;
   threadId?: string | null;
   tool_call_id?: string;
   tools?: ChatToolPayload[];
@@ -135,8 +139,8 @@ export interface CreateMessageParams
   fromProvider?: string;
   groupId?: string;
   role: MessageRoleType;
-  sessionId?: string; // Made optional to support group chat messages
-  threadId?: string | null;
+  sessionId?: string;
+  targetId?: string | null;
   topicId?: string;
   traceId?: string;
 }
@@ -179,4 +183,8 @@ export interface SendGroupMessageParams {
    */
   metadata?: Record<string, any>;
   onlyAddUserMessage?: boolean;
+  /**
+   * for group chat
+   */
+  targetMemberId?: string | null;
 }

@@ -136,6 +136,10 @@ export default {
   },
 
   messages: {
+    dm: {
+      sentTo: '发送给',
+      title: '私信',
+    },
     modelCard: {
       credit: '积分',
       creditPricing: '定价',

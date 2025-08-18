@@ -30,12 +30,15 @@ const leftActionsForGroup = ['stt', 'mention', 'fileUpload', 'knowledgeBase'] as
 
 const rightActions = ['clear'] as ActionKeys[];
 
-const renderTextArea = (onSend: () => void) => <TextArea onSend={onSend} />;
-const renderFooter: FooterRender = ({ expand, onExpandChange }) => (
-  <Footer expand={expand} onExpandChange={onExpandChange} />
-);
+interface DesktopProps {
+  targetMemberId?: string;
+}
 
-const Desktop = memo(() => {
+const Desktop = memo<DesktopProps>(({ targetMemberId }) => {
+  const renderTextArea = (onSend: () => void) => <TextArea onSend={onSend} targetMemberId={targetMemberId} />;
+  const renderFooter: FooterRender = ({ expand, onExpandChange }) => (
+    <Footer expand={expand} onExpandChange={onExpandChange} />
+  );
   const [inputHeight, updatePreference] = useGlobalStore((s) => [
     systemStatusSelectors.inputHeight(s),
     s.updateSystemStatus,

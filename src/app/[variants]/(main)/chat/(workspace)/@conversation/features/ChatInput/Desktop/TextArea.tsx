@@ -7,7 +7,12 @@ import { chatSelectors } from '@/store/chat/slices/message/selectors';
 import { useSessionStore } from '@/store/session';
 import { sessionSelectors } from '@/store/session/selectors';
 
-const TextArea = memo<{ onSend?: () => void }>(({ onSend }) => {
+interface TextAreaProps {
+  onSend?: () => void;
+  targetMemberId?: string;
+}
+
+const TextArea = memo<TextAreaProps>(({ onSend, targetMemberId }) => {
   const [loading, value, updateInputMessage] = useChatStore((s) => [
     chatSelectors.isAIGenerating(s),
     s.inputMessage,
@@ -25,7 +30,7 @@ const TextArea = memo<{ onSend?: () => void }>(({ onSend }) => {
       onChange={updateInputMessage}
       onSend={() => {
         if (isGroupSession) {
-          sendGroupMessage();
+          sendGroupMessage({ targetMemberId });
         } else {
           sendMessage();
         }

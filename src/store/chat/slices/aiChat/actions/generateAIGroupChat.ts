@@ -101,12 +101,10 @@ export const generateAIGroupChat: StateCreator<
   [],
   AIGroupChatAction
 > = (set, get) => ({
-  sendGroupMessage: async ({ groupId, message, files, onlyAddUserMessage }) => {
+  sendGroupMessage: async ({ groupId, message, files, onlyAddUserMessage, targetMemberId }) => {
     const { internal_createMessage, internal_triggerSupervisorDecisionDebounced, internal_setActiveGroup, activeTopicId } = get();
 
     if (!message.trim() && (!files || files.length === 0)) return;
-
-    console.log("generateAIGroupChat: Start send group message", groupId, message, files, onlyAddUserMessage);
 
     internal_setActiveGroup(groupId);
 
@@ -119,6 +117,7 @@ export const generateAIGroupChat: StateCreator<
         role: 'user',
         groupId,
         topicId: activeTopicId,
+        targetId: targetMemberId,
       };
 
       const messageId = await internal_createMessage(userMessage);

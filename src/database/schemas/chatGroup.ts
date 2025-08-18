@@ -42,6 +42,7 @@ export const chatGroups = pgTable(
       orchestratorProvider?: string;
       responseOrder?: 'sequential' | 'natural';
       responseSpeed?: 'slow' | 'medium' | 'fast';
+      revealDM?: boolean;
     }>(),
 
     clientId: text('client_id'),

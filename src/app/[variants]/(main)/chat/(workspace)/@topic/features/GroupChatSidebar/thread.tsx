@@ -6,6 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 import { memo } from 'react';
 import { Flexbox } from 'react-layout-kit';
 
+import ChatInput from '../../../@conversation/features/ChatInput';
 import { useChatGroupStore } from '@/store/chatGroup';
 import { useSessionStore } from '@/store/session';
 import { sessionSelectors } from '@/store/session/selectors';
@@ -32,6 +33,8 @@ const GroupChatThread = memo(() => {
   const agents = useSessionStore(sessionSelectors.currentGroupAgents);
   const currentAgent = agents?.find(agent => agent.id === activeThreadAgentId);
   const agentTitle = currentAgent?.title || `Agent ${activeThreadAgentId}`;
+
+  // Get current group ID - removed as not needed anymore
 
   const handleBackToSidebar = () => {
     toggleThread(''); // Clear thread to go back to sidebar
@@ -60,6 +63,11 @@ const GroupChatThread = memo(() => {
       <Flexbox flex={1} style={{ overflow: 'hidden' }}>
         <ThreadChatList />
       </Flexbox>
+
+      {/* DM Chat Input */}
+      {activeThreadAgentId && (
+        <ChatInput mobile={false} targetMemberId={activeThreadAgentId} />
+      )}
     </Flexbox>
   );
 });

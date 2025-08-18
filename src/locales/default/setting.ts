@@ -334,6 +334,10 @@ export default {
       placeholder: "Select response speed",
       title: "Response Speed"
     },
+    revealDM: {
+      desc: "Make the DM content sent to other members visible to you.",
+      title: "Reveal DM"
+    },
     submit: "Update Settings",
     title: "Chat Settings"
   },

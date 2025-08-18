@@ -105,6 +105,9 @@
     "regenerate": "重新生成"
   },
   "messages": {
+    "dm": {
+      "sentTo": "发送给"
+    },
     "modelCard": {
       "credit": "积分",
       "creditPricing": "定价",

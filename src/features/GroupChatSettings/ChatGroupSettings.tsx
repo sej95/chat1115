@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { FORM_STYLE } from '@/const/layoutTokens';
 
 import { selectors, useStore } from './store';
-import { Select } from 'antd';
+import { Select, Switch } from 'antd';
 import ModelSelect from '../ModelSelect';
 import { isEqual } from 'lodash';
 
@@ -65,6 +65,13 @@ const ChatGroupSettings = memo(() => {
         divider: false,
         label: t('settingGroupChat.maxResponseInRow.title'),
         name: 'maxResponseInRow',
+      },
+      {
+        children: <Switch />,
+        desc: t('settingGroupChat.revealDM.desc'),
+        divider: false,
+        label: t('settingGroupChat.revealDM.title'),
+        name: 'revealDM',
       },
     ],
     title: t('settingGroupChat.title'),

@@ -34,7 +34,11 @@ const defaultLeftActions: ActionKeys[] = [
 
 const defaultRightActions: ActionKeys[] = ['clear'];
 
-const MobileChatInput = memo(() => {
+interface MobileProps {
+  targetMemberId?: string;
+}
+
+const MobileChatInput = memo<MobileProps>(({ targetMemberId }) => {
   const theme = useTheme();
   const ref = useRef<TextAreaRef>(null);
   const [expand, setExpand] = useState<boolean>(false);

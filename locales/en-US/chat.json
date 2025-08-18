@@ -115,6 +115,9 @@
     "regenerate": "Regenerate"
   },
   "messages": {
+    "dm": {
+      "sentTo": "Visible to"
+    },
     "modelCard": {
       "credit": "Credits",
       "creditPricing": "Pricing",

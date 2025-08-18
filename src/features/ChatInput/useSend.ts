@@ -17,6 +17,10 @@ export type UseSendMessageParams = Pick<
   'onlyAddUserMessage' | 'isWelcomeQuestion'
 >;
 
+export type UseSendGroupMessageParams = UseSendMessageParams & {
+  targetMemberId?: string;
+};
+
 export const useSendMessage = () => {
   const [sendMessage, updateInputMessage] = useChatStore((s) => [
     s.sendMessage,
@@ -99,7 +103,7 @@ export const useSendGroupMessage = () => {
   ]);
   const { analytics } = useAnalytics();
 
-  const send = useCallback((params: UseSendMessageParams = {}) => {
+  const send = useCallback((params: UseSendGroupMessageParams = {}) => {
     const store = useChatStore.getState();
     if (!store.activeId) return;
     const fileList = fileChatSelectors.chatUploadFileList(useFileStore.getState());
@@ -123,6 +127,7 @@ export const useSendGroupMessage = () => {
       files: fileList,
       groupId: store.activeId,
       message: messageWithMentions,
+      targetMemberId: params.targetMemberId,
       ...params,
     });
 

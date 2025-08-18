@@ -77,6 +77,8 @@ const Item = memo<ChatListItemProps>(
     const item = useChatStore(chatSelectors.getMessageById(id), isEqual);
     const transitionMode = useUserStore(userGeneralSettingsSelectors.transitionMode);
 
+    console.log("item", item);
+
     const [
       isMessageLoading,
       generating,
