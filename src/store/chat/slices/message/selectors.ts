@@ -230,15 +230,15 @@ const getThreadMessages = (agentId: string) => (s: ChatStoreState): ChatMessage[
   const allMessages = activeBaseChats(s);
 
   // Filter messages to only include:
-  // 1. User messages (role: 'user')
-  // 2. Assistant messages from the specific agent (role: 'assistant' && agentId matches)
+  // 1. User messages sent TO the specific agent (role: 'user' && targetId matches agentId)
+  // 2. Assistant messages FROM the specific agent sent TO user (role: 'assistant' && agentId matches && targetId is 'user')
   return allMessages.filter((message) => {
-    if (message.role === 'user') {
-      return true; // Include all user messages
+    if (message.role === 'user' && message.targetId === agentId) {
+      return true; // Include user messages sent to the specific agent
     }
 
-    if (message.role === 'assistant' && message.agentId === agentId) {
-      return true; // Include messages from the specific agent
+    if (message.role === 'assistant' && message.agentId === agentId && message.targetId === 'user') {
+      return true; // Include messages from the specific agent sent to user
     }
 
     return false; // Exclude all other messages

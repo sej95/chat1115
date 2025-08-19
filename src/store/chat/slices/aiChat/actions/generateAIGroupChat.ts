@@ -244,8 +244,6 @@ export const generateAIGroupChat: StateCreator<
         ...((agents || []).map((agent) => ({ id: agent.id || '', title: agent.title || '' })))
       ];
 
-      console.log("AGENT TITLE MAP", agentTitleMap);
-
       const baseSystemRole = agentData.systemRole || '';
       const members: GroupMemberInfo[] = agentTitleMap as GroupMemberInfo[];
       const groupChatSystemPrompt = buildGroupChatSystemPrompt({

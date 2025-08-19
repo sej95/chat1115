@@ -31,18 +31,29 @@ ${messages.map((m) => chatMessage(m)).join('\n')}
  * - Agent sees all group messages (no targetId)
  * - Agent sees DMs where they are the target
  * - Agent sees DMs they sent
- * - Agent sees all user messages (user can always communicate with any agent)
+ * - Agent sees user messages that are group messages or targeted to them
  */
 export const filterMessagesForAgent = (messages: ChatMessage[], agentId: string): ChatMessage[] => {
   return messages.filter(message => {
-    // Always include user messages (users can communicate with any agent)
-    if (message.role === 'user') {
-      return true;
-    }
-
     // Always include system messages
     if (message.role === 'system') {
       return true;
+    }
+
+    // For user messages, check DM targeting rules
+    if (message.role === 'user') {
+      // If no target specified, it's a group message - include it
+      if (!message.targetId) {
+        return true;
+      }
+
+      // If the message is targeted to this agent, include it
+      if (message.targetId === agentId) {
+        return true;
+      }
+
+      // Otherwise, it's a DM to another agent - exclude it
+      return false;
     }
 
     // For assistant messages, check DM targeting rules

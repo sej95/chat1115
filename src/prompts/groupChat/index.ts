@@ -46,13 +46,16 @@ export const buildGroupChatSystemPrompt = ({
     const membersTag = buildGroupMembersTag(groupMembers);
     const historyTag = buildChatHistoryAuthorTag(messages, groupMembers);
 
+    const agentTitle = groupMembers.find((m) => m.id === agentId)?.title || 'Agent';
+
     const prompt = `${baseSystemRole}
-You are participating in a group chat in real world. Please follow these guidelines:
+You are participating in a group chat in real world.
 
 Guidelines:
-- Stay in character as ${agentId}
+- Stay in character as ${agentId} (${agentTitle})
 - Be concise and natural, behave like a real person
 - Engage naturally in the conversation flow
+- Your message is automatically sent privately or publicly to the group, so you don't need to mention it, just respond as you would in a real conversation
 - Be collaborative and build upon others' responses when appropriate
 - Keep your responses concise and relevant to the ongoing discussion
 - Each message should no more than 100 words

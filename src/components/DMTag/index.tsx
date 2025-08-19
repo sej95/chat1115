@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Flexbox } from 'react-layout-kit';
 
 import { DEFAULT_INBOX_AVATAR } from '@/const/meta';
+import { useChatGroupStore } from '@/store/chatGroup';
 import { useSessionStore } from '@/store/session';
 import { sessionMetaSelectors } from '@/store/session/selectors';
 import { Lock } from 'lucide-react';
@@ -23,6 +24,7 @@ export interface DMTagProps {
 const DMTag = memo<DMTagProps>(({ senderId, targetId }) => {
     const { t } = useTranslation('chat');
     const theme = useTheme();
+    const toggleThread = useChatGroupStore((s) => s.toggleThread);
 
     const targetInfo = useSessionStore((s) => {
         if (!targetId) return null;
@@ -47,6 +49,15 @@ const DMTag = memo<DMTagProps>(({ senderId, targetId }) => {
 
     // Check if message involves user (either sent by user or sent to user)
     const involvesUser = senderId === 'user' || targetId === 'user';
+
+    // Handler for opening thread panel
+    const handleOpenThread = () => {
+        // Open thread with the non-user participant
+        const agentId = senderId === 'user' ? targetId : senderId;
+        if (agentId && agentId !== 'user') {
+            toggleThread(agentId);
+        }
+    };
 
     return (
         <Flexbox
@@ -88,7 +99,12 @@ const DMTag = memo<DMTagProps>(({ senderId, targetId }) => {
             </Flexbox>
 
             <Flexbox align="center" gap={6} horizontal>
-                <Button size="small" style={{ color: theme.colorSuccess }} type="primary">
+                <Button 
+                    onClick={handleOpenThread}
+                    size="small" 
+                    style={{ color: theme.colorSuccess }} 
+                    type="primary"
+                >
                     {involvesUser ? 'Open in Thread' : 'Reveal'}
                 </Button>
             </Flexbox>
