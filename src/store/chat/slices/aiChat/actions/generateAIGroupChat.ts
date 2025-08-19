@@ -10,6 +10,8 @@ import { ChatStore } from '@/store/chat/store';
 import { messageMapKey } from '@/store/chat/utils/messageMapKey';
 import { useSessionStore } from '@/store/session';
 import { sessionSelectors } from '@/store/session/selectors';
+import { agentSelectors } from '@/store/agent/selectors';
+import { getAgentStoreState } from '@/store/agent/store';
 import { ChatMessage, CreateMessageParams, SendGroupMessageParams } from '@/types/message';
 import { setNamespace } from '@/utils/storeDebug';
 import { chatGroupSelectors } from '@/store/chatGroup/selectors';
@@ -31,16 +33,16 @@ const supervisor = new GroupChatSupervisor();
 const getDebounceThreshold = (responseSpeed?: 'slow' | 'medium' | 'fast'): number => {
   switch (responseSpeed) {
     case 'fast': {
-      return 1000;
+      return 3000; // Increased from 1000ms to prevent rushing
     }
     case 'medium': {
-      return 2000;
+      return 5000; // Increased from 2000ms 
     }
     case 'slow': {
-      return 5000;
+      return 8000; // Increased from 5000ms
     }
     default: {
-      return 3000;
+      return 5000; // Increased from 3000ms
     }
   }
 };
@@ -186,7 +188,7 @@ export const generateAIGroupChat: StateCreator<
   },
 
   internal_executeAgentResponses: async (groupId: string, decisions: SupervisorDecisionList) => {
-    const { internal_processAgentMessage } = get();
+    const { internal_processAgentMessage, internal_triggerSupervisorDecisionDebounced } = get();
 
     const responsePromises = decisions.map((decision) =>
       internal_processAgentMessage(groupId, decision.id, decision.target),
@@ -194,6 +196,12 @@ export const generateAIGroupChat: StateCreator<
 
     try {
       await Promise.all(responsePromises);
+      
+      // Only trigger next supervisor decision after ALL agents have completed their responses
+      // This prevents rapid-fire agent responses and gives time for conversation to settle
+      if (decisions.length > 0) {
+        internal_triggerSupervisorDecisionDebounced(groupId);
+      }
     } catch (error) {
       console.error('Failed to execute agent responses:', error);
     }
@@ -234,6 +242,10 @@ export const generateAIGroupChat: StateCreator<
         console.error(`No provider or model configured for agent ${agentId}`);
         return;
       }
+
+      // Get the individual agent's full configuration including temperature, top_p, etc.
+      const agentStoreState = getAgentStoreState();
+      const agentConfig = agentSelectors.getAgentConfigById(agentId)(agentStoreState);
 
       // Get real user name from user store
       const userStoreState = getUserStoreState();
@@ -286,14 +298,18 @@ export const generateAIGroupChat: StateCreator<
           provider: agentProvider,
           params: {
             traceId: `group-${groupId}-agent-${agentId}`,
+            // Include the agent's individual configuration parameters
+            // This ensures each agent uses their own temperature, top_p, max_tokens, etc.
+            agentConfig,
           },
         });
       }
 
       await refreshMessages();
 
-      // After successful agent response, trigger debounced supervisor decision
-      get().internal_triggerSupervisorDecisionDebounced(groupId);
+      // Don't trigger supervisor decision after individual agent responses
+      // This prevents infinite loops of agent responses
+      // Supervisor decisions should only be triggered after user messages or when all agents complete
 
     } catch (error) {
       console.error(`Failed to process message for agent ${agentId}:`, error);
