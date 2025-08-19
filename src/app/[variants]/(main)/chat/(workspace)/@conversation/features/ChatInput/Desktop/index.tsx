@@ -37,7 +37,7 @@ interface DesktopProps {
 const Desktop = memo<DesktopProps>(({ targetMemberId }) => {
   const renderTextArea = (onSend: () => void) => <TextArea onSend={onSend} targetMemberId={targetMemberId} />;
   const renderFooter: FooterRender = ({ expand, onExpandChange }) => (
-    <Footer expand={expand} onExpandChange={onExpandChange} inThread={!!targetMemberId} />
+    <Footer expand={expand} inThread={!!targetMemberId} onExpandChange={onExpandChange} />
   );
   const [inputHeight, updatePreference] = useGlobalStore((s) => [
     systemStatusSelectors.inputHeight(s),
@@ -48,6 +48,7 @@ const Desktop = memo<DesktopProps>(({ targetMemberId }) => {
 
   return (
     <DesktopChatInput
+      inThread={!!targetMemberId}
       inputHeight={inputHeight}
       leftActions={isGroupSession ? leftActionsForGroup : leftActions}
       onInputHeightChange={(height) => {
@@ -56,7 +57,6 @@ const Desktop = memo<DesktopProps>(({ targetMemberId }) => {
       renderFooter={renderFooter}
       renderTextArea={renderTextArea}
       rightActions={targetMemberId ? [] : rightActions}
-      inThread={!!targetMemberId}
     />
   );
 });
