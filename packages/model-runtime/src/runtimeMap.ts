@@ -10,7 +10,7 @@ import { LobeBedrockAI } from './bedrock';
 import { LobeBflAI } from './bfl';
 import { LobeCloudflareAI } from './cloudflare';
 import { LobeCohereAI } from './cohere';
-import { LobeComfyUIAI } from './comfyui';
+import { LobeComfyUI } from './comfyui';
 import { LobeDeepSeekAI } from './deepseek';
 import { LobeFalAI } from './fal';
 import { LobeFireworksAI } from './fireworksai';
@@ -70,7 +70,7 @@ export const providerRuntimeMap = {
   bfl: LobeBflAI,
   cloudflare: LobeCloudflareAI,
   cohere: LobeCohereAI,
-  comfyui: LobeComfyUIAI,
+  comfyui: LobeComfyUI,
   deepseek: LobeDeepSeekAI,
   fal: LobeFalAI,
   fireworksai: LobeFireworksAI,
