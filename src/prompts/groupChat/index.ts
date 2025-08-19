@@ -73,4 +73,51 @@ export const groupChatPrompts = {
     buildGroupChatSystemPrompt,
 };
 
+export const filterMessagesForAgent = (messages: ChatMessage[], agentId: string): ChatMessage[] => {
+    return messages.filter(message => {
+        // Always include system messages
+        if (message.role === 'system') {
+            return true;
+        }
 
+        // For user messages, check DM targeting rules
+        if (message.role === 'user') {
+            // If no target specified, it's a group message - include it
+            if (!message.targetId) {
+                return true;
+            }
+
+            // If the message is targeted to this agent, include it
+            if (message.targetId === agentId) {
+                return true;
+            }
+
+            // Otherwise, it's a DM to another agent - exclude it
+            return false;
+        }
+
+        // For assistant messages, check DM targeting rules
+        if (message.role === 'assistant') {
+            // If no target specified, it's a group message - include it
+            if (!message.targetId) {
+                return true;
+            }
+
+            // If the agent is the target of the DM, include it
+            if (message.targetId === agentId) {
+                return true;
+            }
+
+            // If the agent sent the message, include it
+            if (message.agentId === agentId) {
+                return true;
+            }
+
+            // Otherwise, it's a DM not involving this agent - exclude it
+            return false;
+        }
+
+        // Default: include the message
+        return true;
+    });
+};

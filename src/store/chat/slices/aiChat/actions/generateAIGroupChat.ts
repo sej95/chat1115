@@ -19,8 +19,7 @@ import { getUserStoreState } from '@/store/user/store';
 import { userProfileSelectors } from '@/store/user/selectors';
 
 import { GroupChatSupervisor, SupervisorContext, SupervisorDecisionList } from '../../message/supervisor';
-import { buildGroupChatSystemPrompt, GroupMemberInfo } from '@/prompts/groupChat';
-import { filterMessagesForAgent } from '@/prompts/chatMessages';
+import { buildGroupChatSystemPrompt, GroupMemberInfo, filterMessagesForAgent } from '@/prompts/groupChat';
 
 import { toggleBooleanList } from '../../../utils';
 import type { ChatStoreState } from '../../../initialState';

@@ -1,3 +1,5 @@
+import { UploadFileItem } from '../files';
+
 export * from './base';
 export * from './chat';
 export * from './image';
