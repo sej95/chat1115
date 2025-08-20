@@ -14,7 +14,7 @@ import {
 import { createInsertSchema } from 'drizzle-zod';
 
 import { idGenerator } from '@/database/utils/idGenerator';
-import { FileSource } from '@lobechat/types';
+import { FileSource } from '@/types/files';
 
 import { accessedAt, createdAt, timestamps } from './_helpers';
 import { asyncTasks } from './asyncTask';
