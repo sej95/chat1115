@@ -187,6 +187,8 @@ export default {
 
   newAgent: '新建助手',
 
+  newGroupChat: '新建群聊',
+
   noAgentsYet: '此群组还没有助手。点击 + 按钮邀请助手。',
 
   noAvailableAgents: '没有可邀请的助手',

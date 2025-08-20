@@ -11,6 +11,11 @@ export default {
     prompt: '角色设定',
     tts: '语音服务',
   },
+  groupTab: {
+    chat: '群聊',
+    members: '成员',
+    meta: '群聊信息',
+  },
   analytics: {
     telemetry: {
       desc: '通过选择发送遥测数据，你可以帮助我们改善 {{appName}} 整体用户体验',

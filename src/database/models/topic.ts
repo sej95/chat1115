@@ -25,6 +25,7 @@ interface QueryTopicParams {
   containerId?: string | null; // sessionId or groupId
   current?: number;
   pageSize?: number;
+  sessionId?: string | null;
 }
 
 export class TopicModel {

@@ -8,7 +8,6 @@ import {
   ChatTranslate,
   CreateMessageParams,
   MessageItem,
-  ModelRankItem,
   UpdateMessageParams,
 } from '@/types/message';
 
