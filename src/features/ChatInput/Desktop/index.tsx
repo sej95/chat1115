@@ -8,8 +8,8 @@ import { CHAT_TEXTAREA_HEIGHT, CHAT_TEXTAREA_MAX_HEIGHT } from '@/const/layoutTo
 
 import { ActionKeys } from '../ActionBar/config';
 import LocalFiles from './FilePreview';
-import MentionedUsers from './MentionedUsers';
 import Head from './Header';
+import MentionedUsers from './MentionedUsers';
 
 export type FooterRender = (params: {
   expand: boolean;
@@ -18,12 +18,12 @@ export type FooterRender = (params: {
 
 interface DesktopChatInputProps {
   inputHeight: number;
+  inThread?: boolean;
   leftActions: ActionKeys[];
   onInputHeightChange?: (height: number) => void;
   renderFooter: FooterRender;
   renderTextArea: (onSend: () => void) => ReactNode;
   rightActions: ActionKeys[];
-  inThread?: boolean;
 }
 
 const DesktopChatInput = memo<DesktopChatInputProps>(
