@@ -35,7 +35,9 @@ interface DesktopProps {
 }
 
 const Desktop = memo<DesktopProps>(({ targetMemberId }) => {
-  const renderTextArea = (onSend: () => void) => <TextArea onSend={onSend} targetMemberId={targetMemberId} />;
+  const renderTextArea = (onSend: () => void) => (
+    <TextArea onSend={onSend} targetMemberId={targetMemberId} />
+  );
   const renderFooter: FooterRender = ({ expand, onExpandChange }) => (
     <Footer expand={expand} inThread={!!targetMemberId} onExpandChange={onExpandChange} />
   );
@@ -48,8 +50,8 @@ const Desktop = memo<DesktopProps>(({ targetMemberId }) => {
 
   return (
     <DesktopChatInput
-      inThread={!!targetMemberId}
       inputHeight={inputHeight}
+      inThread={!!targetMemberId}
       leftActions={isGroupSession ? leftActionsForGroup : leftActions}
       onInputHeightChange={(height) => {
         updatePreference({ inputHeight: height });
