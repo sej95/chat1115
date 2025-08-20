@@ -16,7 +16,6 @@ import { chatGroupSelectors } from '@/store/chatGroup/selectors';
 import { GroupSettingsTabs } from '@/store/global/initialState';
 import { useSessionStore } from '@/store/session';
 import Footer from '@/features/Setting/Footer';
-import { sessionMetaSelectors } from '@/store/session/selectors';
 import { useInitGroupConfig } from '@/hooks/useInitGroupConfig';
 
 // Counterpart: src/app/[variants]/(main)/chat/(workspace)/features/AgentSettings/index.tsx

@@ -8,7 +8,6 @@ import { template } from 'lodash-es';
 import { StateCreator } from 'zustand/vanilla';
 
 import { LOADING_FLAT, MESSAGE_CANCEL_FLAT } from '@/const/message';
-
 import { isDesktop, isServerMode } from '@/const/version';
 import { chatService } from '@/services/chat';
 import { messageService } from '@/services/message';
@@ -29,7 +28,6 @@ import { MessageSemanticSearchChunk } from '@/types/rag';
 import { Action, setNamespace } from '@/utils/storeDebug';
 
 import { chatSelectors, topicSelectors } from '../../../selectors';
-
 import { AIGroupChatAction, generateAIGroupChat } from './generateAIGroupChat';
 
 const n = setNamespace('ai');
@@ -316,7 +314,8 @@ export const generateAIChat: StateCreator<
 
     // the internal process method of the AI message
     internal_coreProcessMessage: async (originalMessages, userMessageId, params) => {
-      const { internal_fetchAIChatMessage, triggerToolCalls, refreshMessages, activeTopicId } = get();
+      const { internal_fetchAIChatMessage, triggerToolCalls, refreshMessages, activeTopicId } =
+        get();
 
       // create a new array to avoid the original messages array change
       const messages = [...originalMessages];
@@ -368,8 +367,7 @@ export const generateAIChat: StateCreator<
         agentId: params?.agentId,
         parentId: userMessageId,
         // TODO: [Group Chat] Better implementation for group chat
-        sessionId: params?.groupId ? undefined : get().activeId,
-        groupId: params?.groupId,
+        sessionId: get().activeId,
         topicId: activeTopicId, // if there is activeTopicId，then add it to topicId
         threadId: params?.threadId,
         fileChunks,
@@ -543,7 +541,7 @@ export const generateAIChat: StateCreator<
         internal_toggleChatReasoning,
       } = get();
 
-      console.log("internal_fetchAIChatMessage", { messages, messageId, params, provider, model });
+      console.log('internal_fetchAIChatMessage', { messages, messageId, params, provider, model });
 
       const abortController = internal_toggleChatLoading(
         true,
@@ -552,7 +550,8 @@ export const generateAIChat: StateCreator<
       );
 
       // Use passed agent config for group chat, or current agent config for single chat
-      const agentConfig = params?.agentConfig || agentSelectors.currentAgentConfig(getAgentStoreState());
+      const agentConfig =
+        params?.agentConfig || agentSelectors.currentAgentConfig(getAgentStoreState());
       const chatConfig = agentChatConfigSelectors.currentChatConfig(getAgentStoreState());
 
       const compiler = template(chatConfig.inputTemplate, {
@@ -577,18 +576,18 @@ export const generateAIChat: StateCreator<
       preprocessMsgs = !chatConfig.inputTemplate
         ? preprocessMsgs
         : preprocessMsgs.map((m) => {
-          if (m.role === 'user') {
-            try {
-              return { ...m, content: compiler({ text: m.content }) };
-            } catch (error) {
-              console.error(error);
+            if (m.role === 'user') {
+              try {
+                return { ...m, content: compiler({ text: m.content }) };
+              } catch (error) {
+                console.error(error);
 
-              return m;
+                return m;
+              }
             }
-          }
 
-          return m;
-        });
+            return m;
+          });
 
       // 3. add systemRole
       if (agentConfig.systemRole) {
@@ -614,7 +613,7 @@ export const generateAIChat: StateCreator<
       // to upload image
       const uploadTasks: Map<string, Promise<{ id?: string; url?: string }>> = new Map();
 
-      console.log("internal_fetchAIChatMessage", { preprocessMsgs, model, provider, agentConfig });
+      console.log('internal_fetchAIChatMessage', { preprocessMsgs, model, provider, agentConfig });
 
       const historySummary = chatConfig.enableCompressHistory
         ? topicSelectors.currentActiveTopicSummary(get())
@@ -644,7 +643,16 @@ export const generateAIChat: StateCreator<
           content,
           { traceId, observationId, toolCalls, reasoning, grounding, usage, speed },
         ) => {
-          console.log("internal_fetchAIChatMessage: onFinish", { content, traceId, observationId, toolCalls, reasoning, grounding, usage, speed });
+          console.log('internal_fetchAIChatMessage: onFinish', {
+            content,
+            traceId,
+            observationId,
+            toolCalls,
+            reasoning,
+            grounding,
+            usage,
+            speed,
+          });
           // if there is traceId, update it
           if (traceId) {
             msgTraceId = traceId;

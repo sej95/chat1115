@@ -47,8 +47,8 @@ const useStyles = createStyles(({ css, prefixCls, token }) => {
 
 interface FooterProps {
   expand: boolean;
-  onExpandChange: (expand: boolean) => void;
   inThread?: boolean;
+  onExpandChange: (expand: boolean) => void;
 }
 
 const Footer = memo<FooterProps>(({ onExpandChange, expand, inThread }) => {
@@ -120,7 +120,5 @@ const Footer = memo<FooterProps>(({ onExpandChange, expand, inThread }) => {
     </>
   );
 });
-
-Footer.displayName = 'Footer';
 
 export default Footer;
