@@ -24,7 +24,7 @@ const GroupChatSettings = memo(() => {
   const { t } = useTranslation('setting');
   const id = useSessionStore((s) => s.activeId);
   const config = useChatGroupStore(chatGroupSelectors.currentGroupConfig, isEqual);
-  const meta = useSessionStore(sessionMetaSelectors.currentGroupMeta, isEqual);
+  const meta = useChatGroupStore(chatGroupSelectors.currentGroupMeta, isEqual);
   const { isLoading } = useInitGroupConfig();
 
   const [showGroupSetting, updateGroupConfig, updateGroupMeta] = useChatGroupStore((s) => [s.showGroupSetting, s.updateGroupConfig, s.updateGroupMeta]);

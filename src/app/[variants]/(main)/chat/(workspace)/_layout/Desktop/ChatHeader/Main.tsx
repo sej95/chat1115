@@ -20,6 +20,7 @@ import Tags from './Tags';
 import { useUserStore } from '@/store/user';
 import { userProfileSelectors } from '@/store/user/selectors';
 import { DEFAULT_AVATAR } from '@/const/meta';
+import { ChatGroupAgentItem } from '@/database/schemas/chatGroup';
 
 const useStyles = createStyles(({ css }) => ({
   container: css`
@@ -58,7 +59,7 @@ const Main = memo<{ className?: string }>(({ className }) => {
       sessionMetaSelectors.currentAgentTitle(s),
       sessionMetaSelectors.currentAgentAvatar(s),
       sessionMetaSelectors.currentAgentBackgroundColor(s),
-      session?.members,
+      session?.type === 'group' ? session.members : undefined,
       session?.type,
     ];
   });
@@ -97,9 +98,9 @@ const Main = memo<{ className?: string }>(({ className }) => {
             {
               avatar: currentUser.avatar,
             },
-            ...(members?.map((member) => ({
+            ...(members?.map((member: ChatGroupAgentItem) => ({
               avatar: member.avatar || DEFAULT_AVATAR,
-              background: member.backgroundColor,
+              background: member.backgroundColor || undefined,
             })) || []),
           ]}
           onClick={() => openChatSettings()}

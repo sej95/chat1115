@@ -1,9 +1,6 @@
+import { ChatGroupAgentItem, ChatGroupItem, NewChatGroup } from '@/database/schemas/chatGroup';
 import { lambdaClient } from '@/libs/trpc/client';
-import {
-  ChatGroupAgentItem,
-  ChatGroupItem,
-  NewChatGroup,
-} from '@/database/schemas/chatGroup';
+
 import { IChatGroupService } from './type';
 
 export class ServerService implements IChatGroupService {
@@ -12,19 +9,12 @@ export class ServerService implements IChatGroupService {
     return lambdaClient.group.createGroup.mutate(params);
   }
 
-  updateGroup(
-    id: string,
-    value: Partial<ChatGroupItem>,
-  ): Promise<ChatGroupItem> {
+  updateGroup(id: string, value: Partial<ChatGroupItem>): Promise<ChatGroupItem> {
     return lambdaClient.group.updateGroup.mutate({ id, value });
   }
 
   deleteGroup(id: string): Promise<any> {
     return lambdaClient.group.deleteGroup.mutate({ id });
-  }
-
-  deleteAllGroups(): Promise<any> {
-    return lambdaClient.group.deleteAllGroups.mutate();
   }
 
   getGroup(id: string): Promise<ChatGroupItem | undefined> {
@@ -35,10 +25,7 @@ export class ServerService implements IChatGroupService {
     return lambdaClient.group.getGroups.query();
   }
 
-  addAgentsToGroup(
-    groupId: string,
-    agentIds: string[],
-  ): Promise<ChatGroupAgentItem[]> {
+  addAgentsToGroup(groupId: string, agentIds: string[]): Promise<ChatGroupAgentItem[]> {
     return lambdaClient.group.addAgentsToGroup.mutate({ agentIds, groupId });
   }
 

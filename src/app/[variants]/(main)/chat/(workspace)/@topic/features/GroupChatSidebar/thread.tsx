@@ -59,7 +59,7 @@ const GroupChatThread = memo(() => {
         />
         <Avatar
           avatar={agentAvatar || undefined}
-          background={agentBackgroundColor}
+          background={agentBackgroundColor || undefined}
           size={24}
         />
         <div className={styles.headerTitle}>

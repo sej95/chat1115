@@ -11,7 +11,7 @@ import { Flexbox } from 'react-layout-kit';
 
 import { useActionSWR } from '@/libs/swr';
 import { useSessionStore } from '@/store/session';
-import { LobeAgentSession, LobeSessionType } from 'packages/types/src/session';
+import { LobeAgentSession, LobeSessionType } from '@/types/session';
 import { DEFAULT_AVATAR } from '@/const/meta';
 
 const { Text } = Typography;

@@ -331,7 +331,7 @@ export const fetchSSE = async (url: string, options: RequestInit & FetchSSEOptio
 
   // 添加文本buffer和计时器相关变量
   let textBuffer = '';
-  let bufferTimer: number | null = null;
+  let bufferTimer: ReturnType<typeof setTimeout> | null = null;
   const BUFFER_INTERVAL = 300; // 300ms
 
   const flushTextBuffer = () => {
@@ -362,7 +362,7 @@ export const fetchSSE = async (url: string, options: RequestInit & FetchSSEOptio
   });
 
   let thinkingBuffer = '';
-  let thinkingBufferTimer: number | null = null;
+  let thinkingBufferTimer: ReturnType<typeof setTimeout> | null = null;
 
   // 创建一个函数来处理buffer的刷新
   const flushThinkingBuffer = () => {

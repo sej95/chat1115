@@ -8,8 +8,8 @@ import {
   genWhere,
 } from '@/database/utils/genWhere';
 import { idGenerator } from '@/database/utils/idGenerator';
-import { MessageItem } from 'packages/types/src/message';
-import { TopicRankItem } from 'packages/types/src/topic';
+import { MessageItem } from '@/types/message';
+import { TopicRankItem } from '@/types/topic';
 
 import { TopicItem, messages, topics } from '../schemas';
 

@@ -2,6 +2,7 @@ import type { PartialDeep } from 'type-fest';
 import { StateCreator } from 'zustand/vanilla';
 
 import { setNamespace } from '@/utils/storeDebug';
+import { DEFAULT_CHAT_GROUP_CHAT_CONFIG, DEFAULT_CHAT_GROUP_META_CONFIG } from '@/const/settings';
 
 import { LoadingState, State, initialState } from './initialState';
 import { LobeChatGroupConfig, LobeChatGroupMetaConfig } from '@/types/chatGroup';
@@ -47,7 +48,7 @@ export const store: StateCreator<Store, [['zustand/devtools', never]]> = (set, g
   resetGroupConfig: async () => {
     const { onConfigChange } = get();
 
-    const defaultConfig = {};
+    const defaultConfig = DEFAULT_CHAT_GROUP_CHAT_CONFIG;
 
     await onConfigChange?.(defaultConfig);
     set({ config: defaultConfig }, false, t('resetGroupConfig'));
@@ -56,7 +57,7 @@ export const store: StateCreator<Store, [['zustand/devtools', never]]> = (set, g
   resetGroupMeta: async () => {
     const { onMetaChange } = get();
 
-    const defaultMeta = {};
+    const defaultMeta = DEFAULT_CHAT_GROUP_META_CONFIG;
 
     await onMetaChange?.(defaultMeta);
     set({ meta: defaultMeta }, false, t('resetGroupMeta'));
@@ -64,10 +65,8 @@ export const store: StateCreator<Store, [['zustand/devtools', never]]> = (set, g
 
   setGroupConfig: async (config) => {
     const { onConfigChange } = get();
-    const currentConfig = get().config || {};
+    const currentConfig = get().config || DEFAULT_CHAT_GROUP_CHAT_CONFIG;
     const newConfig = { ...currentConfig, ...config };
-
-    console.log('newConfig', newConfig);
 
     await onConfigChange?.(newConfig);
     set({ config: newConfig }, false, t('setGroupConfig'));
@@ -75,7 +74,7 @@ export const store: StateCreator<Store, [['zustand/devtools', never]]> = (set, g
 
   setGroupMeta: async (meta) => {
     const { onMetaChange } = get();
-    const currentMeta = get().meta || {};
+    const currentMeta = get().meta || DEFAULT_CHAT_GROUP_META_CONFIG;
     const newMeta = { ...currentMeta, ...meta };
 
     await onMetaChange?.(newMeta);

@@ -4,10 +4,10 @@ import { isDev } from '@/utils/env';
 
 export const chatGroupDevtools = (name: string) =>
   devtools<any, any, any, any>(
-    (store) => (...a) => {
+    (store) => (...a: any[]) => {
       const res = store(...a);
 
-      if (isDev && res.internal_dispatchChatGroup) {
+      if (isDev && res && typeof res === 'object' && 'internal_dispatchChatGroup' in res) {
         // @ts-ignore
         window.dispatchChatGroup = res.internal_dispatchChatGroup;
       }

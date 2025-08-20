@@ -4,7 +4,8 @@ import { useSessionStore } from '@/store/session';
 import { sessionSelectors } from '@/store/session/selectors';
 import { ChatGroupState } from './initialState';
 import { ChatGroupStore } from './store';
-import { DEFAULT_CHAT_GROUP_CHAT_CONFIG } from '@/const/settings';
+import { DEFAULT_CHAT_GROUP_CHAT_CONFIG, DEFAULT_CHAT_GROUP_META_CONFIG } from '@/const/settings';
+import { merge } from '@/utils/merge';
 
 const getGroupById = (id: string) => (s: ChatGroupState): ChatGroupItem | undefined =>
   s.groupMap[id];
@@ -43,12 +44,25 @@ const allGroups = (s: ChatStoreState): ChatGroupItem[] =>
 
 const groupsInitialized = (s: ChatStoreState): boolean => s.groupsInit;
 
-const getGroupConfig = (groupId: string) => (s: ChatGroupStore) =>
-  s.groupMap?.[groupId]?.config || DEFAULT_CHAT_GROUP_CHAT_CONFIG;
+const getGroupConfig = (groupId: string) => (s: ChatGroupStore) => {
+  const groupConfig = s.groupMap?.[groupId]?.config;
+  return merge(DEFAULT_CHAT_GROUP_CHAT_CONFIG, groupConfig || {});
+};
 
 const currentGroupConfig = (s: ChatGroupStore) => {
   const groupId = activeGroupId();
   return groupId ? getGroupConfig(groupId)(s) : DEFAULT_CHAT_GROUP_CHAT_CONFIG;
+};
+
+const currentGroupMeta = (s: ChatGroupStore) => {
+  const groupId = activeGroupId();
+  if (!groupId) return DEFAULT_CHAT_GROUP_META_CONFIG;
+  
+  const group = s.groupMap?.[groupId];
+  return merge(DEFAULT_CHAT_GROUP_META_CONFIG, {
+    title: group?.title || '',
+    description: group?.description || '',
+  });
 };
 
 
@@ -58,6 +72,7 @@ export const chatGroupSelectors = {
   allGroups,
   currentGroup,
   currentGroupConfig,
+  currentGroupMeta,
   getAllGroups,
   getGroupById,
   getGroupByIdFromChatStore,

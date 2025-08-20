@@ -18,7 +18,7 @@ import { MemberSelectionModal } from '@/components/MemberSelectionModal';
 import AgentSettings from '../../../features/AgentSettings';
 
 import TopicListContent from '../TopicListContent';
-import { LobeGroupSession } from 'packages/types/src/session';
+import { LobeGroupSession } from '@/types/session';
 import Header from '../Header';
 import { DEFAULT_AVATAR } from '@/const/meta';
 import { useTranslation } from 'react-i18next';

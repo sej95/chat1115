@@ -18,8 +18,8 @@ import { CreateTopicParams } from '@/services/topic/type';
 import type { ChatStore } from '@/store/chat';
 import { useUserStore } from '@/store/user';
 import { systemAgentSelectors } from '@/store/user/selectors';
-import { ChatMessage } from 'packages/types/src/message';
-import { ChatTopic } from 'packages/types/src/topic';
+import { ChatMessage } from '@/types/message';
+import { ChatTopic } from '@/types/topic';
 import { merge } from '@/utils/merge';
 import { setNamespace } from '@/utils/storeDebug';
 
