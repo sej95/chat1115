@@ -11,7 +11,7 @@ import { sessionSelectors } from '@/store/session/selectors';
 import MentionedUserItem from './MentionedUserItem';
 
 const useStyles = createStyles(({ css, token }) => ({
-    container: css`
+  container: css`
     overflow-x: scroll;
     width: 100%;
     border-start-start-radius: 8px;
@@ -21,34 +21,32 @@ const useStyles = createStyles(({ css, token }) => ({
 }));
 
 const MentionedUsers = memo(() => {
-    const { styles } = useStyles();
+  const { styles } = useStyles();
 
-    const currentSession = useSessionStore(sessionSelectors.currentSession);
-    const mentionedUsers = useMentionStore(mentionSelectors.mentionedUsers);
-    const hasMentionedUsers = useMentionStore(mentionSelectors.hasMentionedUsers);
+  const currentSession = useSessionStore(sessionSelectors.currentSession);
+  const mentionedUsers = useMentionStore(mentionSelectors.mentionedUsers);
+  const hasMentionedUsers = useMentionStore(mentionSelectors.hasMentionedUsers);
 
-    console.log("MENTIONED USERS", mentionedUsers);
+  if (currentSession?.type !== 'group' || !hasMentionedUsers) return null;
 
-    if (currentSession?.type !== 'group' || !hasMentionedUsers) return null;
+  const mentionedAgents = currentSession.members?.filter(
+    (agent) => agent.id && mentionedUsers.includes(agent.id),
+  );
 
-    const mentionedAgents = currentSession.members?.filter(agent =>
-        mentionedUsers.includes(agent.id)
-    );
+  if (mentionedAgents?.length === 0) return null;
 
-    if (mentionedAgents?.length === 0) return null;
-
-    return (
-        <Flexbox
-            className={styles.container}
-            gap={6}
-            horizontal
-            padding={hasMentionedUsers ? '16px 16px 12px' : 0}
-        >
-            {mentionedAgents?.map((agent) => (
-                <MentionedUserItem agent={agent} key={agent.id} />
-            ))}
-        </Flexbox>
-    );
+  return (
+    <Flexbox
+      className={styles.container}
+      gap={6}
+      horizontal
+      padding={hasMentionedUsers ? '16px 16px 12px' : 0}
+    >
+      {mentionedAgents?.map((agent) => (
+        <MentionedUserItem agent={agent} key={agent.id} />
+      ))}
+    </Flexbox>
+  );
 });
 
 export default MentionedUsers;
