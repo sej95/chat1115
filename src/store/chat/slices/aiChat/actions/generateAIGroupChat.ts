@@ -4,26 +4,32 @@ import { produce } from 'immer';
 import { StateCreator } from 'zustand/vanilla';
 
 import { LOADING_FLAT } from '@/const/message';
-import { ChatErrorType } from '@/types/fetch';
-
-import { ChatStore } from '@/store/chat/store';
-import { messageMapKey } from '@/store/chat/utils/messageMapKey';
-import { useSessionStore } from '@/store/session';
-import { sessionSelectors } from '@/store/session/selectors';
+import {
+  GroupMemberInfo,
+  buildGroupChatSystemPrompt,
+  filterMessagesForAgent,
+} from '@/prompts/groupChat';
 import { agentSelectors } from '@/store/agent/selectors';
 import { getAgentStoreState } from '@/store/agent/store';
+import { ChatStore } from '@/store/chat/store';
+import { messageMapKey } from '@/store/chat/utils/messageMapKey';
+import { chatGroupSelectors } from '@/store/chatGroup/selectors';
+import { useChatGroupStore } from '@/store/chatGroup/store';
+import { useSessionStore } from '@/store/session';
+import { sessionSelectors } from '@/store/session/selectors';
+import { userProfileSelectors } from '@/store/user/selectors';
+import { getUserStoreState } from '@/store/user/store';
+import { ChatErrorType } from '@/types/fetch';
 import { ChatMessage, CreateMessageParams, SendGroupMessageParams } from '@/types/message';
 import { setNamespace } from '@/utils/storeDebug';
-import { chatGroupSelectors } from '@/store/chatGroup/selectors';
-import { getUserStoreState } from '@/store/user/store';
-import { userProfileSelectors } from '@/store/user/selectors';
 
-import { GroupChatSupervisor, SupervisorContext, SupervisorDecisionList } from '../../message/supervisor';
-import { buildGroupChatSystemPrompt, GroupMemberInfo, filterMessagesForAgent } from '@/prompts/groupChat';
-
-import { toggleBooleanList } from '../../../utils';
 import type { ChatStoreState } from '../../../initialState';
-import { useChatGroupStore } from '@/store/chatGroup/store';
+import { toggleBooleanList } from '../../../utils';
+import {
+  GroupChatSupervisor,
+  SupervisorContext,
+  SupervisorDecisionList,
+} from '../../message/supervisor';
 
 const n = setNamespace('aiGroupChat');
 
@@ -32,16 +38,16 @@ const supervisor = new GroupChatSupervisor();
 const getDebounceThreshold = (responseSpeed?: 'slow' | 'medium' | 'fast'): number => {
   switch (responseSpeed) {
     case 'fast': {
-      return 3000; // Increased from 1000ms to prevent rushing
+      return 3000;
     }
     case 'medium': {
-      return 5000; // Increased from 2000ms 
+      return 5000;
     }
     case 'slow': {
-      return 8000; // Increased from 5000ms
+      return 8000;
     }
     default: {
-      return 5000; // Increased from 3000ms
+      return 5000;
     }
   }
 };
@@ -79,12 +85,19 @@ export interface AIGroupChatAction {
   /**
    * Executes agent responses for group chat based on supervisor decisions
    */
-  internal_executeAgentResponses: (groupId: string, decisions: SupervisorDecisionList) => Promise<void>;
+  internal_executeAgentResponses: (
+    groupId: string,
+    decisions: SupervisorDecisionList,
+  ) => Promise<void>;
 
   /**
    * Processes a single agent message in group chat
    */
-  internal_processAgentMessage: (groupId: string, agentId: string, targetId?: string) => Promise<void>;
+  internal_processAgentMessage: (
+    groupId: string,
+    agentId: string,
+    targetId?: string,
+  ) => Promise<void>;
 
   /**
    * Sets the active group
@@ -104,7 +117,12 @@ export const generateAIGroupChat: StateCreator<
   AIGroupChatAction
 > = (set, get) => ({
   sendGroupMessage: async ({ groupId, message, files, onlyAddUserMessage, targetMemberId }) => {
-    const { internal_createMessage, internal_triggerSupervisorDecisionDebounced, internal_setActiveGroup, activeTopicId } = get();
+    const {
+      internal_createMessage,
+      internal_triggerSupervisorDecisionDebounced,
+      internal_setActiveGroup,
+      activeTopicId,
+    } = get();
 
     if (!message.trim() && (!files || files.length === 0)) return;
 
@@ -143,11 +161,7 @@ export const generateAIGroupChat: StateCreator<
   // ========= ↓ Group Chat Internal Methods ↓ ========== //
 
   internal_triggerSupervisorDecision: async (groupId: string) => {
-    const {
-      messagesMap,
-      internal_toggleSupervisorLoading,
-      activeTopicId,
-    } = get();
+    const { messagesMap, internal_toggleSupervisorLoading, activeTopicId } = get();
 
     const messages = messagesMap[messageMapKey(groupId, activeTopicId)] || [];
     const agents = sessionSelectors.currentGroupAgents(useSessionStore.getState());
@@ -195,7 +209,7 @@ export const generateAIGroupChat: StateCreator<
 
     try {
       await Promise.all(responsePromises);
-      
+
       // Only trigger next supervisor decision after ALL agents have completed their responses
       // This prevents rapid-fire agent responses and gives time for conversation to settle
       if (decisions.length > 0) {
@@ -227,7 +241,7 @@ export const generateAIGroupChat: StateCreator<
 
       // Get group agents and find the specific agent
       const agents = sessionSelectors.currentGroupAgents(useSessionStore.getState());
-      const agentData = agents?.find(agent => agent.id === agentId);
+      const agentData = agents?.find((agent) => agent.id === agentId);
 
       if (!agentData) {
         console.error(`Agent ${agentId} not found in group members`);
@@ -252,7 +266,7 @@ export const generateAIGroupChat: StateCreator<
 
       const agentTitleMap: GroupMemberInfo[] = [
         { id: 'user', title: realUserName },
-        ...((agents || []).map((agent) => ({ id: agent.id || '', title: agent.title || '' })))
+        ...(agents || []).map((agent) => ({ id: agent.id || '', title: agent.title || '' })),
       ];
 
       const baseSystemRole = agentData.systemRole || '';
@@ -287,7 +301,20 @@ export const generateAIGroupChat: StateCreator<
         meta: {},
       };
 
-      const messagesForAPI = [systemMessage, ...messages];
+      // Add author names to messages for better context
+      const messagesWithAuthors = messages.map((msg) => {
+        const authorInfo = agentTitleMap.find((member) => 
+          msg.role === 'user' ? member.id === 'user' : member.id === msg.agentId
+        );
+        const authorName = authorInfo?.title || (msg.role === 'user' ? realUserName : 'Unknown');
+        
+        return {
+          ...msg,
+          content: `<author_name_do_not_include_in_your_response>${authorName}</author_name_do_not_include_in_your_response>${msg.content}`,
+        };
+      });
+
+      const messagesForAPI = [systemMessage, ...messagesWithAuthors];
 
       if (assistantId) {
         await internal_fetchAIChatMessage({
@@ -309,16 +336,13 @@ export const generateAIGroupChat: StateCreator<
       // Don't trigger supervisor decision after individual agent responses
       // This prevents infinite loops of agent responses
       // Supervisor decisions should only be triggered after user messages or when all agents complete
-
     } catch (error) {
       console.error(`Failed to process message for agent ${agentId}:`, error);
 
       // Update error state if we have an assistant message
       const currentMessages = get().messagesMap[groupId] || [];
-      const errorMessage = currentMessages.find(m =>
-        m.role === 'assistant' &&
-        m.groupId === groupId &&
-        m.content === LOADING_FLAT
+      const errorMessage = currentMessages.find(
+        (m) => m.role === 'assistant' && m.groupId === groupId && m.content === LOADING_FLAT,
       );
 
       if (errorMessage) {
@@ -329,8 +353,8 @@ export const generateAIGroupChat: StateCreator<
             content: `Error: Failed to generate response. ${error instanceof Error ? error.message : 'Unknown error'}`,
             error: {
               type: ChatErrorType.CreateMessageError,
-              message: error instanceof Error ? error.message : 'Unknown error'
-            }
+              message: error instanceof Error ? error.message : 'Unknown error',
+            },
           },
         });
       }
@@ -361,7 +385,7 @@ export const generateAIGroupChat: StateCreator<
   internal_triggerSupervisorDecisionDebounced: (groupId: string) => {
     const { internal_cancelSupervisorDecision, internal_triggerSupervisorDecision } = get();
 
-    console.log("Supervisor decision debounced triggered for group", groupId);
+    console.log('Supervisor decision debounced triggered for group', groupId);
 
     internal_cancelSupervisorDecision(groupId);
 
@@ -369,7 +393,9 @@ export const generateAIGroupChat: StateCreator<
     const responseSpeed = groupConfig?.responseSpeed;
     const debounceThreshold = getDebounceThreshold(responseSpeed);
 
-    console.log(`Using debounce threshold: ${debounceThreshold}ms for responseSpeed: ${responseSpeed}`);
+    console.log(
+      `Using debounce threshold: ${debounceThreshold}ms for responseSpeed: ${responseSpeed}`,
+    );
 
     // Set a new timer with dynamic debounce based on group settings
     const timerId = setTimeout(async () => {
@@ -428,7 +454,7 @@ export const generateAIGroupChat: StateCreator<
       console.log('Cancelling all pending supervisor decisions for session change/cleanup');
 
       // Cancel all timers
-      groupIds.forEach(groupId => {
+      groupIds.forEach((groupId) => {
         const timer = supervisorDebounceTimers[groupId];
         if (timer) {
           clearTimeout(timer);
@@ -436,11 +462,7 @@ export const generateAIGroupChat: StateCreator<
       });
 
       // Clear all timers from state
-      set(
-        { supervisorDebounceTimers: {} },
-        false,
-        n('cancelAllSupervisorTimers'),
-      );
+      set({ supervisorDebounceTimers: {} }, false, n('cancelAllSupervisorTimers'));
     }
   },
 });

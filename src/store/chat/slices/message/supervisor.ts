@@ -1,7 +1,7 @@
 import { ChatMessage } from '@/types/message';
 import { ChatGroupAgentItem } from '@/database/schemas/chatGroup';
-import { groupSupervisorPrompts } from '@/prompts/chatMessages';
 import { chatService } from '@/services/chat';
+import { groupSupervisorPrompts } from 'packages/prompts/src';
 
 export interface SupervisorDecision {
   id: string; // agent ID who should respond
