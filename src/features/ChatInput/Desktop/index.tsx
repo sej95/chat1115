@@ -17,8 +17,8 @@ export type FooterRender = (params: {
 }) => ReactNode;
 
 interface DesktopChatInputProps {
-  inputHeight: number;
   inThread?: boolean;
+  inputHeight: number;
   leftActions: ActionKeys[];
   onInputHeightChange?: (height: number) => void;
   renderFooter: FooterRender;

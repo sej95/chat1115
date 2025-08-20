@@ -50,8 +50,8 @@ const Desktop = memo<DesktopProps>(({ targetMemberId }) => {
 
   return (
     <DesktopChatInput
-      inputHeight={inputHeight}
       inThread={!!targetMemberId}
+      inputHeight={inputHeight}
       leftActions={isGroupSession ? leftActionsForGroup : leftActions}
       onInputHeightChange={(height) => {
         updatePreference({ inputHeight: height });
