@@ -6,6 +6,7 @@ import { Edit, UserMinus } from 'lucide-react';
 import { memo, useState } from 'react';
 import { Flexbox } from 'react-layout-kit';
 
+import { MemberSelectionModal } from '@/components/MemberSelectionModal';
 import { useChatGroupStore } from '@/store/chatGroup';
 import { chatGroupSelectors } from '@/store/chatGroup/selectors';
 import { useSessionStore } from '@/store/session';
@@ -13,8 +14,6 @@ import { sessionSelectors } from '@/store/session/selectors';
 import { useUserStore } from '@/store/user';
 import { userProfileSelectors } from '@/store/user/selectors';
 import { LobeGroupSession } from '@/types/session';
-
-import { MemberSelectionModal } from '@/components/MemberSelectionModal';
 
 const useStyles = createStyles(({ css, token }) => ({
   container: css`
@@ -71,7 +70,6 @@ const GroupMembers = memo(() => {
 
   const membersContent = (
     <Flexbox className={styles.container} flex={1} gap={2}>
-
       {/* Current User - Always shown first */}
       <div className={styles.memberItem}>
         <Flexbox align={'center'} gap={12} horizontal>
@@ -102,7 +100,11 @@ const GroupMembers = memo(() => {
         return (
           <div className={styles.memberItem} key={agent.id}>
             <Flexbox align={'center'} gap={12} horizontal>
-              <Avatar avatar={agent.avatar} background={agent.backgroundColor} size={32} />
+              <Avatar
+                avatar={agent.avatar}
+                background={agent.backgroundColor || undefined}
+                size={32}
+              />
               <Flexbox flex={1} gap={2}>
                 <div
                   style={{
@@ -135,7 +137,7 @@ const GroupMembers = memo(() => {
                 danger
                 icon={UserMinus}
                 onClick={() => {
-                  removeAgentFromGroup(currentGroup?.id, agent.id);
+                  removeAgentFromGroup(currentGroup?.id || '', agent.id || '');
                 }}
                 size={'small'}
                 title="Remove Member"
@@ -159,7 +161,7 @@ const GroupMembers = memo(() => {
       {membersContent}
 
       <MemberSelectionModal
-        mode="invite"
+        mode="add"
         onCancel={() => setInviteModalOpen(false)}
         onConfirm={handleInviteMembers}
         open={inviteModalOpen}
@@ -167,7 +169,5 @@ const GroupMembers = memo(() => {
     </Flexbox>
   );
 });
-
-GroupMembers.displayName = 'GroupMembers';
 
 export default GroupMembers;

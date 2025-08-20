@@ -139,7 +139,7 @@ export interface CreateMessageParams
   fromProvider?: string;
   groupId?: string;
   role: MessageRoleType;
-  sessionId?: string;
+  sessionId: string;
   targetId?: string | null;
   topicId?: string;
   traceId?: string;

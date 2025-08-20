@@ -9,5 +9,5 @@ export const useFetchGroups = () => {
   const isLogin = useUserStore(authSelectors.isLogin);
   const useFetchGroups = useChatGroupStore((s) => s.useFetchGroups);
 
-  useFetchGroups(isDBInited, isLogin);
+  useFetchGroups(isDBInited ?? false, isLogin ?? false);
 };
