@@ -5,7 +5,6 @@ import { SessionGroupModel } from '@/database/models/sessionGroup';
 import { AgentItem } from '@/database/schemas';
 import { BaseClientService } from '@/services/baseClientService';
 import { LobeAgentConfig } from '@/types/agent';
-import { LobeSessionType } from '@/types/session';
 
 import { ISessionService } from './type';
 
@@ -33,20 +32,6 @@ export class ClientService extends BaseClientService implements ISessionService 
     });
     if (!item) {
       throw new Error('session create Error');
-    }
-    return item.id;
-  };
-
-  createGroupSession: ISessionService['createGroupSession'] = async (data) => {
-    const { group, meta, ...session } = data;
-
-    const item = await this.sessionModel.create({
-      config: meta as any,
-      session: { ...session, groupId: group },
-      type: LobeSessionType.Group,
-    });
-    if (!item) {
-      throw new Error('group session create Error');
     }
     return item.id;
   };

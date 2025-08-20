@@ -1,14 +1,17 @@
-import { ChatStoreState } from '@/store/chat/initialState';
+import { DEFAULT_CHAT_GROUP_CHAT_CONFIG, DEFAULT_CHAT_GROUP_META_CONFIG } from '@/const/settings';
 import { ChatGroupItem } from '@/database/schemas/chatGroup';
+import { ChatStoreState } from '@/store/chat/initialState';
 import { useSessionStore } from '@/store/session';
 import { sessionSelectors } from '@/store/session/selectors';
-import { ChatGroupState } from './initialState';
-import { ChatGroupStore } from './store';
-import { DEFAULT_CHAT_GROUP_CHAT_CONFIG, DEFAULT_CHAT_GROUP_META_CONFIG } from '@/const/settings';
 import { merge } from '@/utils/merge';
 
-const getGroupById = (id: string) => (s: ChatGroupState): ChatGroupItem | undefined =>
-  s.groupMap[id];
+import { ChatGroupState } from './initialState';
+import { ChatGroupStore } from './store';
+
+const getGroupById =
+  (id: string) =>
+  (s: ChatGroupState): ChatGroupItem | undefined =>
+    s.groupMap[id];
 
 const getAllGroups = (s: ChatGroupState): ChatGroupItem[] => Object.values(s.groupMap);
 
@@ -36,8 +39,10 @@ const currentGroup = (s: ChatGroupStore): ChatGroupItem | undefined => {
   return groupId && s.groupMap ? s.groupMap[groupId] : undefined;
 };
 
-const getGroupByIdFromChatStore = (groupId: string) => (s: ChatStoreState): ChatGroupItem | undefined =>
-  s.groupMaps?.[groupId];
+const getGroupByIdFromChatStore =
+  (groupId: string) =>
+  (s: ChatStoreState): ChatGroupItem | undefined =>
+    s.groupMaps?.[groupId];
 
 const allGroups = (s: ChatStoreState): ChatGroupItem[] =>
   s.groupMaps ? Object.values(s.groupMaps) : [];
@@ -57,15 +62,13 @@ const currentGroupConfig = (s: ChatGroupStore) => {
 const currentGroupMeta = (s: ChatGroupStore) => {
   const groupId = activeGroupId();
   if (!groupId) return DEFAULT_CHAT_GROUP_META_CONFIG;
-  
+
   const group = s.groupMap?.[groupId];
   return merge(DEFAULT_CHAT_GROUP_META_CONFIG, {
-    title: group?.title || '',
     description: group?.description || '',
+    title: group?.title || '',
   });
 };
-
-
 
 export const chatGroupSelectors = {
   activeGroupId,

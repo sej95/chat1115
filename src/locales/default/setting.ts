@@ -11,11 +11,6 @@ export default {
     prompt: '角色设定',
     tts: '语音服务',
   },
-  groupTab: {
-    chat: '群聊',
-    members: '成员',
-    meta: '群聊信息',
-  },
   analytics: {
     telemetry: {
       desc: '通过选择发送遥测数据，你可以帮助我们改善 {{appName}} 整体用户体验',
@@ -39,6 +34,11 @@ export default {
       success: '已重置所有设置',
       title: '重置所有设置',
     },
+  },
+  groupTab: {
+    chat: '群聊',
+    members: '成员',
+    meta: '群聊信息',
   },
   header: {
     desc: '偏好与模型设置',
@@ -301,57 +301,57 @@ export default {
   },
   settingGroup: {
     description: {
-      placeholder: "Enter group description",
-      title: "Group Description"
+      placeholder: 'Enter group description',
+      title: 'Group Description',
     },
     name: {
-      placeholder: "Enter group name",
-      title: "Group Name"
+      placeholder: 'Enter group name',
+      title: 'Group Name',
     },
-    submit: "Update Group",
-    title: "Group Information"
+    submit: 'Update Group',
+    title: 'Group Information',
   },
   settingGroupChat: {
     maxResponseInRow: {
-      desc: "Choose how many messages members can respond in a row. Set to 0 to disable.",
-      title: "Max Messages in a Row"
+      desc: 'Choose how many messages members can respond in a row. Set to 0 to disable.',
+      title: 'Max Messages in a Row',
     },
     model: {
-      desc: "Choose the model to use for group conversations",
-      title: "Orchestrator Model"
+      desc: 'Choose the model to use for group conversations',
+      title: 'Orchestrator Model',
     },
     responseOrder: {
-      desc: "Agents will respond in the order they are set in the group",
+      desc: 'Agents will respond in the order they are set in the group',
       options: {
-        natural: "Natural",
-        sequential: "Sequential"
+        natural: 'Natural',
+        sequential: 'Sequential',
       },
-      placeholder: "Select response order",
-      title: "Response Order"
+      placeholder: 'Select response order',
+      title: 'Response Order',
     },
     responseSpeed: {
-      desc: "Choose how agents respond in group conversations",
+      desc: 'Choose how agents respond in group conversations',
       options: {
-        fast: "Fast",
-        medium: "Medium",
-        slow: "Slow"
+        fast: 'Fast',
+        medium: 'Medium',
+        slow: 'Slow',
       },
-      placeholder: "Select response speed",
-      title: "Response Speed"
+      placeholder: 'Select response speed',
+      title: 'Response Speed',
     },
     revealDM: {
-      desc: "Make the DM content sent to other members visible to you.",
-      title: "Reveal DM"
+      desc: 'Make the DM content sent to other members visible to you.',
+      title: 'Reveal DM',
     },
-    submit: "Update Settings",
-    title: "Chat Settings"
+    submit: 'Update Settings',
+    title: 'Chat Settings',
   },
   settingGroupMembers: {
-    edit: "Edit Member",
-    empty: "No agents in this group yet. Click the + button to add members.",
-    owner: "You (Owner)",
-    remove: "Remove Member",
-    you: "You"
+    edit: 'Edit Member',
+    empty: 'No agents in this group yet. Click the + button to add members.',
+    owner: 'You (Owner)',
+    remove: 'Remove Member',
+    you: 'You',
   },
   settingModel: {
     enableMaxTokens: {
@@ -633,5 +633,5 @@ export default {
       store: '插件商店',
     },
     title: '扩展插件',
-  }
+  },
 };
