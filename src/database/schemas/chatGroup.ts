@@ -43,6 +43,7 @@ export const chatGroups = pgTable(
       responseOrder?: 'sequential' | 'natural';
       responseSpeed?: 'slow' | 'medium' | 'fast';
       revealDM?: boolean;
+      systemPrompt?: string;
     }>(),
 
     clientId: text('client_id'),

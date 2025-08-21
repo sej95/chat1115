@@ -8,6 +8,8 @@ import { DEFAULT_INBOX_AVATAR } from '@/const/meta';
 import { useChatGroupStore } from '@/store/chatGroup';
 import { useSessionStore } from '@/store/session';
 import { sessionMetaSelectors } from '@/store/session/selectors';
+import { useUserStore } from '@/store/user';
+import { userProfileSelectors } from '@/store/user/selectors';
 import { Lock } from 'lucide-react';
 
 export interface DMTagProps {
@@ -26,11 +28,13 @@ const DMTag = memo<DMTagProps>(({ senderId, targetId }) => {
     const theme = useTheme();
     const toggleThread = useChatGroupStore((s) => s.toggleThread);
 
+    const currentUserAvatar = useUserStore(userProfileSelectors.userAvatar);
+
     const targetInfo = useSessionStore((s) => {
         if (!targetId) return null;
         if (targetId === 'user') {
             return {
-                avatar: DEFAULT_INBOX_AVATAR,
+                avatar: currentUserAvatar || DEFAULT_INBOX_AVATAR,
                 backgroundColor: undefined,
                 name: t('you'),
             };

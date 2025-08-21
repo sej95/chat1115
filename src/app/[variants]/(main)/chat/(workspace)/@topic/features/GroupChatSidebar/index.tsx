@@ -109,6 +109,8 @@ const GroupChatSidebar = memo(() => {
 
   // state for tracking which members are being removed
   const [removingMemberIds, setRemovingMemberIds] = useState<string[]>([]);
+  // state for tracking which member is being hovered
+  const [hoveredMemberId, setHoveredMemberId] = useState<string | null>(null);
 
   useEffect(() => {
     setMembers(initialMembers);
@@ -218,7 +220,14 @@ const GroupChatSidebar = memo(() => {
                     }}
                     renderItem={(item: any) => (
                       <SortableList.Item className={styles.memberItem} id={item.id}>
-                        <Flexbox align={'center'} gap={8} horizontal justify={'space-between'}>
+                        <Flexbox 
+                          align={'center'} 
+                          gap={8} 
+                          horizontal 
+                          justify={'space-between'}
+                          onMouseEnter={() => setHoveredMemberId(item.id)}
+                          onMouseLeave={() => setHoveredMemberId(null)}
+                        >
                           <Flexbox
                             align={'center'}
                             flex={1}
@@ -240,28 +249,30 @@ const GroupChatSidebar = memo(() => {
                               </div>
                             </Flexbox>
                           </Flexbox>
-                          <Flexbox gap={4} horizontal>
-                            <ActionIcon
-                              icon={MessageSquare}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleThread(item.id);
-                              }}
-                              size={'small'}
-                              title="Open Thread"
-                            />
-                            <ActionIcon
-                              danger
-                              icon={UserMinus}
-                              loading={removingMemberIds.includes(item.id)}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRemoveMember(item.id);
-                              }}
-                              size={'small'}
-                              title="Remove Member"
-                            />
-                          </Flexbox>
+                          {hoveredMemberId === item.id && (
+                            <Flexbox gap={4} horizontal>
+                              <ActionIcon
+                                icon={MessageSquare}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleThread(item.id);
+                                }}
+                                size={'small'}
+                                title="Open Thread"
+                              />
+                              <ActionIcon
+                                danger
+                                icon={UserMinus}
+                                loading={removingMemberIds.includes(item.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveMember(item.id);
+                                }}
+                                size={'small'}
+                                title="Remove Member"
+                              />
+                            </Flexbox>
+                          )}
                         </Flexbox>
                       </SortableList.Item>
                     )}
