@@ -308,6 +308,10 @@ export default {
       placeholder: 'Enter group name',
       title: 'Group Name',
     },
+    systemPrompt: {
+      placeholder: 'Enter system prompt',
+      title: 'System Prompt',
+    },
     submit: 'Update Group',
     title: 'Group Information',
   },

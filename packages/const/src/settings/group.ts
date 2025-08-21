@@ -7,6 +7,7 @@ export const DEFAULT_CHAT_GROUP_CHAT_CONFIG: LobeChatGroupChatConfig = {
     orchestratorProvider: DEFAULT_PROVIDER,
     responseOrder: 'natural',
     responseSpeed: 'fast',
+    revealDM: false,
 };
 
 export const DEFAULT_CHAT_GROUP_META_CONFIG: LobeChatGroupMetaConfig = {

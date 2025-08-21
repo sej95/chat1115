@@ -27,7 +27,7 @@ const GroupChatThread = lazy(() => import('./thread'));
 
 const useStyles = createStyles(({ css, token }) => ({
   content: css`
-    padding: 0 ${token.paddingSM}px;
+    padding: 0;
     min-height: 200px;
     height: fit-content;
     overflow-y: auto;
@@ -40,16 +40,16 @@ const useStyles = createStyles(({ css, token }) => ({
     text-align: center;
   `,
   memberItem: css`
-    background: ${token.colorFillQuaternary};
-    border: 1px solid ${token.colorBorderSecondary};
-    border-radius: ${token.borderRadius}px;
-    margin-bottom: 2px;
-    padding: ${token.paddingSM}px ${token.paddingXS}px;
-    transition: all 0.2s ease;
     cursor: pointer;
+    margin-block: 1px;
+    margin-inline: 8px;
+    padding: 8px;
+    border-radius: ${token.borderRadius}px;
+    width: calc(100% - 16px);
+    transition: all 0.2s ease;
 
     &:hover {
-      background: ${token.colorFillTertiary};
+      background: ${token.colorFillSecondary};
     }
   `,
   placeholder: css`
@@ -182,12 +182,15 @@ const GroupChatSidebar = memo(() => {
                 }
               />
 
-              <Flexbox className={styles.content} flex={0.6} gap={2}>
+              <Flexbox className={styles.content} flex={0.6} gap={0}>
                 {/* Current User - Always shown first */}
                 <div className={styles.memberItem} style={{ marginBottom: 8 }}>
-                  <Flexbox align={'center'} gap={12} horizontal>
-                    <Avatar avatar={currentUser.avatar} size={32} />
-                    <Flexbox flex={1} gap={2}>
+                  <Flexbox align={'center'} gap={8} horizontal>
+                    <div style={{ opacity: 0.3, pointerEvents: 'none' }}>
+                      <SortableList.DragHandle />
+                    </div>
+                    <Avatar avatar={currentUser.avatar} size={24} />
+                    <Flexbox flex={1}>
                       <div
                         style={{
                           fontSize: '14px',
@@ -225,8 +228,8 @@ const GroupChatSidebar = memo(() => {
                             style={{ cursor: 'pointer' }}
                           >
                             <SortableList.DragHandle />
-                            <Avatar avatar={item.avatar || DEFAULT_AVATAR} background={item.backgroundColor!} size={32} />
-                            <Flexbox flex={1} gap={2}>
+                            <Avatar avatar={item.avatar || DEFAULT_AVATAR} background={item.backgroundColor!} size={24} />
+                            <Flexbox flex={1}>
                               <div
                                 style={{
                                   fontSize: '14px',
@@ -234,14 +237,6 @@ const GroupChatSidebar = memo(() => {
                                 }}
                               >
                                 {item.title || t('defaultSession', { ns: 'common' })}
-                              </div>
-                              <div
-                                style={{
-                                  color: '#666',
-                                  fontSize: '12px',
-                                }}
-                              >
-                                {item.systemRole}
                               </div>
                             </Flexbox>
                           </Flexbox>

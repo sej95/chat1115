@@ -1,15 +1,15 @@
 'use client';
 
 import { Form, type FormGroupItemType, SliderWithInput } from '@lobehub/ui';
+import { Select, Switch } from 'antd';
+import { isEqual } from 'lodash';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { FORM_STYLE } from '@/const/layoutTokens';
 
-import { selectors, useStore } from './store';
-import { Select, Switch } from 'antd';
 import ModelSelect from '../ModelSelect';
-import { isEqual } from 'lodash';
+import { selectors, useStore } from './store';
 
 /**
  * Chat Settings for Group Chat
@@ -18,7 +18,7 @@ const ChatGroupSettings = memo(() => {
   const { t } = useTranslation(['setting', 'common']);
   const [form] = Form.useForm();
   const updateConfig = useStore((s) => s.updateGroupConfig);
-  const config = useStore(selectors.currentChatConfig, isEqual)
+  const config = useStore(selectors.currentChatConfig, isEqual);
 
   const responseSpeedOptions = [
     { label: t('settingGroupChat.responseSpeed.options.slow'), value: 'slow' },

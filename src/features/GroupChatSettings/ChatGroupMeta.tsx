@@ -1,8 +1,8 @@
 'use client';
 
 import { Form, type FormGroupItemType } from '@lobehub/ui';
-import { Input } from 'antd';
 import { useUpdateEffect } from 'ahooks';
+import { Input } from 'antd';
 import isEqual from 'fast-deep-equal';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -34,13 +34,24 @@ const ChatGroupMeta = memo(() => {
       {
         children: (
           <TextArea
-            autoSize={{ maxRows: 8, minRows: 3 }}
+            autoSize={{ maxRows: 10, minRows: 5 }}
             placeholder={t('settingGroup.description.placeholder')}
             rows={4}
           />
         ),
         label: t('settingGroup.description.title'),
         name: 'description',
+      },
+      {
+        children: (
+          <TextArea
+            autoSize={{ maxRows: 8, minRows: 3 }}
+            placeholder={t('settingGroup.systemPrompt.placeholder')}
+            rows={4}
+          />
+        ),
+        label: t('settingGroup.systemPrompt.title'),
+        name: 'systemPrompt',
       },
     ],
     title: t('settingGroup.title'),
