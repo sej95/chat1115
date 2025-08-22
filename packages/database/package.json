@@ -9,7 +9,7 @@
     "test:coverage": "vitest --coverage"
   },
   "dependencies": {
-    "@electric-sql/pglite": "^0.2.17",
+    "@electric-sql/pglite": "^0.3.0",
     "@lobechat/const": "workspace:*",
     "@lobechat/types": "workspace:*",
     "dayjs": "^1.11.13",
