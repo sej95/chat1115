@@ -10,7 +10,7 @@ export default () => {
 
   return (
     <Center height={'100%'} width={'100%'}>
-      <BrandLoading size={40} style={{ opacity: 0.6 }} text={LobeHubText} />
+      <BrandLoading size={0} style={{ opacity: 0.6 }} text={LobeHubText} />
     </Center>
   );
 };

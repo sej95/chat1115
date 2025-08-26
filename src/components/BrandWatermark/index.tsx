@@ -33,7 +33,7 @@ const BrandWatermark = memo<Omit<FlexboxProps, 'children'>>(({ style, ...rest })
       style={{ color: theme.colorTextDescription, fontSize: 12, ...style }}
       {...rest}
     >
-      <span>Powered by</span>
+      <span>Powered by IUAI</span>
       {isCustomORG ? (
         <span>{ORG_NAME}</span>
       ) : (
@@ -42,7 +42,7 @@ const BrandWatermark = memo<Omit<FlexboxProps, 'children'>>(({ style, ...rest })
           href={`https://lobehub.com?utm_source=${UTM_SOURCE}&utm_content=brand_watermark`}
           target={'_blank'}
         >
-          <LobeHub size={20} type={'text'} />
+          <LobeHub size={0} type={'text'} />
         </Link>
       )}
     </Flexbox>

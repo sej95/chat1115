@@ -36,10 +36,10 @@ export class ChangelogService {
     changelogPath: 'changelog',
     docsPath: 'docs/changelog',
     majorVersion: 1,
-    repo: 'lobe-chat',
+    repo: 'iuai-chat',
     type: 'cloud',
     urlTemplate: process.env.CHANGELOG_URL_TEMPLATE || URL_TEMPLATE,
-    user: 'lobehub',
+    user: 'iuaihub',
   };
 
   async getLatestChangelogId() {

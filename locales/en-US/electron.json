@@ -44,7 +44,7 @@
   "remoteServer": {
     "authError": "Authorization failed: {{error}}",
     "authPending": "Please complete the authorization in your browser",
-    "configDesc": "Connect to the remote LobeChat server to enable data synchronization",
+    "configDesc": "Connect to the remote IuaiChat server to enable data synchronization",
     "configError": "Configuration error",
     "configTitle": "Configure Cloud Sync",
     "connect": "Connect and authorize",
@@ -66,7 +66,7 @@
     "isIniting": "Initializing...",
     "lobehubCloud": {
       "description": "Officially provided cloud version",
-      "title": "LobeHub Cloud"
+      "title": "IuaiHub Cloud"
     },
     "local": {
       "description": "Uses a local database, fully available offline",

@@ -7,7 +7,7 @@
     "defaultMessage": "我是您的私人智能助理 {{appName}} ，請問現在能幫您做什麼？<br />如果需要獲得更加專業或定制的助手，可以點擊 <plus /> 創建自定義助手",
     "defaultMessageWithoutCreate": "我是您的私人智能助理 {{appName}} ，請問現在能幫您做什麼？",
     "qa": {
-      "q01": "LobeHub 是什麼？",
+      "q01": "IuaiHub 是什麼？",
       "q02": "{{appName}} 是什麼？",
       "q03": "{{appName}} 是否有社群支持？",
       "q04": "{{appName}} 支持哪些功能？",

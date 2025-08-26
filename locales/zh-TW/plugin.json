@@ -357,8 +357,8 @@
       "version": "版本"
     },
     "official": {
-      "badge": "LobeHub 官方插件",
-      "description": "此插件由 LobeHub 官方開發和維護，經過嚴格的安全審核，可放心使用。",
+      "badge": "IuaiHub 官方插件",
+      "description": "此插件由 IuaiHub 官方開發和維護，經過嚴格的安全審核，可放心使用。",
       "loadingMessage": "正在獲取插件詳情...",
       "loadingTitle": "載入中",
       "title": "安裝官方插件"
@@ -461,7 +461,7 @@
     "tabs": {
       "installed": "已安裝",
       "mcp": "MCP 插件",
-      "old": "LobeChat 插件"
+      "old": "IuaiChat 插件"
     },
     "title": "插件商店"
   },
