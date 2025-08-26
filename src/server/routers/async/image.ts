@@ -59,15 +59,63 @@ const checkAbortSignal = (signal: AbortSignal) => {
 
 /**
  * Categorizes errors into appropriate AsyncTaskErrorType
+ * Returns the original error message if available, otherwise returns the error type as message
+ * Client should handle localization based on errorType
  */
 const categorizeError = (
   error: any,
   isAborted: boolean,
 ): { errorMessage: string; errorType: AsyncTaskErrorType } => {
+  log('🔥🔥🔥 [ASYNC] categorizeError called:', {
+    errorMessage: error?.message,
+    errorName: error?.name,
+    errorStatus: error?.status,
+    errorType: error?.errorType,
+    fullError: JSON.stringify(error, null, 2),
+    isAborted,
+  });
+  // Handle Comfy UI errors
+  if (error.errorType === AgentRuntimeErrorType.ComfyUIServiceUnavailable) {
+    return {
+      errorMessage:
+        error.error?.message || error.message || AgentRuntimeErrorType.ComfyUIServiceUnavailable,
+      errorType: AsyncTaskErrorType.ServerError,
+    };
+  }
+
+  if (error.errorType === AgentRuntimeErrorType.ComfyUIBizError) {
+    return {
+      errorMessage: error.error?.message || error.message || AgentRuntimeErrorType.ComfyUIBizError,
+      errorType: AsyncTaskErrorType.ServerError,
+    };
+  }
+
+  if (error.errorType === AgentRuntimeErrorType.ConnectionCheckFailed) {
+    return {
+      errorMessage: error.message || AgentRuntimeErrorType.ConnectionCheckFailed,
+      errorType: AsyncTaskErrorType.ServerError,
+    };
+  }
+
+  if (error.errorType === AgentRuntimeErrorType.PermissionDenied) {
+    return {
+      errorMessage: error.error?.message || error.message || AgentRuntimeErrorType.PermissionDenied,
+      errorType: AsyncTaskErrorType.InvalidProviderAPIKey,
+    };
+  }
+
+  if (error.errorType === AgentRuntimeErrorType.ModelNotFound) {
+    return {
+      errorMessage: error.error?.message || error.message || AgentRuntimeErrorType.ModelNotFound,
+      errorType: AsyncTaskErrorType.ModelNotFound,
+    };
+  }
+
   // FIXME: 401 的问题应该放到 agentRuntime 中处理会更好
   if (error.errorType === AgentRuntimeErrorType.InvalidProviderAPIKey || error?.status === 401) {
     return {
-      errorMessage: 'Invalid provider API key, please check your API key',
+      errorMessage:
+        error.error?.message || error.message || AgentRuntimeErrorType.InvalidProviderAPIKey,
       errorType: AsyncTaskErrorType.InvalidProviderAPIKey,
     };
   }
@@ -81,27 +129,27 @@ const categorizeError = (
 
   if (isAborted || error.message?.includes('aborted')) {
     return {
-      errorMessage: 'Image generation task timed out, please try again',
+      errorMessage: AsyncTaskErrorType.Timeout,
       errorType: AsyncTaskErrorType.Timeout,
     };
   }
 
   if (error.message?.includes('timeout') || error.name === 'TimeoutError') {
     return {
-      errorMessage: 'Image generation task timed out, please try again',
+      errorMessage: AsyncTaskErrorType.Timeout,
       errorType: AsyncTaskErrorType.Timeout,
     };
   }
 
   if (error.message?.includes('network') || error.name === 'NetworkError') {
     return {
-      errorMessage: error.message || 'Network error occurred during image generation',
+      errorMessage: error.message || AsyncTaskErrorType.ServerError,
       errorType: AsyncTaskErrorType.ServerError,
     };
   }
 
   return {
-    errorMessage: error.message || 'Unknown error occurred during image generation',
+    errorMessage: error.message || AsyncTaskErrorType.ServerError,
     errorType: AsyncTaskErrorType.ServerError,
   };
 };
@@ -133,7 +181,6 @@ export const imageRouter = router({
 
         // Check if operation has been cancelled
         checkAbortSignal(signal);
-
         log('Agent runtime initialized, calling createImage');
         const response = await agentRuntime.createImage({
           model,
@@ -158,8 +205,55 @@ export const imageRouter = router({
 
         log('Transforming image for generation');
         const { imageUrl, width, height } = response;
-        const { image, thumbnailImage } =
-          await ctx.generationService.transformImageForGeneration(imageUrl);
+
+        // Extract ComfyUI authentication headers if provider is ComfyUI
+        let authHeaders: Record<string, string> | undefined;
+        if (provider === 'comfyui') {
+          // Get ComfyUI configuration from the runtime
+          // The runtime._runtime contains the actual LobeComfyUI instance with options
+          const comfyRuntime = (agentRuntime as any)._runtime;
+          const runtimeConfig = comfyRuntime?.options;
+
+          log('ComfyUI runtime config:', {
+            authType: runtimeConfig?.authType,
+            hasApiKey: !!runtimeConfig?.apiKey,
+            hasCustomHeaders: !!runtimeConfig?.customHeaders,
+            hasPassword: !!runtimeConfig?.password,
+            hasUsername: !!runtimeConfig?.username,
+          });
+
+          if (
+            runtimeConfig?.authType === 'basic' &&
+            runtimeConfig?.username &&
+            runtimeConfig?.password
+          ) {
+            // Basic auth header
+            const basicAuth = Buffer.from(
+              `${runtimeConfig.username}:${runtimeConfig.password}`,
+            ).toString('base64');
+            authHeaders = {
+              Authorization: `Basic ${basicAuth}`,
+            };
+            log('Using Basic authentication for ComfyUI image download');
+          } else if (runtimeConfig?.authType === 'bearer' && runtimeConfig?.apiKey) {
+            // Bearer token header
+            authHeaders = {
+              Authorization: `Bearer ${runtimeConfig.apiKey}`,
+            };
+            log('Using Bearer authentication for ComfyUI image download');
+          } else if (runtimeConfig?.authType === 'custom' && runtimeConfig?.customHeaders) {
+            // Custom headers
+            authHeaders = runtimeConfig.customHeaders;
+            log('Using custom headers for ComfyUI image download');
+          } else {
+            log('No authentication configured for ComfyUI');
+          }
+        }
+
+        const { image, thumbnailImage } = await ctx.generationService.transformImageForGeneration(
+          imageUrl,
+          authHeaders,
+        );
 
         // Check if operation has been cancelled
         checkAbortSignal(signal);
